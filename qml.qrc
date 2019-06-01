@@ -1,0 +1,13 @@
+<RCC>
+	<qresource prefix="/">
+		<file>qml/Main.qml</file>
+		<file>qml/DeviceTab.qml</file>
+		<file>qml/SettingsTab.qml</file>
+		<file>qml/SettingsTabGeneral.qml</file>
+		<file>qml/SettingsTabTG.qml</file>
+		<file>qml/SettingsTabLM.qml</file>
+		<file>qml/TrafficTab.qml</file>
+		<file>qml/TrafficTabBox.qml</file>
+		<file>qml/LatencyTab.qml</file>
+	</qresource>
+</RCC>
