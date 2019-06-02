@@ -24,6 +24,7 @@
 #include <QDebug>
 
 #include <zbnt.hpp>
+#include <QTrafficGenerator.hpp>
 #include <QUInt64Validator.hpp>
 #include <QUInt64RangeValidator.hpp>
 
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
 		}
 	);
 
+	qmlRegisterType<QTrafficGenerator>("zbnt", 1, 0, "QTrafficGenerator");
 	qmlRegisterType<QUInt64Validator>("zbnt", 1, 0, "UInt64Validator");
 	qmlRegisterType<QUInt64RangeValidator>("zbnt", 1, 0, "UInt64RangeValidator");
 	qmlRegisterSingletonType(QUrl("qrc:/qml/DefaultLabel.qml"), "zbnt", 1, 0, "DefaultLabel");

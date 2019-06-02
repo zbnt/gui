@@ -21,6 +21,8 @@
 #include <QTcpSocket>
 #include <QUrl>
 
+#include <QTrafficGenerator.hpp>
+
 class ZBNT : public QObject
 {
 	Q_OBJECT
@@ -28,13 +30,8 @@ class ZBNT : public QObject
 	Q_PROPERTY(bool running MEMBER m_running NOTIFY runningChanged)
 	Q_PROPERTY(bool connected MEMBER m_connected NOTIFY connectedChanged)
 
-	Q_PROPERTY(bool headersLoaded1 MEMBER m_headersLoaded1 NOTIFY headers1Changed)
-	Q_PROPERTY(quint32 headersLen1 MEMBER m_headersLen1 NOTIFY headers1Changed)
-	Q_PROPERTY(QString headersPath1 MEMBER m_headersPath1 NOTIFY headers1Changed)
-
-	Q_PROPERTY(bool headersLoaded2 MEMBER m_headersLoaded2 NOTIFY headers2Changed)
-	Q_PROPERTY(quint32 headersLen2 MEMBER m_headersLen2 NOTIFY headers2Changed)
-	Q_PROPERTY(QString headersPath2 MEMBER m_headersPath2 NOTIFY headers2Changed)
+	Q_PROPERTY(QTrafficGenerator *tg0 MEMBER m_tg0 CONSTANT)
+	Q_PROPERTY(QTrafficGenerator *tg1 MEMBER m_tg1 CONSTANT)
 
 public:
 	ZBNT();
@@ -42,13 +39,10 @@ public:
 
 public slots:
 	QString cyclesToTime(QString cycles);
-	void loadHeaders(int index, QUrl url);
 
 signals:
 	void runningChanged();
 	void connectedChanged();
-	void headers1Changed();
-	void headers2Changed();
 
 private slots:
 	void onConnected();
@@ -62,15 +56,11 @@ private:
 	bool m_running = false;
 	bool m_connected = false;
 
-	// eth0
-	bool m_headersLoaded1 = false;
-	quint32 m_headersLen1 = 0;
-	QString m_headersPath1;
-	QByteArray m_headers1;
+	// General settings
 
-	// eth1
-	bool m_headersLoaded2 = false;
-	quint32 m_headersLen2 = 0;
-	QString m_headersPath2;
-	QByteArray m_headers2;
+	quint64 m_runTime = 125000000ul;
+	bool m_exportResults = true;
+
+	QTrafficGenerator *m_tg0 = nullptr;
+	QTrafficGenerator *m_tg1 = nullptr;
 };

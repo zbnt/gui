@@ -26,24 +26,26 @@ import zbnt 1.0
 Item {
 	id: root
 
-	property int index: 0
-
-	property bool headersLoaded: false
-	property string headersPath: ""
-	property int headersLength: 0
-
+	property var object: undefined
 	property bool ready: !enableInput.checked || (headersLoaded && delayMethodSelector.valid)
-	property bool use: enableInput.checked
-	property int paddingMethod: paddingMethodSelector.currentIndex
-	property int paddingConstant: paddingConstantInput.value
-	property int paddingRangeBottom: paddingRangeBottomInput.value
-	property int paddingRangeTop: paddingRangeTopInput.value
-	property int paddingAverage: paddingAverageInput.value
-	property string delayMethod: delayMethodSelector.currentIndex
-	property string delayConstant: delayConstantInput.text
-	property string delayRangeBottom: delayRangeBottomInput.text
-	property string delayRangeTop: delayRangeTopInput.text
-	property string delayAverage: delayAverageInput.text
+
+	property bool headersLoaded: object.headersLoaded
+	property string headersPath: object.headersPath
+	property int headersLength: object.headersLength
+
+	Component.onCompleted: {
+		object.enable = Qt.binding(function() { return enableInput.checked })
+		object.paddingMethod = Qt.binding(function() { return paddingMethodSelector.currentIndex })
+		object.paddingConstant = Qt.binding(function() { return paddingConstantInput.value })
+		object.paddingRangeBottom = Qt.binding(function() { return paddingRangeBottomInput.value })
+		object.paddingRangeTop = Qt.binding(function() { return paddingRangeTopInput.value })
+		object.paddingAverage = Qt.binding(function() { return paddingAverageInput.value })
+		object.delayMethod = Qt.binding(function() { return delayMethodSelector.currentIndex })
+		object.delayConstant = Qt.binding(function() { return delayConstantInput.text })
+		object.delayRangeBottom = Qt.binding(function() { return delayRangeBottomInput.text })
+		object.delayRangeTop = Qt.binding(function() { return delayRangeTopInput.text })
+		object.delayAverage = Qt.binding(function() { return delayAverageInput.text })
+	}
 
 	FileDialog {
 		id: filePicker
@@ -56,7 +58,7 @@ Item {
 		nameFilters: ["Headers file (.bin, .hex) (*.bin *.hex)"]
 
 		onAccepted: {
-			ZBNT.loadHeaders(root.index, fileUrl);
+			root.object.loadHeaders(fileUrl);
 
 			if(root.headersLength >= 1500)
 			{

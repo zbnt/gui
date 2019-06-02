@@ -23,6 +23,10 @@ import QtQuick.Layouts 1.3
 import zbnt 1.0
 
 Item {
+	id: root
+
+	property bool ready: settingsGeneral.ready && settingsTG1.ready && settingsTG2.ready && settingsLM.ready
+
 	ColumnLayout {
 		anchors.fill: parent
 		spacing: 10
@@ -53,23 +57,23 @@ Item {
 				anchors.fill: parent
 				currentIndex: categorySelector.currentIndex
 
-				SettingsTabGeneral { }
-
-				SettingsTabTG {
-					index: 0
-					headersLoaded: ZBNT.headersLoaded1
-					headersPath: ZBNT.headersPath1
-					headersLength: ZBNT.headersLen1
+				SettingsTabGeneral {
+					id: settingsGeneral
 				}
 
 				SettingsTabTG {
-					index: 1
-					headersLoaded: ZBNT.headersLoaded2
-					headersPath: ZBNT.headersPath2
-					headersLength: ZBNT.headersLen2
+					id: settingsTG1
+					object: ZBNT.tg0
 				}
 
-				SettingsTabLM { }
+				SettingsTabTG {
+					id: settingsTG2
+					object: ZBNT.tg1
+				}
+
+				SettingsTabLM {
+					id: settingsLM
+				}
 			}
 		}
 	}

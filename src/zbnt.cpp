@@ -26,6 +26,8 @@
 ZBNT::ZBNT() : QObject(nullptr)
 {
 	m_socket = new QTcpSocket(this);
+	m_tg0 = new QTrafficGenerator(this);
+	m_tg1 = new QTrafficGenerator(this);
 
 	connect(m_socket, &QTcpSocket::connected, this, &ZBNT::onConnected);
 	connect(m_socket, &QTcpSocket::disconnected, this, &ZBNT::onDisconnected);
@@ -33,8 +35,7 @@ ZBNT::ZBNT() : QObject(nullptr)
 }
 
 ZBNT::~ZBNT()
-{
-}
+{ }
 
 QString ZBNT::cyclesToTime(QString cycles)
 {
@@ -74,73 +75,6 @@ QString ZBNT::cyclesToTime(QString cycles)
 	}
 
 	return res;
-}
-
-void ZBNT::loadHeaders(int index, QUrl url)
-{
-	QString selectedPath = url.toLocalFile();
-
-	if(!selectedPath.length())
-		return;
-
-	QFile headersFile;
-	headersFile.setFileName(selectedPath);
-	headersFile.open(QIODevice::ReadOnly);
-
-	if(!headersFile.isOpen())
-		return;
-
-	QByteArray *headersContents = index ? &m_headers2 : &m_headers1;
-
-	if(selectedPath.endsWith(".hex"))
-	{
-		QByteArray fileContents = headersFile.readAll();
-		uint8_t num = 0x10;
-
-		headersContents->clear();
-
-		for(char c : fileContents)
-		{
-			if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
-			{
-				c = tolower(c) - '0';
-
-				if(c >= 10)
-					c -= 'a' - '9' - 1;
-
-				if(num <= 0xF)
-				{
-					headersContents->append((num << 4) | c);
-					num = 0x10;
-				}
-				else
-				{
-					num = c;
-				}
-			}
-		}
-	}
-	else
-	{
-		*headersContents = headersFile.readAll();
-	}
-
-	if(index)
-	{
-		m_headersLen2 = headersContents->length();
-		m_headersPath2 = selectedPath;
-		m_headersLoaded2 = true;
-
-		emit headers2Changed();
-	}
-	else
-	{
-		m_headersLen1 = headersContents->length();
-		m_headersPath1 = selectedPath;
-		m_headersLoaded1 = true;
-
-		emit headers1Changed();
-	}
 }
 
 void ZBNT::onConnected()

@@ -12,12 +12,14 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(ZBNT_GUI_SRC
 	"src/Main.cpp"
 	"src/zbnt.cpp"
+	"src/QTrafficGenerator.cpp"
 	"src/QUInt64Validator.cpp"
 	"src/QUInt64RangeValidator.cpp"
 )
 
 set(ZBNT_GUI_HDR
 	"include/zbnt.hpp"
+	"include/QTrafficGenerator.hpp"
 	"include/QUInt64Validator.hpp"
 	"include/QUInt64RangeValidator.hpp"
 )
