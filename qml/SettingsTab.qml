@@ -73,6 +73,7 @@ Item {
 
 				SettingsTabLM {
 					id: settingsLM
+					object: ZBNT.lm0
 				}
 			}
 		}

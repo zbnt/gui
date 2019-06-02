@@ -20,7 +20,13 @@ import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
+import zbnt 1.0
+
 Item {
+	id: root
+
+	property bool settingsValid: false
+
 	ColumnLayout {
 		anchors.fill: parent
 		spacing: 10
@@ -69,12 +75,24 @@ Item {
 
 					Button {
 						text: "Autodetect"
+						enabled: !ZBNT.connected
+						focusPolicy: Qt.NoFocus
+
 						Layout.alignment: Qt.AlignRight
+
+						onPressed: {
+						}
 					}
 
 					Button {
-						text: "Connect"
+						text: ZBNT.connected ? "Disconnect" : "Connect"
+						enabled: !ZBNT.running
+						focusPolicy: Qt.NoFocus
+
 						Layout.alignment: Qt.AlignRight
+
+						onPressed: {
+						}
 					}
 				}
 			}
@@ -123,9 +141,15 @@ Item {
 				}
 
 				Button {
-					text: "Start"
+					text: ZBNT.running ? "Stop" : "Start"
+					enabled: ZBNT.connected
+					focusPolicy: Qt.NoFocus
+
 					Layout.columnSpan: 2
 					Layout.alignment: Qt.AlignRight
+
+					onPressed: {
+					}
 				}
 			}
 		}

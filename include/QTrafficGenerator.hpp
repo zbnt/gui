@@ -63,8 +63,8 @@ private:
 	quint16 m_paddingRangeTop = 0;
 	quint16 m_paddingRangeBottom = 0;
 	quint16 m_paddingAverage = 0;
-	QString m_delayConstant = 0;
-	QString m_delayRangeTop = 0;
-	QString m_delayRangeBottom = 0;
-	QString m_delayAverage = 0;
+	QString m_delayConstant;
+	QString m_delayRangeTop;
+	QString m_delayRangeBottom;
+	QString m_delayAverage;
 };

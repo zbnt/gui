@@ -25,11 +25,15 @@ import zbnt 1.0
 Item {
 	id: root
 
+	property var object: undefined
 	property bool ready: !enableInput.checked || (frameSizeInput.valid && pingPeriodInput.valid && timeoutInput.valid)
-	property bool use: enableInput.checked
-	property string frameSize: frameSizeInput.text
-	property string period: pingPeriodInput.text
-	property string timeout: timeoutInput.text
+
+	Component.onCompleted: {
+		object.enable = Qt.binding(function() { return enableInput.checked })
+		object.frameSize = Qt.binding(function() { return frameSizeInput.text })
+		object.period = Qt.binding(function() { return pingPeriodInput.text })
+		object.timeout = Qt.binding(function() { return timeoutInput.text })
+	}
 
 	GridLayout {
 		columns: 3
@@ -98,6 +102,7 @@ Item {
 			id: pingPeriodInput
 			enabled: enableInput.checked
 
+			text: "12500000"
 			min: "1"
 			max: "4294967295"
 

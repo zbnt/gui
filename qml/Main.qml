@@ -20,6 +20,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
+import zbnt 1.0
+
 ApplicationWindow {
 	id: window
 
@@ -72,10 +74,24 @@ ApplicationWindow {
 				anchors.fill: parent
 				currentIndex: tabBar.currentIndex
 
-				DeviceTab { }
-				SettingsTab { }
-				TrafficTab { }
-				LatencyTab { }
+				DeviceTab {
+					id: deviceTab
+
+					settingsValid: settingsTab.ready
+				}
+
+				SettingsTab {
+					id: settingsTab
+				}
+
+				TrafficTab {
+					id: trafficTab
+				}
+
+				LatencyTab {
+					id: latencyTab
+					object: ZBNT.lm0
+				}
 			}
 		}
 	}

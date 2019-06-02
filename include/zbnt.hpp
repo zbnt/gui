@@ -22,6 +22,7 @@
 #include <QUrl>
 
 #include <QTrafficGenerator.hpp>
+#include <QLatencyMeasurer.hpp>
 
 class ZBNT : public QObject
 {
@@ -32,6 +33,7 @@ class ZBNT : public QObject
 
 	Q_PROPERTY(QTrafficGenerator *tg0 MEMBER m_tg0 CONSTANT)
 	Q_PROPERTY(QTrafficGenerator *tg1 MEMBER m_tg1 CONSTANT)
+	Q_PROPERTY(QLatencyMeasurer *lm0 MEMBER m_lm0 CONSTANT)
 
 public:
 	ZBNT();
@@ -56,11 +58,10 @@ private:
 	bool m_running = false;
 	bool m_connected = false;
 
-	// General settings
-
 	quint64 m_runTime = 125000000ul;
 	bool m_exportResults = true;
 
 	QTrafficGenerator *m_tg0 = nullptr;
 	QTrafficGenerator *m_tg1 = nullptr;
+	QLatencyMeasurer *m_lm0 = nullptr;
 };

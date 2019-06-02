@@ -16,42 +16,44 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <zbnt.hpp>
+#include <Utils.hpp>
 
 #include <vector>
 
-#include <Utils.hpp>
-
-ZBNT::ZBNT() : QObject(nullptr)
+void cyclesToTime(quint64 cycles, QString &time)
 {
-	m_socket = new QTcpSocket(this);
-	m_tg0 = new QTrafficGenerator(this);
-	m_tg1 = new QTrafficGenerator(this);
-	m_lm0 = new QLatencyMeasurer(this);
+	static const std::vector<std::pair<const char*, quint64>> convTable =
+	{
+		{"d", 24 * 60 * 60 * 1'000'000'000ull},
+		{"h", 60 * 60 * 1'000'000'000ull},
+		{"m", 60 * 1'000'000'000ull},
+		{"s", 1'000'000'000ull},
+		{"ms", 1'000'000},
+		{"us", 1'000},
+		{"ns", 1}
+	};
 
-	connect(m_socket, &QTcpSocket::connected, this, &ZBNT::onConnected);
-	connect(m_socket, &QTcpSocket::disconnected, this, &ZBNT::onDisconnected);
-	connect(m_socket, &QTcpSocket::readyRead, this, &ZBNT::readSocket);
-}
+	cycles *= 8;
+	bool first = true;
 
-ZBNT::~ZBNT()
-{ }
+	for(const auto &e : convTable)
+	{
+		quint64 step = cycles / e.second;
 
-QString ZBNT::cyclesToTime(QString cycles)
-{
-	QString res;
-	::cyclesToTime(cycles.toULongLong(), res);
-	return res;
-}
+		if(step || (first && e.second == 1))
+		{
+			if(!first)
+			{
+				time += " + ";
+			}
 
-void ZBNT::onConnected()
-{
-}
+			first = false;
 
-void ZBNT::onDisconnected()
-{
-}
+			time += QString::number(step);
+			time += " ";
+			time += e.first;
+		}
 
-void ZBNT::readSocket()
-{
+		cycles %= e.second;
+	}
 }

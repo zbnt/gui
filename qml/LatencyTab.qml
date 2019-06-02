@@ -22,6 +22,10 @@ import QtQuick.Layouts 1.3
 import QtCharts 2.3
 
 Item {
+	id: root
+
+	property var object: undefined
+
 	ColumnLayout {
 		anchors.fill: parent
 		spacing: 10
@@ -59,7 +63,7 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: root.object.numPingPongs
 					Layout.fillWidth: true
 				}
 
@@ -71,7 +75,7 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: root.object.numLostPings
 					Layout.fillWidth: true
 				}
 
@@ -83,7 +87,7 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: root.object.numLostPongs
 					Layout.fillWidth: true
 				}
 			}
@@ -122,7 +126,7 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: root.object.lastRT
 					Layout.fillWidth: true
 				}
 
@@ -134,7 +138,7 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: root.object.lastE2E
 					Layout.fillWidth: true
 				}
 			}
@@ -173,7 +177,7 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: root.object.avgRT
 					Layout.fillWidth: true
 				}
 
@@ -185,7 +189,7 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: root.object.avgE2E
 					Layout.fillWidth: true
 				}
 			}
