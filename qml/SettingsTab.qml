@@ -20,6 +20,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
+import zbnt 1.0
+
 Item {
 	ColumnLayout {
 		anchors.fill: parent
@@ -52,8 +54,21 @@ Item {
 				currentIndex: categorySelector.currentIndex
 
 				SettingsTabGeneral { }
-				SettingsTabTG { }
-				SettingsTabTG { }
+
+				SettingsTabTG {
+					index: 0
+					headersLoaded: ZBNT.headersLoaded1
+					headersPath: ZBNT.headersPath1
+					headersLength: ZBNT.headersLen1
+				}
+
+				SettingsTabTG {
+					index: 1
+					headersLoaded: ZBNT.headersLoaded2
+					headersPath: ZBNT.headersPath2
+					headersLength: ZBNT.headersLen2
+				}
+
 				SettingsTabLM { }
 			}
 		}

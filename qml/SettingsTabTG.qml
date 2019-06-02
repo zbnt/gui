@@ -19,8 +19,53 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import QtQuick.Dialogs 1.3
+
+import zbnt 1.0
 
 Item {
+	id: root
+
+	property int index: 0
+
+	property bool headersLoaded: false
+	property string headersPath: ""
+	property int headersLength: 0
+
+	property bool ready: !enableInput.checked || (headersLoaded && delayMethodSelector.valid)
+	property bool use: enableInput.checked
+	property int paddingMethod: paddingMethodSelector.currentIndex
+	property int paddingConstant: paddingConstantInput.value
+	property int paddingRangeBottom: paddingRangeBottomInput.value
+	property int paddingRangeTop: paddingRangeTopInput.value
+	property int paddingAverage: paddingAverageInput.value
+	property string delayMethod: delayMethodSelector.currentIndex
+	property string delayConstant: delayConstantInput.text
+	property string delayRangeBottom: delayRangeBottomInput.text
+	property string delayRangeTop: delayRangeTopInput.text
+	property string delayAverage: delayAverageInput.text
+
+	FileDialog {
+		id: filePicker
+		title: "Pick a file"
+		folder: ""
+
+		selectExisting: true
+		selectMultiple: false
+		selectFolder: false
+		nameFilters: ["Headers file (.bin, .hex) (*.bin *.hex)"]
+
+		onAccepted: {
+			ZBNT.loadHeaders(root.index, fileUrl);
+
+			if(root.headersLength >= 1500)
+			{
+				paddingMethodSelector.currentIndex = 0;
+				paddingConstantInput.value = 0;
+			}
+		}
+	}
+
 	GridLayout {
 		columns: 2
 		rowSpacing: 5
@@ -34,6 +79,8 @@ Item {
 		}
 
 		CheckBox {
+			id: enableInput
+			checked: true
 			Layout.fillWidth: true
 		}
 
@@ -48,18 +95,31 @@ Item {
 
 			TextField {
 				readOnly: true
+				text: root.headersPath
+				enabled: enableInput.checked
+				color: !enabled ? DisabledLabel.color : ((root.headersLength >= 14 && root.headersLength <= 1500) ? DefaultLabel.color : "#e53935")
 				Layout.fillWidth: true
 			}
 
 			Button {
 				text: "Open"
+				enabled: enableInput.checked
+				focus: false
+				focusPolicy: Qt.NoFocus
+
+				onPressed: {
+					filePicker.open()
+				}
 			}
 		}
 
 		Label { }
 
-		Label {
-			text: "No file selected"
+		ErrorLabel {
+			valid: root.headersLoaded && root.headersLength >= 14 && root.headersLength <= 1500
+			enabled: enableInput.checked
+			normalText: root.headersLength + " bytes"
+			errorText: !root.headersLoaded ? "No file selected" : (normalText + " - Must be at " + (root.headersLength >= 14 ? "most 1500" : "least 64") + " bytes")
 			font.italic: true
 		}
 
@@ -76,6 +136,8 @@ Item {
 
 		ComboBox {
 			id: paddingMethodSelector
+			enabled: root.headersLoaded && enableInput.checked && root.headersLength >= 14 && root.headersLength < 1500
+
 			Layout.fillWidth: true
 
 			model: [
@@ -97,8 +159,14 @@ Item {
 			visible: paddingMethodSelector.currentIndex == 0
 
 			SpinBox {
+				id: paddingConstantInput
+
 				from: 0
-				to: 1500
+				to: 1500 - root.headersLength
+
+				editable: true
+				enabled: root.headersLoaded && enableInput.checked && root.headersLength >= 14 && root.headersLength < 1500
+
 				Layout.fillWidth: true
 			}
 
@@ -119,8 +187,19 @@ Item {
 			visible: paddingMethodSelector.currentIndex == 1
 
 			SpinBox {
+				id: paddingRangeBottomInput
+
 				from: 0
-				to: 1500
+				to: 1500 - root.headersLength
+
+				editable: true
+				enabled: root.headersLoaded && enableInput.checked
+
+				onValueChanged: {
+					if(value > paddingRangeTopInput.value)
+						value = paddingRangeTopInput.value;
+				}
+
 				Layout.fillWidth: true
 			}
 
@@ -129,8 +208,19 @@ Item {
 			}
 
 			SpinBox {
+				id: paddingRangeTopInput
+
 				from: 0
-				to: 1500
+				to: 1500 - root.headersLength
+
+				editable: true
+				enabled: root.headersLoaded && enableInput.checked
+
+				onValueChanged: {
+					if(paddingRangeBottomInput.value > value)
+						paddingRangeBottomInput.value = value;
+				}
+
 				Layout.fillWidth: true
 			}
 
@@ -151,8 +241,14 @@ Item {
 			visible: paddingMethodSelector.currentIndex == 2
 
 			SpinBox {
+				id: paddingAverageInput
+
 				from: 0
-				to: 1500
+				to: 1500 - root.headersLength
+
+				editable: true
+				enabled: root.headersLoaded && enableInput.checked
+
 				Layout.fillWidth: true
 			}
 
@@ -174,7 +270,10 @@ Item {
 
 		ComboBox {
 			id: delayMethodSelector
+			enabled: root.headersLoaded && enableInput.checked
 			Layout.fillWidth: true
+
+			property bool valid: [delayConstantInput.valid, delayRangeBottomInput.valid && delayRangeTopInput.valid && delayRangeValidator.valid, delayAverageInput.valid][currentIndex]
 
 			model: [
 				"Constant",
@@ -194,15 +293,32 @@ Item {
 			Layout.fillWidth: true
 			visible: delayMethodSelector.currentIndex == 0
 
-			SpinBox {
-				from: 0
-				to: 1500
+			UInt64Field {
+				id: delayConstantInput
+				enabled: root.headersLoaded && enableInput.checked
+				horizontalAlignment: Qt.AlignHCenter
+
+				min: "0"
+				max: "4294967295"
+
 				Layout.fillWidth: true
 			}
 
 			Label {
 				text: " cycles"
 			}
+		}
+
+		Label {
+			visible: delayMethodSelector.currentIndex == 0
+		}
+
+		ErrorLabel {
+			visible: delayMethodSelector.currentIndex == 0
+			enabled: delayConstantInput.enabled
+			valid: delayConstantInput.valid
+			normalText: ZBNT.cyclesToTime(delayConstantInput.text)
+			errorText: delayConstantInput.validator.error
 		}
 
 		Label {
@@ -216,9 +332,15 @@ Item {
 			Layout.fillWidth: true
 			visible: delayMethodSelector.currentIndex == 1
 
-			SpinBox {
-				from: 0
-				to: 1500
+			UInt64Field {
+				id: delayRangeBottomInput
+				enabled: root.headersLoaded && enableInput.checked
+				horizontalAlignment: Qt.AlignHCenter
+
+				text: "0"
+				min: "0"
+				max: "4294967295"
+
 				Layout.fillWidth: true
 			}
 
@@ -226,15 +348,72 @@ Item {
 				text: " - "
 			}
 
-			SpinBox {
-				from: 0
-				to: 1500
+			UInt64Field {
+				id: delayRangeTopInput
+				enabled: root.headersLoaded && enableInput.checked
+				horizontalAlignment: Qt.AlignHCenter
+
+				text: "1"
+				min: "1"
+				max: "4294967295"
+
 				Layout.fillWidth: true
+
+				UInt64RangeValidator {
+					id: delayRangeValidator
+					top: delayRangeTopInput.text
+					bottom: delayRangeBottomInput.text
+				}
 			}
 
 			Label {
 				text: " cycles"
 			}
+		}
+
+		Label {
+			visible: delayMethodSelector.currentIndex == 1 && delayRangeBottomInput.valid && delayRangeTopInput.valid && delayRangeValidator.valid
+		}
+
+		Label {
+			visible: delayMethodSelector.currentIndex == 1 && delayRangeBottomInput.valid && delayRangeTopInput.valid && delayRangeValidator.valid
+			text: ZBNT.cyclesToTime(delayRangeBottomInput.text) + " to " + ZBNT.cyclesToTime(delayRangeTopInput.text)
+		}
+
+		Label {
+			visible: delayMethodSelector.currentIndex == 1 && !delayRangeBottomInput.valid
+		}
+
+		ErrorLabel {
+			visible: delayMethodSelector.currentIndex == 1 && !delayRangeBottomInput.valid
+			enabled: delayRangeBottomInput.enabled
+			valid: false
+			normalText: ""
+			errorText: delayRangeBottomInput.validator.error.replace("M", "Minimum m")
+		}
+
+		Label {
+			visible: delayMethodSelector.currentIndex == 1 && !delayRangeTopInput.valid
+		}
+
+		ErrorLabel {
+			visible: delayMethodSelector.currentIndex == 1 && !delayRangeTopInput.valid
+			enabled: delayRangeTopInput.enabled
+			valid: false
+			normalText: ""
+			errorText: delayRangeTopInput.validator.error.replace("M", "Maximum m")
+		}
+
+		Label {
+			visible: delayMethodSelector.currentIndex == 1 && !delayRangeValidator.valid
+		}
+
+		ErrorLabel {
+			visible: delayMethodSelector.currentIndex == 1 && !delayRangeValidator.valid
+			enabled: delayRangeTopInput.enabled
+			valid: false
+			normalText: ""
+			errorText: "Invalid range"
 		}
 
 		Label {
@@ -248,15 +427,32 @@ Item {
 			Layout.fillWidth: true
 			visible: delayMethodSelector.currentIndex == 2
 
-			SpinBox {
-				from: 0
-				to: 1500
+			UInt64Field {
+				id: delayAverageInput
+				enabled: root.headersLoaded && enableInput.checked
+				horizontalAlignment: Qt.AlignHCenter
+
+				min: "0"
+				max: "4294967295"
+
 				Layout.fillWidth: true
 			}
 
 			Label {
 				text: " cycles/frame"
 			}
+		}
+
+		Label {
+			visible: delayMethodSelector.currentIndex == 2
+		}
+
+		ErrorLabel {
+			visible: delayMethodSelector.currentIndex == 2
+			enabled: delayAverageInput.enabled
+			valid: delayAverageInput.valid
+			normalText: ZBNT.cyclesToTime(delayAverageInput.text) + " per frame"
+			errorText: delayAverageInput.validator.error
 		}
 
 		Item { Layout.fillHeight: true }

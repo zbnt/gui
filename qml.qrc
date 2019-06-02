@@ -9,5 +9,9 @@
 		<file>qml/TrafficTab.qml</file>
 		<file>qml/TrafficTabBox.qml</file>
 		<file>qml/LatencyTab.qml</file>
+		<file>qml/DefaultLabel.qml</file>
+		<file>qml/DisabledLabel.qml</file>
+		<file>qml/ErrorLabel.qml</file>
+		<file>qml/UInt64Field.qml</file>
 	</qresource>
 </RCC>

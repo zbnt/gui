@@ -20,7 +20,15 @@ import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
+import zbnt 1.0
+
 Item {
+	id: root
+
+	property bool ready: runTimeInput.valid
+	property string runTime: runTimeInput.text
+	property bool exportResults: exportFilesInput.checked
+
 	GridLayout {
 		columns: 3
 		rowSpacing: 5
@@ -33,7 +41,12 @@ Item {
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
-		TextField {
+		UInt64Field {
+			id: runTimeInput
+
+			min: "125000000"
+			max: "1152921504606846975"
+
 			Layout.fillWidth: true
 		}
 
@@ -43,9 +56,11 @@ Item {
 
 		Label { }
 
-		Label {
-			text: "8 [ns]"
-			font.italic: true
+		ErrorLabel {
+			enabled: runTimeInput.enabled
+			valid: runTimeInput.valid
+			normalText: ZBNT.cyclesToTime(runTimeInput.text)
+			errorText: runTimeInput.validator.error
 			Layout.columnSpan: 2
 		}
 
@@ -61,6 +76,8 @@ Item {
 		}
 
 		CheckBox {
+			id: exportFilesInput
+			checked: true
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
 		}

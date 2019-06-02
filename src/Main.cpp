@@ -23,11 +23,29 @@
 
 #include <QDebug>
 
+#include <zbnt.hpp>
+#include <QUInt64Validator.hpp>
+#include <QUInt64RangeValidator.hpp>
+
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 
 	// Register QML types
+
+	qmlRegisterSingletonType<ZBNT>("zbnt", 1, 0, "ZBNT",
+		[](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject*
+		{
+			Q_UNUSED(engine)
+			Q_UNUSED(scriptEngine);
+			return new ZBNT();
+		}
+	);
+
+	qmlRegisterType<QUInt64Validator>("zbnt", 1, 0, "UInt64Validator");
+	qmlRegisterType<QUInt64RangeValidator>("zbnt", 1, 0, "UInt64RangeValidator");
+	qmlRegisterSingletonType(QUrl("qrc:/qml/DefaultLabel.qml"), "zbnt", 1, 0, "DefaultLabel");
+	qmlRegisterSingletonType(QUrl("qrc:/qml/DisabledLabel.qml"), "zbnt", 1, 0, "DisabledLabel");
 
 	// Start QML engine
 

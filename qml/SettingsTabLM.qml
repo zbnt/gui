@@ -20,7 +20,17 @@ import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
+import zbnt 1.0
+
 Item {
+	id: root
+
+	property bool ready: !enableInput.checked || (frameSizeInput.valid && pingPeriodInput.valid && timeoutInput.valid)
+	property bool use: enableInput.checked
+	property string frameSize: frameSizeInput.text
+	property string period: pingPeriodInput.text
+	property string timeout: timeoutInput.text
+
 	GridLayout {
 		columns: 3
 		rowSpacing: 5
@@ -34,6 +44,8 @@ Item {
 		}
 
 		CheckBox {
+			id: enableInput
+			checked: true
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
 		}
@@ -44,12 +56,31 @@ Item {
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
-		TextField {
+		UInt64Field {
+			id: frameSizeInput
+			enabled: enableInput.checked
+
+			min: "64"
+			max: "1500"
+
 			Layout.fillWidth: true
 		}
 
 		Label {
 			text: "bytes"
+		}
+
+		Label {
+			visible: !frameSizeInput.valid
+		}
+
+		ErrorLabel {
+			enabled: frameSizeInput.enabled
+			valid: frameSizeInput.valid
+			visible: !valid
+			normalText: ""
+			errorText: frameSizeInput.validator.error
+			Layout.columnSpan: 2
 		}
 
 		Item {
@@ -63,7 +94,13 @@ Item {
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
-		TextField {
+		UInt64Field {
+			id: pingPeriodInput
+			enabled: enableInput.checked
+
+			min: "1"
+			max: "4294967295"
+
 			Layout.fillWidth: true
 		}
 
@@ -73,9 +110,11 @@ Item {
 
 		Label { }
 
-		Label {
-			text: "8 [ns]"
-			font.italic: true
+		ErrorLabel {
+			enabled: pingPeriodInput.enabled
+			valid: pingPeriodInput.valid
+			normalText: ZBNT.cyclesToTime(pingPeriodInput.text)
+			errorText: pingPeriodInput.validator.error
 			Layout.columnSpan: 2
 		}
 
@@ -90,7 +129,15 @@ Item {
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
-		TextField {
+		UInt64Field {
+			id: timeoutInput
+			enabled: enableInput.checked
+
+			text: "125000000"
+
+			min: "1"
+			max: "4294967295"
+
 			Layout.fillWidth: true
 		}
 
@@ -100,9 +147,11 @@ Item {
 
 		Label { }
 
-		Label {
-			text: "8 [ns]"
-			font.italic: true
+		ErrorLabel {
+			enabled: timeoutInput.enabled
+			valid: timeoutInput.valid
+			normalText: ZBNT.cyclesToTime(timeoutInput.text)
+			errorText: timeoutInput.validator.error
 			Layout.columnSpan: 2
 		}
 
