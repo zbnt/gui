@@ -28,6 +28,10 @@ ZBNT::ZBNT() : QObject(nullptr)
 	m_tg0 = new QTrafficGenerator(this);
 	m_tg1 = new QTrafficGenerator(this);
 	m_lm0 = new QLatencyMeasurer(this);
+	m_sc0 = new QStatsCollector(this);
+	m_sc1 = new QStatsCollector(this);
+	m_sc2 = new QStatsCollector(this);
+	m_sc3 = new QStatsCollector(this);
 
 	connect(m_socket, &QTcpSocket::connected, this, &ZBNT::onConnected);
 	connect(m_socket, &QTcpSocket::disconnected, this, &ZBNT::onDisconnected);

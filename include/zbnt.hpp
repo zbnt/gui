@@ -23,6 +23,7 @@
 
 #include <QTrafficGenerator.hpp>
 #include <QLatencyMeasurer.hpp>
+#include <QStatsCollector.hpp>
 
 class ZBNT : public QObject
 {
@@ -34,6 +35,10 @@ class ZBNT : public QObject
 	Q_PROPERTY(QTrafficGenerator *tg0 MEMBER m_tg0 CONSTANT)
 	Q_PROPERTY(QTrafficGenerator *tg1 MEMBER m_tg1 CONSTANT)
 	Q_PROPERTY(QLatencyMeasurer *lm0 MEMBER m_lm0 CONSTANT)
+	Q_PROPERTY(QStatsCollector *sc0 MEMBER m_sc0 CONSTANT)
+	Q_PROPERTY(QStatsCollector *sc1 MEMBER m_sc1 CONSTANT)
+	Q_PROPERTY(QStatsCollector *sc2 MEMBER m_sc2 CONSTANT)
+	Q_PROPERTY(QStatsCollector *sc3 MEMBER m_sc3 CONSTANT)
 
 public:
 	ZBNT();
@@ -64,4 +69,8 @@ private:
 	QTrafficGenerator *m_tg0 = nullptr;
 	QTrafficGenerator *m_tg1 = nullptr;
 	QLatencyMeasurer *m_lm0 = nullptr;
+	QStatsCollector *m_sc0 = nullptr;
+	QStatsCollector *m_sc1 = nullptr;
+	QStatsCollector *m_sc2 = nullptr;
+	QStatsCollector *m_sc3 = nullptr;
 };

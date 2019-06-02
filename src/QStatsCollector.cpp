@@ -16,39 +16,42 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import QtQuick 2.12
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.3
+#include <QStatsCollector.hpp>
 
-import zbnt 1.0
+#include <QString>
 
-Item {
-	ColumnLayout {
-		anchors.fill: parent
-		spacing: 10
+QStatsCollector::QStatsCollector(QObject *parent) : QObject(parent)
+{ }
 
-		TrafficTabBox {
-			title: "eth0"
-			object: ZBNT.sc0
-		}
+QStatsCollector::~QStatsCollector()
+{ }
 
-		TrafficTabBox {
-			title: "eth1"
-			object: ZBNT.sc1
-		}
+QString QStatsCollector::txBytes()
+{
+	return QString::number(m_txBytes);
+}
 
-		TrafficTabBox {
-			title: "eth2"
-			object: ZBNT.sc2
-		}
+QString QStatsCollector::txGood()
+{
+	return QString::number(m_txGood);
+}
 
-		TrafficTabBox {
-			title: "eth3"
-			object: ZBNT.sc3
-		}
+QString QStatsCollector::txBad()
+{
+	return QString::number(m_txBad);
+}
 
-		Item {
-			Layout.fillHeight: true
-		}
-	}
+QString QStatsCollector::rxBytes()
+{
+	return QString::number(m_rxBytes);
+}
+
+QString QStatsCollector::rxGood()
+{
+	return QString::number(m_rxGood);
+}
+
+QString QStatsCollector::rxBad()
+{
+	return QString::number(m_rxBad);
 }

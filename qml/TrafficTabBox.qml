@@ -25,13 +25,7 @@ GroupBox {
 	topPadding: 26
 	bottomPadding: 15
 
-	property string txBytes: "0"
-	property string txGood: "0"
-	property string txBad: "0"
-
-	property string rxBytes: "0"
-	property string rxGood: "0"
-	property string rxBad: "0"
+	property var object: undefined
 
 	label: Label {
 		y: 5
@@ -66,7 +60,7 @@ GroupBox {
 			}
 
 			Label {
-				text: root.txBytes + " bytes"
+				text: root.object.txBytes + " bytes"
 			}
 
 			Label {
@@ -74,11 +68,11 @@ GroupBox {
 			}
 
 			Label {
-				text: root.txGood + " good frames"
+				text: root.object.txGood + " good frames"
 			}
 
 			Label {
-				text: root.txBad + " bad frames"
+				text: root.object.txBad + " bad frames"
 			}
 		}
 
@@ -96,7 +90,7 @@ GroupBox {
 			}
 
 			Label {
-				text: root.rxBytes + " bytes"
+				text: root.object.rxBytes + " bytes"
 			}
 
 			Label {
@@ -104,11 +98,11 @@ GroupBox {
 			}
 
 			Label {
-				text: root.rxGood + " good frames"
+				text: root.object.rxGood + " good frames"
 			}
 
 			Label {
-				text: root.rxBad + " bad frames"
+				text: root.object.rxBad + " bad frames"
 			}
 		}
 
