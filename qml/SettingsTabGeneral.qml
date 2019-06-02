@@ -26,8 +26,11 @@ Item {
 	id: root
 
 	property bool ready: runTimeInput.valid
-	property string runTime: runTimeInput.text
-	property bool exportResults: exportFilesInput.checked
+
+	Component.onCompleted: {
+		ZBNT.runTime = Qt.binding(function() { return runTimeInput.text })
+		ZBNT.exportResults = Qt.binding(function() { return exportFilesInput.checked })
+	}
 
 	GridLayout {
 		columns: 3

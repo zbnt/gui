@@ -27,6 +27,10 @@ Item {
 
 	property bool settingsValid: false
 
+	Component.onCompleted: {
+		ZBNT.ip = Qt.binding(function() { return ipInput.text })
+	}
+
 	ColumnLayout {
 		anchors.fill: parent
 		spacing: 10
@@ -63,6 +67,7 @@ Item {
 				}
 
 				TextField {
+					id: ipInput
 					Layout.fillWidth: true
 				}
 
@@ -81,6 +86,7 @@ Item {
 						Layout.alignment: Qt.AlignRight
 
 						onPressed: {
+							ZBNT.autodetectBoardIP()
 						}
 					}
 
@@ -92,6 +98,14 @@ Item {
 						Layout.alignment: Qt.AlignRight
 
 						onPressed: {
+							if(ZBNT.connected)
+							{
+								ZBNT.connectToBoard();
+							}
+							else
+							{
+								ZBNT.disconnectFromBoard();
+							}
 						}
 					}
 				}
@@ -131,11 +145,14 @@ Item {
 				}
 
 				Label {
-					text: "0"
+					text: ZBNT.currentTime
 					Layout.fillWidth: true
 				}
 
 				ProgressBar {
+					from: 0
+					to: 2048
+					value: ZBNT.currentProgress
 					Layout.columnSpan: 2
 					Layout.fillWidth: true
 				}
@@ -149,6 +166,14 @@ Item {
 					Layout.alignment: Qt.AlignRight
 
 					onPressed: {
+						if(ZBNT.running)
+						{
+							ZBNT.startRun();
+						}
+						else
+						{
+							ZBNT.stopRun();
+						}
 					}
 				}
 			}

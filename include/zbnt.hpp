@@ -32,6 +32,13 @@ class ZBNT : public QObject
 	Q_PROPERTY(bool running MEMBER m_running NOTIFY runningChanged)
 	Q_PROPERTY(bool connected MEMBER m_connected NOTIFY connectedChanged)
 
+	Q_PROPERTY(QString ip MEMBER m_ip NOTIFY settingsChanged)
+	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
+	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
+
+	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY measurementChanged)
+	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY measurementChanged)
+
 	Q_PROPERTY(QTrafficGenerator *tg0 MEMBER m_tg0 CONSTANT)
 	Q_PROPERTY(QTrafficGenerator *tg1 MEMBER m_tg1 CONSTANT)
 	Q_PROPERTY(QLatencyMeasurer *lm0 MEMBER m_lm0 CONSTANT)
@@ -47,9 +54,24 @@ public:
 public slots:
 	QString cyclesToTime(QString cycles);
 
+	void autodetectBoardIP();
+	void connectToBoard();
+	void disconnectFromBoard();
+
+	void startRun();
+	void stopRun();
+
+	QString runTime();
+	void setRunTime(QString time);
+
+	QString currentTime();
+	void setCurrentTime(QString time);
+
 signals:
 	void runningChanged();
+	void settingsChanged();
 	void connectedChanged();
+	void measurementChanged();
 
 private slots:
 	void onConnected();
@@ -63,8 +85,12 @@ private:
 	bool m_running = false;
 	bool m_connected = false;
 
+	QString m_ip;
 	quint64 m_runTime = 125000000ul;
 	bool m_exportResults = true;
+
+	quint64 m_currentTime = 0;
+	quint32 m_currentProgress = 0;
 
 	QTrafficGenerator *m_tg0 = nullptr;
 	QTrafficGenerator *m_tg1 = nullptr;

@@ -48,6 +48,46 @@ QString ZBNT::cyclesToTime(QString cycles)
 	return res;
 }
 
+void ZBNT::autodetectBoardIP()
+{
+}
+
+void ZBNT::connectToBoard()
+{
+}
+
+void ZBNT::disconnectFromBoard()
+{
+}
+
+void ZBNT::startRun()
+{
+}
+
+void ZBNT::stopRun()
+{
+}
+
+QString ZBNT::runTime()
+{
+	return QString::number(m_runTime);
+}
+
+void ZBNT::setRunTime(QString time)
+{
+	m_runTime = time.toULongLong();
+}
+
+QString ZBNT::currentTime()
+{
+	return QString::number(m_currentTime);
+}
+
+void ZBNT::setCurrentTime(QString time)
+{
+	m_currentTime = time.toULongLong();
+}
+
 void ZBNT::onConnected()
 {
 }
