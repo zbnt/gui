@@ -119,7 +119,7 @@ Item {
 				anchors.rightMargin: 5
 
 				Label {
-					text: "Round-trip:"
+					text: "Ping time:"
 					font.weight: Font.Bold
 					horizontalAlignment: Text.AlignRight
 					Layout.minimumWidth: parent.width / 2
@@ -131,7 +131,7 @@ Item {
 				}
 
 				Label {
-					text: "End-to-end:"
+					text: "Pong time:"
 					font.weight: Font.Bold
 					horizontalAlignment: Text.AlignRight
 					Layout.minimumWidth: parent.width / 2
@@ -139,57 +139,6 @@ Item {
 
 				Label {
 					text: root.object.lastE2E
-					Layout.fillWidth: true
-				}
-			}
-		}
-
-		GroupBox {
-			title: "Average"
-			topPadding: 26
-			bottomPadding: 15
-
-			label: Label {
-				y: 5
-				text: parent.title
-				verticalAlignment: Text.AlignTop
-				horizontalAlignment: Text.AlignHCenter
-				anchors.horizontalCenter: parent.horizontalCenter
-			}
-
-			Layout.fillWidth: true
-
-			GridLayout {
-				columns: 2
-				rowSpacing: 4
-				columnSpacing: 10
-
-				anchors.fill: parent
-				anchors.topMargin: 5
-				anchors.leftMargin: 5
-				anchors.rightMargin: 5
-
-				Label {
-					text: "Round-trip:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 2
-				}
-
-				Label {
-					text: root.object.avgRT
-					Layout.fillWidth: true
-				}
-
-				Label {
-					text: "End-to-end:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 2
-				}
-
-				Label {
-					text: root.object.avgE2E
 					Layout.fillWidth: true
 				}
 			}

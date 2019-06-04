@@ -18,28 +18,24 @@
 
 #pragma once
 
-#include <iostream>
-#include <iomanip>
-#include <QString>
-#include <QAbstractSocket>
+#define CTL_TCP_PORT   		5465
+#define CTL_MAGIC_IDENTIFIER  "\x4D\x60\x64\x5A"
 
-extern void cyclesToTime(quint64 cycles, QString &time);
-
-template<typename T>
-void sendAsBytes(QAbstractSocket *socket, T data)
+enum SignalIDs
 {
-	socket->write((const char*) &data, sizeof(T));
-}
+	SIG_START,
+	SIG_STOP,
+	SIG_CFG_TG0,
+	SIG_CFG_TG1,
+	SIG_CFG_LM0,
+	SIG_HEADERS_TG0,
+	SIG_HEADERS_TG1,
+	SIG_MEASUREMENTS
+};
 
-template<typename T>
-T readAsNumber(const QByteArray &data, quint32 offset)
+enum RxStatus
 {
-	T res = 0;
-
-	for(int i = 0; i < sizeof(T); ++i)
-	{
-		res |= T(quint8(data[offset + i])) << (8 * i);
-	}
-
-	return res;
-}
+	SIG_RX_MAGIC,
+	SIG_RX_HEADER,
+	SIG_RX_DATA
+};

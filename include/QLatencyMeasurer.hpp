@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QObject>
+#include <QTcpSocket>
 
 class QLatencyMeasurer : public QObject
 {
@@ -40,6 +41,9 @@ class QLatencyMeasurer : public QObject
 public:
 	QLatencyMeasurer(QObject *parent = nullptr);
 	~QLatencyMeasurer();
+
+	void sendSettings(QTcpSocket *socket);
+	void receiveMeasurement(const QByteArray &measurement);
 
 public slots:
 	QString numPingPongs();

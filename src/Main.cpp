@@ -27,6 +27,8 @@
 #include <QStatsCollector.hpp>
 #include <QTrafficGenerator.hpp>
 #include <QLatencyMeasurer.hpp>
+
+#include <QIPValidator.hpp>
 #include <QUInt64Validator.hpp>
 #include <QUInt64RangeValidator.hpp>
 
@@ -48,8 +50,11 @@ int main(int argc, char *argv[])
 	qmlRegisterType<QStatsCollector>("zbnt", 1, 0, "QStatsCollector");
 	qmlRegisterType<QTrafficGenerator>("zbnt", 1, 0, "QTrafficGenerator");
 	qmlRegisterType<QLatencyMeasurer>("zbnt", 1, 0, "QLatencyMeasurer");
+
+	qmlRegisterType<QIPValidator>("zbnt", 1, 0, "IPValidator");
 	qmlRegisterType<QUInt64Validator>("zbnt", 1, 0, "UInt64Validator");
 	qmlRegisterType<QUInt64RangeValidator>("zbnt", 1, 0, "UInt64RangeValidator");
+
 	qmlRegisterSingletonType(QUrl("qrc:/qml/DefaultLabel.qml"), "zbnt", 1, 0, "DefaultLabel");
 	qmlRegisterSingletonType(QUrl("qrc:/qml/DisabledLabel.qml"), "zbnt", 1, 0, "DisabledLabel");
 

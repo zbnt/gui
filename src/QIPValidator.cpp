@@ -16,30 +16,30 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include <QIPValidator.hpp>
 
-#include <iostream>
-#include <iomanip>
-#include <QString>
-#include <QAbstractSocket>
+#include <algorithm>
 
-extern void cyclesToTime(quint64 cycles, QString &time);
+#include <QHostAddress>
 
-template<typename T>
-void sendAsBytes(QAbstractSocket *socket, T data)
+QIPValidator::QIPValidator(QObject *parent) : QValidator(parent)
+{ }
+
+QIPValidator::~QIPValidator()
+{ }
+
+bool QIPValidator::validate(QString input)
 {
-	socket->write((const char*) &data, sizeof(T));
+	int pos = 0;
+	validate(input, pos);
+
+	QHostAddress addr(input);
+	return !addr.isNull() && input.contains(QRegularExpression("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$"));
 }
 
-template<typename T>
-T readAsNumber(const QByteArray &data, quint32 offset)
+QValidator::State QIPValidator::validate(QString &input, int &pos) const
 {
-	T res = 0;
-
-	for(int i = 0; i < sizeof(T); ++i)
-	{
-		res |= T(quint8(data[offset + i])) << (8 * i);
-	}
-
-	return res;
+	auto newEnd = std::remove_if(input.begin(), input.end(), [](const QChar &c) { return !c.isDigit() && c != '.'; } );
+	input.truncate(newEnd - input.begin());
+	return Acceptable;
 }

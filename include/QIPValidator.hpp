@@ -16,30 +16,19 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include <QValidator>
 
-#include <iostream>
-#include <iomanip>
-#include <QString>
-#include <QAbstractSocket>
+#include <limits>
 
-extern void cyclesToTime(quint64 cycles, QString &time);
-
-template<typename T>
-void sendAsBytes(QAbstractSocket *socket, T data)
+class QIPValidator : public QValidator
 {
-	socket->write((const char*) &data, sizeof(T));
-}
+	Q_OBJECT
 
-template<typename T>
-T readAsNumber(const QByteArray &data, quint32 offset)
-{
-	T res = 0;
+public:
+	QIPValidator(QObject *parent = nullptr);
+	~QIPValidator();
 
-	for(int i = 0; i < sizeof(T); ++i)
-	{
-		res |= T(quint8(data[offset + i])) << (8 * i);
-	}
-
-	return res;
-}
+public slots:
+	bool validate(QString input);
+	QValidator::State validate(QString &input, int &pos) const override;
+};

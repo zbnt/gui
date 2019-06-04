@@ -59,21 +59,25 @@ Item {
 
 				SettingsTabGeneral {
 					id: settingsGeneral
+					enabled: !ZBNT.running
 				}
 
 				SettingsTabTG {
 					id: settingsTG1
 					object: ZBNT.tg0
+					enabled: !ZBNT.running
 				}
 
 				SettingsTabTG {
 					id: settingsTG2
 					object: ZBNT.tg1
+					enabled: !ZBNT.running
 				}
 
 				SettingsTabLM {
 					id: settingsLM
 					object: ZBNT.lm0
+					enabled: !ZBNT.running
 				}
 			}
 		}

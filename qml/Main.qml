@@ -76,7 +76,6 @@ ApplicationWindow {
 
 				DeviceTab {
 					id: deviceTab
-
 					settingsValid: settingsTab.ready
 				}
 

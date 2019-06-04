@@ -20,11 +20,42 @@
 
 #include <QFile>
 
+#include <Utils.hpp>
+
 QTrafficGenerator::QTrafficGenerator(QObject *parent) : QObject(parent)
 { }
 
 QTrafficGenerator::~QTrafficGenerator()
 { }
+
+void QTrafficGenerator::sendSettings(QTcpSocket *socket)
+{
+	if(!socket) return;
+
+	sendAsBytes<quint16>(socket, 27);
+
+	sendAsBytes<quint8>(socket, m_enable);
+
+	sendAsBytes<quint8>(socket, m_paddingMethod);
+	sendAsBytes<quint16>(socket, m_paddingConstant);
+	sendAsBytes<quint16>(socket, m_paddingRangeBottom);
+	sendAsBytes<quint16>(socket, m_paddingRangeTop);
+	sendAsBytes<quint16>(socket, m_paddingAverage);
+
+	sendAsBytes<quint8>(socket, m_delayMethod);
+	sendAsBytes<quint32>(socket, m_delayConstant.toULong());
+	sendAsBytes<quint32>(socket, m_delayRangeBottom.toULong());
+	sendAsBytes<quint32>(socket, m_delayRangeTop.toULong());
+	sendAsBytes<quint32>(socket, m_delayAverage.toULong());
+}
+
+void QTrafficGenerator::sendHeaders(QTcpSocket *socket)
+{
+	if(!socket) return;
+
+	sendAsBytes<quint16>(socket, m_headersLength);
+	socket->write(m_headers);
+}
 
 void QTrafficGenerator::loadHeaders(QUrl url)
 {

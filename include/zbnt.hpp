@@ -24,13 +24,14 @@
 #include <QTrafficGenerator.hpp>
 #include <QLatencyMeasurer.hpp>
 #include <QStatsCollector.hpp>
+#include <controller.h>
 
 class ZBNT : public QObject
 {
 	Q_OBJECT
 
 	Q_PROPERTY(bool running MEMBER m_running NOTIFY runningChanged)
-	Q_PROPERTY(bool connected MEMBER m_connected NOTIFY connectedChanged)
+	Q_PROPERTY(quint8 connected MEMBER m_connected NOTIFY connectedChanged)
 
 	Q_PROPERTY(QString ip MEMBER m_ip NOTIFY settingsChanged)
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
@@ -50,6 +51,16 @@ class ZBNT : public QObject
 public:
 	ZBNT();
 	~ZBNT();
+
+	void sendSettings();
+
+	enum ConnectionStatus
+	{
+		Disconnected,
+		Connecting,
+		Connected
+	};
+	Q_ENUMS(ConnectionStatus)
 
 public slots:
 	QString cyclesToTime(QString cycles);
@@ -72,18 +83,19 @@ signals:
 	void settingsChanged();
 	void connectedChanged();
 	void measurementChanged();
+	void connectionError(QString error);
 
 private slots:
-	void onConnected();
-	void onDisconnected();
-	void readSocket();
+	void onNetworkStateChanged(QAbstractSocket::SocketState state);
+	void onNetworkError(QAbstractSocket::SocketError error);
+	void onReadyRead();
 
 private:
 	QTcpSocket *m_socket = nullptr;
 	QByteArray m_readBuffer;
 
 	bool m_running = false;
-	bool m_connected = false;
+	quint8 m_connected = 0;
 
 	QString m_ip;
 	quint64 m_runTime = 125000000ul;
@@ -91,6 +103,13 @@ private:
 
 	quint64 m_currentTime = 0;
 	quint32 m_currentProgress = 0;
+
+	RxStatus m_rxStatus = SIG_RX_MAGIC;
+	quint16 m_rxByteCount = 0;
+	quint16 m_rxSigSize = 0;
+	quint8 m_rxSigID = 0;
+	quint8 m_rxMeasBytesLeft = 0;
+	QByteArray m_rxBuffer;
 
 	QTrafficGenerator *m_tg0 = nullptr;
 	QTrafficGenerator *m_tg1 = nullptr;

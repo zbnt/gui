@@ -12,19 +12,25 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(ZBNT_GUI_SRC
 	"src/Main.cpp"
 	"src/Utils.cpp"
+
 	"src/zbnt.cpp"
 	"src/QStatsCollector.cpp"
 	"src/QTrafficGenerator.cpp"
 	"src/QLatencyMeasurer.cpp"
+
+	"src/QIPValidator.cpp"
 	"src/QUInt64Validator.cpp"
 	"src/QUInt64RangeValidator.cpp"
 )
 
 set(ZBNT_GUI_HDR
 	"include/zbnt.hpp"
+
 	"include/QStatsCollector.hpp"
 	"include/QTrafficGenerator.hpp"
 	"include/QLatencyMeasurer.hpp"
+
+	"include/QIPValidator.hpp"
 	"include/QUInt64Validator.hpp"
 	"include/QUInt64RangeValidator.hpp"
 )

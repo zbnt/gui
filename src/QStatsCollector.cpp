@@ -20,11 +20,26 @@
 
 #include <QString>
 
+#include <Utils.hpp>
+
 QStatsCollector::QStatsCollector(QObject *parent) : QObject(parent)
 { }
 
 QStatsCollector::~QStatsCollector()
 { }
+
+void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
+{
+	m_txBytes = readAsNumber<quint64>(measurement, 8);
+	m_txGood = readAsNumber<quint64>(measurement, 16);
+	m_txBad = readAsNumber<quint64>(measurement, 24);
+
+	m_rxBytes = readAsNumber<quint64>(measurement, 32);
+	m_rxGood = readAsNumber<quint64>(measurement, 40);
+	m_rxBad = readAsNumber<quint64>(measurement, 48);
+
+	emit measurementChanged();
+}
 
 QString QStatsCollector::txBytes()
 {

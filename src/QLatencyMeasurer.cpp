@@ -21,12 +21,37 @@
 #include <QString>
 
 #include <Utils.hpp>
+#include <controller.h>
 
 QLatencyMeasurer::QLatencyMeasurer(QObject *parent) : QObject(parent)
 { }
 
 QLatencyMeasurer::~QLatencyMeasurer()
 { }
+
+void QLatencyMeasurer::sendSettings(QTcpSocket *socket)
+{
+	if(!socket) return;
+
+	sendAsBytes<quint16>(socket, 13);
+
+	sendAsBytes<quint8>(socket, m_enable);
+	sendAsBytes<quint32>(socket, m_frameSize.toULong() - 26);
+	sendAsBytes<quint32>(socket, m_period.toULong());
+	sendAsBytes<quint32>(socket, m_timeout.toULong());
+}
+
+void QLatencyMeasurer::receiveMeasurement(const QByteArray &measurement)
+{
+	m_lastE2E = readAsNumber<quint32>(measurement, 8);
+	m_lastRT = readAsNumber<quint32>(measurement, 12);
+
+	m_numPingPongs = readAsNumber<quint64>(measurement, 16);
+	m_numLostPings = readAsNumber<quint64>(measurement, 24);
+	m_numLostPongs = readAsNumber<quint64>(measurement, 32);
+
+	emit measurementChanged();
+}
 
 QString QLatencyMeasurer::numPingPongs()
 {

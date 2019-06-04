@@ -35,6 +35,8 @@ public:
 	QStatsCollector(QObject *parent = nullptr);
 	~QStatsCollector();
 
+	void receiveMeasurement(const QByteArray &measurement);
+
 public slots:
 	QString txBytes();
 	QString txGood();

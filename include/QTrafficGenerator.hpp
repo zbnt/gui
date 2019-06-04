@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QUrl>
+#include <QTcpSocket>
 
 class QTrafficGenerator : public QObject
 {
@@ -30,11 +31,14 @@ class QTrafficGenerator : public QObject
 	Q_PROPERTY(QString headersPath MEMBER m_headersPath NOTIFY headersChanged)
 
 	Q_PROPERTY(quint8 enable MEMBER m_enable NOTIFY settingsChanged)
+
 	Q_PROPERTY(quint8 paddingMethod MEMBER m_paddingMethod NOTIFY settingsChanged)
 	Q_PROPERTY(quint16 paddingConstant MEMBER m_paddingConstant NOTIFY settingsChanged)
 	Q_PROPERTY(quint16 paddingRangeTop MEMBER m_paddingRangeTop NOTIFY settingsChanged)
 	Q_PROPERTY(quint16 paddingRangeBottom MEMBER m_paddingRangeBottom NOTIFY settingsChanged)
 	Q_PROPERTY(quint16 paddingAverage MEMBER m_paddingAverage NOTIFY settingsChanged)
+
+	Q_PROPERTY(quint8 delayMethod MEMBER m_delayMethod NOTIFY settingsChanged)
 	Q_PROPERTY(QString delayConstant MEMBER m_delayConstant NOTIFY settingsChanged)
 	Q_PROPERTY(QString delayRangeTop MEMBER m_delayRangeTop NOTIFY settingsChanged)
 	Q_PROPERTY(QString delayRangeBottom MEMBER m_delayRangeBottom NOTIFY settingsChanged)
@@ -43,6 +47,9 @@ class QTrafficGenerator : public QObject
 public:
 	QTrafficGenerator(QObject *parent = nullptr);
 	~QTrafficGenerator();
+
+	void sendSettings(QTcpSocket *socket);
+	void sendHeaders(QTcpSocket *socket);
 
 public slots:
 	void loadHeaders(QUrl url);
@@ -58,11 +65,14 @@ private:
 	QByteArray m_headers;
 
 	quint8 m_enable = 1;
+
 	quint8 m_paddingMethod = 0;
 	quint16 m_paddingConstant = 0;
 	quint16 m_paddingRangeTop = 0;
 	quint16 m_paddingRangeBottom = 0;
 	quint16 m_paddingAverage = 0;
+
+	quint8 m_delayMethod = 0;
 	QString m_delayConstant;
 	QString m_delayRangeTop;
 	QString m_delayRangeBottom;

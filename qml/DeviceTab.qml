@@ -19,6 +19,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import QtQuick.Dialogs 1.3
 
 import zbnt 1.0
 
@@ -29,6 +30,23 @@ Item {
 
 	Component.onCompleted: {
 		ZBNT.ip = Qt.binding(function() { return ipInput.text })
+	}
+
+	MessageDialog {
+		id: errorDialog
+		title: "Error"
+		text: ""
+		icon: StandardIcon.Critical
+		standardButtons: StandardButton.Ok
+	}
+
+	Connections {
+		target: ZBNT
+
+		onConnectionError: {
+			errorDialog.text = "Error in connection to " + ipInput.text + " : " + error;
+			errorDialog.open();
+		}
 	}
 
 	ColumnLayout {
@@ -68,6 +86,12 @@ Item {
 
 				TextField {
 					id: ipInput
+					enabled: ZBNT.connected == ZBNT.Disconnected
+
+					color: !enabled ? DisabledLabel.color : (valid ? DefaultLabel.color : "#e53935")
+					property bool valid: validator.validate(text)
+					validator: IPValidator { }
+
 					Layout.fillWidth: true
 				}
 
@@ -80,27 +104,36 @@ Item {
 
 					Button {
 						text: "Autodetect"
-						enabled: !ZBNT.connected
+						enabled: ZBNT.connected == ZBNT.Disconnected
 						focusPolicy: Qt.NoFocus
+						visible: false
 
 						Layout.alignment: Qt.AlignRight
 
-						onPressed: {
+						onClicked: {
 							ZBNT.autodetectBoardIP()
 						}
 					}
 
 					Button {
-						text: ZBNT.connected ? "Disconnect" : "Connect"
-						enabled: !ZBNT.running
+						text: ["Connect", "Connecting", "Disconnect"][ZBNT.connected]
+						enabled: ZBNT.connected != ZBNT.Connecting && !ZBNT.running
 						focusPolicy: Qt.NoFocus
 
 						Layout.alignment: Qt.AlignRight
 
-						onPressed: {
-							if(ZBNT.connected)
+						onClicked: {
+							if(ZBNT.connected == ZBNT.Disconnected)
 							{
-								ZBNT.connectToBoard();
+								if(!ipInput.valid)
+								{
+									errorDialog.text = "Invalid IP, please correct it and try again.";
+									errorDialog.open();
+								}
+								else
+								{
+									ZBNT.connectToBoard();
+								}
 							}
 							else
 							{
@@ -159,16 +192,24 @@ Item {
 
 				Button {
 					text: ZBNT.running ? "Stop" : "Start"
-					enabled: ZBNT.connected
+					enabled: ZBNT.connected == ZBNT.Connected
 					focusPolicy: Qt.NoFocus
 
 					Layout.columnSpan: 2
 					Layout.alignment: Qt.AlignRight
 
-					onPressed: {
-						if(ZBNT.running)
+					onClicked: {
+						if(!ZBNT.running)
 						{
-							ZBNT.startRun();
+							if(!root.settingsValid)
+							{
+								errorDialog.text = "Invalid configuration, please correct the errors and try again.";
+								errorDialog.open()
+							}
+							else
+							{
+								ZBNT.startRun();
+							}
 						}
 						else
 						{
