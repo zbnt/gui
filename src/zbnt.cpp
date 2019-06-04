@@ -190,13 +190,9 @@ void ZBNT::onNetworkError(QAbstractSocket::SocketError error)
 	}
 }
 
-#include <fstream>
-quint32 count = 0;
 void ZBNT::onReadyRead()
 {
 	QByteArray readData = m_socket->readAll();
-
-	++count;
 
 	for(uint8_t c : readData)
 	{

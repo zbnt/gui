@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <iostream>
-#include <iomanip>
 #include <QString>
 #include <QAbstractSocket>
 
