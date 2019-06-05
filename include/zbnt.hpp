@@ -71,6 +71,7 @@ public slots:
 
 	void startRun();
 	void stopRun();
+	void onRunEnd();
 
 	QString runTime();
 	void setRunTime(QString time);

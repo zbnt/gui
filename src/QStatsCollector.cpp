@@ -28,8 +28,23 @@ QStatsCollector::QStatsCollector(QObject *parent) : QObject(parent)
 QStatsCollector::~QStatsCollector()
 { }
 
+void QStatsCollector::enableLogging(const QString &fileName)
+{
+	disableLogging();
+
+	m_logFile.setFileName(fileName);
+	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
+}
+
+void QStatsCollector::disableLogging()
+{
+	if(m_logFile.isOpen()) m_logFile.close();
+}
+
 void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
 {
+	quint64 time = readAsNumber<quint64>(measurement, 0);
+
 	m_txBytes = readAsNumber<quint64>(measurement, 8);
 	m_txGood = readAsNumber<quint64>(measurement, 16);
 	m_txBad = readAsNumber<quint64>(measurement, 24);
@@ -37,6 +52,37 @@ void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
 	m_rxBytes = readAsNumber<quint64>(measurement, 32);
 	m_rxGood = readAsNumber<quint64>(measurement, 40);
 	m_rxBad = readAsNumber<quint64>(measurement, 48);
+
+	if(m_logFile.isWritable())
+	{
+		m_logFile.write(QByteArray::number(time));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_txBytes));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_txGood));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_txBad));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_rxBytes));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_rxGood));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_rxBad));
+		m_logFile.write("\n");
+	}
+
+	emit measurementChanged();
+}
+
+void QStatsCollector::resetMeasurement()
+{
+	m_txBytes = 0;
+	m_txGood = 0;
+	m_txBad = 0;
+
+	m_rxBytes = 0;
+	m_rxGood = 0;
+	m_rxBad = 0;
 
 	emit measurementChanged();
 }

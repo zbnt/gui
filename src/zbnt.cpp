@@ -18,9 +18,7 @@
 
 #include <zbnt.hpp>
 
-#include <vector>
-
-#include <QMessageBox>
+#include <QDateTime>
 
 #include <controller.h>
 #include <Utils.hpp>
@@ -104,6 +102,27 @@ void ZBNT::disconnectFromBoard()
 
 void ZBNT::startRun()
 {
+	if(m_exportResults)
+	{
+		QString timeStamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+
+		m_sc0->enableLogging(QString("measurements_") + timeStamp + "_sc0.csv");
+		m_sc1->enableLogging(QString("measurements_") + timeStamp + "_sc1.csv");
+		m_sc2->enableLogging(QString("measurements_") + timeStamp + "_sc2.csv");
+		m_sc3->enableLogging(QString("measurements_") + timeStamp + "_sc3.csv");
+		m_lm0->enableLogging(QString("measurements_") + timeStamp + "_lm0.csv");
+	}
+
+	m_sc0->resetMeasurement();
+	m_sc1->resetMeasurement();
+	m_sc2->resetMeasurement();
+	m_sc3->resetMeasurement();
+	m_lm0->resetMeasurement();
+
+	m_currentTime = 0;
+	m_currentProgress = 0;
+	emit measurementChanged();
+
 	sendSettings();
 	m_running = true;
 	emit runningChanged();
@@ -111,6 +130,25 @@ void ZBNT::startRun()
 
 void ZBNT::stopRun()
 {
+	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<uint8_t>(m_socket, SIG_STOP);
+	sendAsBytes<uint16_t>(m_socket, 0);
+
+	onRunEnd();
+}
+
+void ZBNT::onRunEnd()
+{
+	m_running = 0;
+
+	m_sc0->disableLogging();
+	m_sc1->disableLogging();
+	m_sc2->disableLogging();
+	m_sc3->disableLogging();
+	m_lm0->disableLogging();
+
+	emit measurementChanged();
+	emit runningChanged();
 }
 
 QString ZBNT::runTime()
@@ -244,6 +282,13 @@ void ZBNT::onReadyRead()
 						if(!m_rxSigSize)
 						{
 							m_rxStatus = SIG_RX_MAGIC;
+
+							if(m_rxSigID == SIG_MEASUREMENTS_END)
+							{
+								m_currentTime = m_runTime;
+								m_currentProgress = 2048;
+								onRunEnd();
+							}
 						}
 						else
 						{

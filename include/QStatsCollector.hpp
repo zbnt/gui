@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QObject>
+#include <QFile>
 
 class QStatsCollector : public QObject
 {
@@ -35,7 +36,11 @@ public:
 	QStatsCollector(QObject *parent = nullptr);
 	~QStatsCollector();
 
+	void enableLogging(const QString &fileName);
+	void disableLogging();
+
 	void receiveMeasurement(const QByteArray &measurement);
+	void resetMeasurement();
 
 public slots:
 	QString txBytes();
@@ -56,4 +61,6 @@ private:
 	quint64 m_rxBytes = 0;
 	quint64 m_rxGood = 0;
 	quint64 m_rxBad = 0;
+
+	QFile m_logFile;
 };

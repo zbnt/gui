@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QObject>
+#include <QFile>
 #include <QTcpSocket>
 
 class QLatencyMeasurer : public QObject
@@ -33,26 +34,26 @@ class QLatencyMeasurer : public QObject
 	Q_PROPERTY(QString numPingPongs READ numPingPongs NOTIFY measurementChanged)
 	Q_PROPERTY(QString numLostPings READ numLostPings NOTIFY measurementChanged)
 	Q_PROPERTY(QString numLostPongs READ numLostPongs NOTIFY measurementChanged)
-	Q_PROPERTY(QString lastRT READ lastRT NOTIFY measurementChanged)
-	Q_PROPERTY(QString lastE2E READ lastE2E NOTIFY measurementChanged)
-	Q_PROPERTY(QString avgRT READ avgRT NOTIFY measurementChanged)
-	Q_PROPERTY(QString avgE2E READ avgE2E NOTIFY measurementChanged)
+	Q_PROPERTY(QString lastPing READ lastPing NOTIFY measurementChanged)
+	Q_PROPERTY(QString lastPong READ lastPong NOTIFY measurementChanged)
 
 public:
 	QLatencyMeasurer(QObject *parent = nullptr);
 	~QLatencyMeasurer();
 
+	void enableLogging(const QString &fileName);
+	void disableLogging();
+
 	void sendSettings(QTcpSocket *socket);
 	void receiveMeasurement(const QByteArray &measurement);
+	void resetMeasurement();
 
 public slots:
 	QString numPingPongs();
 	QString numLostPings();
 	QString numLostPongs();
-	QString lastRT();
-	QString lastE2E();
-	QString avgRT();
-	QString avgE2E();
+	QString lastPing();
+	QString lastPong();
 
 signals:
 	void settingsChanged();
@@ -67,8 +68,8 @@ private:
 	quint64 m_numPingPongs = 0;
 	quint64 m_numLostPings = 0;
 	quint64 m_numLostPongs = 0;
-	quint64 m_lastRT = 0;
-	quint64 m_lastE2E = 0;
-	quint64 m_avgRT = 0;
-	quint64 m_avgE2E = 0;
+	quint64 m_lastPing = 0;
+	quint64 m_lastPong = 0;
+
+	QFile m_logFile;
 };

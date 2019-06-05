@@ -29,6 +29,19 @@ QLatencyMeasurer::QLatencyMeasurer(QObject *parent) : QObject(parent)
 QLatencyMeasurer::~QLatencyMeasurer()
 { }
 
+void QLatencyMeasurer::enableLogging(const QString &fileName)
+{
+	disableLogging();
+
+	m_logFile.setFileName(fileName);
+	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
+}
+
+void QLatencyMeasurer::disableLogging()
+{
+	if(m_logFile.isOpen()) m_logFile.close();
+}
+
 void QLatencyMeasurer::sendSettings(QTcpSocket *socket)
 {
 	if(!socket) return;
@@ -36,19 +49,49 @@ void QLatencyMeasurer::sendSettings(QTcpSocket *socket)
 	sendAsBytes<quint16>(socket, 13);
 
 	sendAsBytes<quint8>(socket, m_enable);
-	sendAsBytes<quint32>(socket, m_frameSize.toULong() - 26);
+	sendAsBytes<quint32>(socket, m_frameSize.toULong() - 30);
 	sendAsBytes<quint32>(socket, m_period.toULong());
 	sendAsBytes<quint32>(socket, m_timeout.toULong());
 }
 
 void QLatencyMeasurer::receiveMeasurement(const QByteArray &measurement)
 {
-	m_lastE2E = readAsNumber<quint32>(measurement, 8);
-	m_lastRT = readAsNumber<quint32>(measurement, 12);
+	quint64 time = readAsNumber<quint64>(measurement, 0);
+
+	m_lastPing = readAsNumber<quint32>(measurement, 8);
+	m_lastPong = readAsNumber<quint32>(measurement, 12);
 
 	m_numPingPongs = readAsNumber<quint64>(measurement, 16);
 	m_numLostPings = readAsNumber<quint64>(measurement, 24);
 	m_numLostPongs = readAsNumber<quint64>(measurement, 32);
+
+	if(m_logFile.isWritable())
+	{
+		m_logFile.write(QByteArray::number(time));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_lastPing));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_lastPong));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_numPingPongs));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_numLostPings));
+		m_logFile.write(",");
+		m_logFile.write(QByteArray::number(m_numLostPongs));
+		m_logFile.write("\n");
+	}
+
+	emit measurementChanged();
+}
+
+void QLatencyMeasurer::resetMeasurement()
+{
+	m_lastPing = 0;
+	m_lastPong = 0;
+
+	m_numPingPongs = 0;
+	m_numLostPings = 0;
+	m_numLostPongs = 0;
 
 	emit measurementChanged();
 }
@@ -68,30 +111,16 @@ QString QLatencyMeasurer::numLostPongs()
 	return QString::number(m_numLostPongs);
 }
 
-QString QLatencyMeasurer::lastRT()
+QString QLatencyMeasurer::lastPong()
 {
 	QString res;
-	cyclesToTime(m_lastRT, res);
+	cyclesToTime(m_lastPong, res);
 	return res;
 }
 
-QString QLatencyMeasurer::lastE2E()
+QString QLatencyMeasurer::lastPing()
 {
 	QString res;
-	cyclesToTime(m_lastE2E, res);
-	return res;
-}
-
-QString QLatencyMeasurer::avgRT()
-{
-	QString res;
-	cyclesToTime(m_avgRT, res);
-	return res;
-}
-
-QString QLatencyMeasurer::avgE2E()
-{
-	QString res;
-	cyclesToTime(m_avgE2E, res);
+	cyclesToTime(m_lastPing, res);
 	return res;
 }

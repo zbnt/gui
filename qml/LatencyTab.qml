@@ -126,7 +126,7 @@ Item {
 				}
 
 				Label {
-					text: root.object.lastRT
+					text: root.object.lastPing
 					Layout.fillWidth: true
 				}
 
@@ -138,7 +138,7 @@ Item {
 				}
 
 				Label {
-					text: root.object.lastE2E
+					text: root.object.lastPong
 					Layout.fillWidth: true
 				}
 			}
