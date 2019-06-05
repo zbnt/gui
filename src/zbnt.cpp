@@ -46,34 +46,40 @@ ZBNT::~ZBNT()
 
 void ZBNT::sendSettings()
 {
+	// Send a stop signal, this will reset the board peripherals
+
+	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, SIG_STOP);
+	sendAsBytes<quint16>(m_socket, 0);
+
 	// Traffic generators
 
 	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, SIG_CFG_TG0);
+	sendAsBytes<quint8>(m_socket, SIG_CFG_TG0);
 	m_tg0->sendSettings(m_socket);
 
 	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, SIG_CFG_TG1);
+	sendAsBytes<quint8>(m_socket, SIG_CFG_TG1);
 	m_tg1->sendSettings(m_socket);
 
 	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, SIG_HEADERS_TG0);
+	sendAsBytes<quint8>(m_socket, SIG_HEADERS_TG0);
 	m_tg0->sendHeaders(m_socket);
 
 	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, SIG_HEADERS_TG1);
+	sendAsBytes<quint8>(m_socket, SIG_HEADERS_TG1);
 	m_tg1->sendHeaders(m_socket);
 
 	// Latency measurer
 
 	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, SIG_CFG_LM0);
+	sendAsBytes<quint8>(m_socket, SIG_CFG_LM0);
 	m_lm0->sendSettings(m_socket);
 
 	// Send start signal
 
 	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, SIG_START);
+	sendAsBytes<quint8>(m_socket, SIG_START);
 	sendAsBytes<quint16>(m_socket, 8);
 	sendAsBytes(m_socket, m_runTime);
 }
