@@ -21,7 +21,7 @@
 #include <QString>
 
 #include <Utils.hpp>
-#include <controller.h>
+#include <Messages.hpp>
 
 QLatencyMeasurer::QLatencyMeasurer(QObject *parent) : QObject(parent)
 { }

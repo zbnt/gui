@@ -20,8 +20,8 @@
 
 #include <QDateTime>
 
-#include <controller.h>
 #include <Utils.hpp>
+#include <Messages.hpp>
 
 ZBNT::ZBNT() : QObject(nullptr)
 {
@@ -46,40 +46,40 @@ ZBNT::~ZBNT()
 
 void ZBNT::sendSettings()
 {
-	// Send a stop signal, this will reset the board peripherals
+	// Send a stop message, this will reset the board peripherals
 
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, SIG_STOP);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_STOP);
 	sendAsBytes<quint16>(m_socket, 0);
 
 	// Traffic generators
 
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, SIG_CFG_TG0);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_CFG_TG0);
 	m_tg0->sendSettings(m_socket);
 
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, SIG_CFG_TG1);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_CFG_TG1);
 	m_tg1->sendSettings(m_socket);
 
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, SIG_HEADERS_TG0);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_HEADERS_TG0);
 	m_tg0->sendHeaders(m_socket);
 
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, SIG_HEADERS_TG1);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_HEADERS_TG1);
 	m_tg1->sendHeaders(m_socket);
 
 	// Latency measurer
 
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, SIG_CFG_LM0);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_CFG_LM0);
 	m_lm0->sendSettings(m_socket);
 
-	// Send start signal
+	// Send start message
 
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, SIG_START);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_START);
 	sendAsBytes<quint16>(m_socket, 8);
 	sendAsBytes(m_socket, m_runTime);
 }
@@ -98,7 +98,7 @@ void ZBNT::autodetectBoardIP()
 
 void ZBNT::connectToBoard()
 {
-	m_socket->connectToHost(m_ip, CTL_TCP_PORT);
+	m_socket->connectToHost(m_ip, MSG_TCP_PORT);
 }
 
 void ZBNT::disconnectFromBoard()
@@ -136,8 +136,8 @@ void ZBNT::startRun()
 
 void ZBNT::stopRun()
 {
-	m_socket->write(CTL_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, SIG_STOP);
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<uint8_t>(m_socket, MSG_ID_STOP);
 	sendAsBytes<uint16_t>(m_socket, 0);
 
 	onRunEnd();
@@ -242,15 +242,15 @@ void ZBNT::onReadyRead()
 	{
 		switch(m_rxStatus)
 		{
-			case SIG_RX_MAGIC:
+			case MSG_RX_MAGIC:
 			{
-				if(c == CTL_MAGIC_IDENTIFIER[m_rxByteCount])
+				if(c == MSG_MAGIC_IDENTIFIER[m_rxByteCount])
 				{
 					m_rxByteCount++;
 
 					if(m_rxByteCount == 4)
 					{
-						m_rxStatus = SIG_RX_HEADER;
+						m_rxStatus = MSG_RX_HEADER;
 						m_rxByteCount = 0;
 					}
 				}
@@ -262,7 +262,7 @@ void ZBNT::onReadyRead()
 				break;
 			}
 
-			case SIG_RX_HEADER:
+			case MSG_RX_HEADER:
 			{
 				switch(m_rxByteCount)
 				{
@@ -287,9 +287,9 @@ void ZBNT::onReadyRead()
 
 						if(!m_rxSigSize)
 						{
-							m_rxStatus = SIG_RX_MAGIC;
+							m_rxStatus = MSG_RX_MAGIC;
 
-							if(m_rxSigID == SIG_MEASUREMENTS_END)
+							if(m_rxSigID == MSG_ID_MEASUREMENTS_END)
 							{
 								m_currentTime = m_runTime;
 								m_currentProgress = 2048;
@@ -298,7 +298,7 @@ void ZBNT::onReadyRead()
 						}
 						else
 						{
-							m_rxStatus = SIG_RX_DATA;
+							m_rxStatus = MSG_RX_DATA;
 						}
 
 						break;
@@ -308,9 +308,9 @@ void ZBNT::onReadyRead()
 				break;
 			}
 
-			case SIG_RX_DATA:
+			case MSG_RX_DATA:
 			{
-				if(m_rxSigID == SIG_MEASUREMENTS && m_rxByteCount)
+				if(m_rxSigID == MSG_ID_MEASUREMENTS && m_rxByteCount)
 				{
 					if(!m_rxMeasBytesLeft)
 					{
@@ -384,7 +384,7 @@ void ZBNT::onReadyRead()
 
 				if(m_rxByteCount == m_rxSigSize)
 				{
-					m_rxStatus = SIG_RX_MAGIC;
+					m_rxStatus = MSG_RX_MAGIC;
 					m_rxByteCount = 0;
 					m_rxMeasBytesLeft = 0;
 				}

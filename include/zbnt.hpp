@@ -24,7 +24,7 @@
 #include <QTrafficGenerator.hpp>
 #include <QLatencyMeasurer.hpp>
 #include <QStatsCollector.hpp>
-#include <controller.h>
+#include <Messages.hpp>
 
 class ZBNT : public QObject
 {
@@ -105,7 +105,7 @@ private:
 	quint64 m_currentTime = 0;
 	quint32 m_currentProgress = 0;
 
-	RxStatus m_rxStatus = SIG_RX_MAGIC;
+	RxStatus m_rxStatus = MSG_RX_MAGIC;
 	quint16 m_rxByteCount = 0;
 	quint16 m_rxSigSize = 0;
 	quint8 m_rxSigID = 0;
