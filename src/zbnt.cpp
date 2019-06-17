@@ -191,6 +191,16 @@ void ZBNT::onMessageReceived(quint8 id, const QByteArray &data)
 			break;
 		}
 
+		case MSG_ID_DONE:
+		{
+			m_currentTime = m_runTime;
+			m_currentProgress = 2048;
+			onRunEnd();
+
+			emit measurementChanged();
+			break;
+		}
+
 		case MSG_ID_MEASUREMENT_LM:
 		{
 			if(data.length() < 40) return;
