@@ -21,6 +21,7 @@
 #include <QFile>
 
 #include <Utils.hpp>
+#include <Messages.hpp>
 
 QTrafficGenerator::QTrafficGenerator(QObject *parent) : QObject(parent)
 { }
@@ -28,12 +29,20 @@ QTrafficGenerator::QTrafficGenerator(QObject *parent) : QObject(parent)
 QTrafficGenerator::~QTrafficGenerator()
 { }
 
+void QTrafficGenerator::setIndex(quint8 idx)
+{
+	m_idx = idx;
+}
+
 void QTrafficGenerator::sendSettings(QTcpSocket *socket)
 {
 	if(!socket) return;
 
-	sendAsBytes<quint16>(socket, 27);
+	socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(socket, MSG_ID_TG_CFG);
+	sendAsBytes<quint16>(socket, 28);
 
+	sendAsBytes<quint8>(socket, m_idx);
 	sendAsBytes<quint8>(socket, m_enable);
 
 	sendAsBytes<quint8>(socket, m_paddingMethod);
@@ -53,7 +62,11 @@ void QTrafficGenerator::sendHeaders(QTcpSocket *socket)
 {
 	if(!socket) return;
 
-	sendAsBytes<quint16>(socket, m_headersLength);
+	socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(socket, MSG_ID_TG_HEADERS);
+	sendAsBytes<quint16>(socket, m_headersLength + 1);
+
+	sendAsBytes<quint8>(socket, m_idx);
 	socket->write(m_headers);
 }
 

@@ -46,6 +46,8 @@ void QLatencyMeasurer::sendSettings(QTcpSocket *socket)
 {
 	if(!socket) return;
 
+	socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(socket, MSG_ID_LM_CFG);
 	sendAsBytes<quint16>(socket, 13);
 
 	sendAsBytes<quint8>(socket, m_enable);

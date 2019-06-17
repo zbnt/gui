@@ -48,6 +48,8 @@ public:
 	QTrafficGenerator(QObject *parent = nullptr);
 	~QTrafficGenerator();
 
+	void setIndex(quint8 idx);
+
 	void sendSettings(QTcpSocket *socket);
 	void sendHeaders(QTcpSocket *socket);
 
@@ -64,6 +66,7 @@ private:
 	QString m_headersPath;
 	QByteArray m_headers;
 
+	quint8 m_idx = 0;
 	quint8 m_enable = 1;
 
 	quint8 m_paddingMethod = 0;

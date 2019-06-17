@@ -33,6 +33,9 @@ ZBNT::ZBNT() : QObject(nullptr)
 	m_sc2 = new QStatsCollector(this);
 	m_sc3 = new QStatsCollector(this);
 
+	m_tg0->setIndex(0);
+	m_tg1->setIndex(1);
+
 	m_socket = new QTcpSocket(this);
 	m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
 
@@ -54,26 +57,13 @@ void ZBNT::sendSettings()
 
 	// Traffic generators
 
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_TG_CFG);
 	m_tg0->sendSettings(m_socket);
-
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_TG_CFG);
 	m_tg1->sendSettings(m_socket);
-
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_TG_HEADERS);
 	m_tg0->sendHeaders(m_socket);
-
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_TG_HEADERS);
 	m_tg1->sendHeaders(m_socket);
 
 	// Latency measurer
 
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_LM_CFG);
 	m_lm0->sendSettings(m_socket);
 
 	// Send start message
