@@ -43,15 +43,15 @@ void QStatsCollector::disableLogging()
 
 void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
 {
-	quint64 time = readAsNumber<quint64>(measurement, 0);
+	quint64 time = readAsNumber<quint64>(measurement, 1);
 
-	m_txBytes = readAsNumber<quint64>(measurement, 8);
-	m_txGood = readAsNumber<quint64>(measurement, 16);
-	m_txBad = readAsNumber<quint64>(measurement, 24);
+	m_txBytes = readAsNumber<quint64>(measurement, 9);
+	m_txGood = readAsNumber<quint64>(measurement, 17);
+	m_txBad = readAsNumber<quint64>(measurement, 25);
 
-	m_rxBytes = readAsNumber<quint64>(measurement, 32);
-	m_rxGood = readAsNumber<quint64>(measurement, 40);
-	m_rxBad = readAsNumber<quint64>(measurement, 48);
+	m_rxBytes = readAsNumber<quint64>(measurement, 33);
+	m_rxGood = readAsNumber<quint64>(measurement, 41);
+	m_rxBad = readAsNumber<quint64>(measurement, 49);
 
 	if(m_logFile.isWritable())
 	{

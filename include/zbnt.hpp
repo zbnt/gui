@@ -24,9 +24,11 @@
 #include <QTrafficGenerator.hpp>
 #include <QLatencyMeasurer.hpp>
 #include <QStatsCollector.hpp>
-#include <Messages.hpp>
 
-class ZBNT : public QObject
+#include <Messages.hpp>
+#include <MessageReceiver.hpp>
+
+class ZBNT : public QObject, public MessageReceiver
 {
 	Q_OBJECT
 
@@ -87,6 +89,7 @@ signals:
 	void connectionError(QString error);
 
 private slots:
+	void onMessageReceived(quint8 id, const QByteArray &data);
 	void onNetworkStateChanged(QAbstractSocket::SocketState state);
 	void onNetworkError(QAbstractSocket::SocketError error);
 	void onReadyRead();
@@ -104,13 +107,6 @@ private:
 
 	quint64 m_currentTime = 0;
 	quint32 m_currentProgress = 0;
-
-	RxStatus m_rxStatus = MSG_RX_MAGIC;
-	quint16 m_rxByteCount = 0;
-	quint16 m_rxSigSize = 0;
-	quint8 m_rxSigID = 0;
-	quint8 m_rxMeasBytesLeft = 0;
-	QByteArray m_rxBuffer;
 
 	QTrafficGenerator *m_tg0 = nullptr;
 	QTrafficGenerator *m_tg1 = nullptr;

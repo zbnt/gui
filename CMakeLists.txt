@@ -14,6 +14,8 @@ set(ZBNT_GUI_SRC
 	"src/Utils.cpp"
 
 	"src/zbnt.cpp"
+	"src/MessageReceiver.cpp"
+
 	"src/QStatsCollector.cpp"
 	"src/QTrafficGenerator.cpp"
 	"src/QLatencyMeasurer.cpp"

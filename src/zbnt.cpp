@@ -55,25 +55,25 @@ void ZBNT::sendSettings()
 	// Traffic generators
 
 	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_CFG_TG0);
+	sendAsBytes<quint8>(m_socket, MSG_ID_TG_CFG);
 	m_tg0->sendSettings(m_socket);
 
 	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_CFG_TG1);
+	sendAsBytes<quint8>(m_socket, MSG_ID_TG_CFG);
 	m_tg1->sendSettings(m_socket);
 
 	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_HEADERS_TG0);
+	sendAsBytes<quint8>(m_socket, MSG_ID_TG_HEADERS);
 	m_tg0->sendHeaders(m_socket);
 
 	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_HEADERS_TG1);
+	sendAsBytes<quint8>(m_socket, MSG_ID_TG_HEADERS);
 	m_tg1->sendHeaders(m_socket);
 
 	// Latency measurer
 
 	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_CFG_LM0);
+	sendAsBytes<quint8>(m_socket, MSG_ID_LM_CFG);
 	m_lm0->sendSettings(m_socket);
 
 	// Send start message
@@ -177,6 +177,86 @@ void ZBNT::setCurrentTime(QString time)
 	m_currentTime = time.toULongLong();
 }
 
+void ZBNT::onMessageReceived(quint8 id, const QByteArray &data)
+{
+	switch(id)
+	{
+		case MSG_ID_HELLO:
+		{
+			break;
+		}
+
+		case MSG_ID_DISCOVERY_RESP:
+		{
+			break;
+		}
+
+		case MSG_ID_MEASUREMENT_LM:
+		{
+			if(data.length() < 40) return;
+
+			quint64 time = readAsNumber<quint64>(data, 0);
+
+			if(time > m_currentTime)
+			{
+				m_currentTime = time;
+				m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
+			}
+
+			m_lm0->receiveMeasurement(data);
+
+			emit measurementChanged();
+			break;
+		}
+
+		case MSG_ID_MEASUREMENT_SC:
+		{
+			if(data.length() < 57) return;
+
+			quint8 idx = readAsNumber<quint8>(data, 0);
+			quint64 time = readAsNumber<quint64>(data, 1);
+
+			if(time > m_currentTime)
+			{
+				m_currentTime = time;
+				m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
+			}
+
+			switch(idx)
+			{
+				case 0:
+				{
+					m_sc0->receiveMeasurement(data);
+					break;
+				}
+
+				case 1:
+				{
+					m_sc1->receiveMeasurement(data);
+					break;
+				}
+
+				case 2:
+				{
+					m_sc2->receiveMeasurement(data);
+					break;
+				}
+
+				case 3:
+				{
+					m_sc3->receiveMeasurement(data);
+					break;
+				}
+			}
+
+			emit measurementChanged();
+			break;
+		}
+
+		default: return;
+	}
+}
+
 void ZBNT::onNetworkStateChanged(QAbstractSocket::SocketState state)
 {
 	switch(state)
@@ -236,161 +316,5 @@ void ZBNT::onNetworkError(QAbstractSocket::SocketError error)
 
 void ZBNT::onReadyRead()
 {
-	QByteArray readData = m_socket->readAll();
-
-	for(uint8_t c : readData)
-	{
-		switch(m_rxStatus)
-		{
-			case MSG_RX_MAGIC:
-			{
-				if(c == MSG_MAGIC_IDENTIFIER[m_rxByteCount])
-				{
-					m_rxByteCount++;
-
-					if(m_rxByteCount == 4)
-					{
-						m_rxStatus = MSG_RX_HEADER;
-						m_rxByteCount = 0;
-					}
-				}
-				else
-				{
-					m_rxByteCount = 0;
-				}
-
-				break;
-			}
-
-			case MSG_RX_HEADER:
-			{
-				switch(m_rxByteCount)
-				{
-					case 0:
-					{
-						m_rxSigID = c;
-						m_rxByteCount++;
-						break;
-					}
-
-					case 1:
-					{
-						m_rxSigSize = c;
-						m_rxByteCount++;
-						break;
-					}
-
-					case 2:
-					{
-						m_rxSigSize |= c << 8;
-						m_rxByteCount = 0;
-
-						if(!m_rxSigSize)
-						{
-							m_rxStatus = MSG_RX_MAGIC;
-
-							if(m_rxSigID == MSG_ID_MEASUREMENTS_END)
-							{
-								m_currentTime = m_runTime;
-								m_currentProgress = 2048;
-								onRunEnd();
-							}
-						}
-						else
-						{
-							m_rxStatus = MSG_RX_DATA;
-						}
-
-						break;
-					}
-				}
-
-				break;
-			}
-
-			case MSG_RX_DATA:
-			{
-				if(m_rxSigID == MSG_ID_MEASUREMENTS && m_rxByteCount)
-				{
-					if(!m_rxMeasBytesLeft)
-					{
-						if(c <= 3)
-						{
-							m_rxMeasBytesLeft = 60;
-						}
-						else
-						{
-							m_rxMeasBytesLeft = 44;
-						}
-
-						m_rxBuffer.clear();
-					}
-
-					m_rxBuffer.append(c);
-					m_rxMeasBytesLeft--;
-
-					if(!m_rxMeasBytesLeft)
-					{
-						quint8 type = m_rxBuffer[0];
-
-						m_rxBuffer.remove(0, 4);
-
-						quint64 time = readAsNumber<quint64>(m_rxBuffer, 0);
-
-						if(time > m_currentTime)
-						{
-							m_currentTime = time;
-							m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
-						}
-
-						switch(type)
-						{
-							case 0:
-							{
-								m_sc0->receiveMeasurement(m_rxBuffer);
-								break;
-							}
-
-							case 1:
-							{
-								m_sc1->receiveMeasurement(m_rxBuffer);
-								break;
-							}
-
-							case 2:
-							{
-								m_sc2->receiveMeasurement(m_rxBuffer);
-								break;
-							}
-
-							case 3:
-							{
-								m_sc3->receiveMeasurement(m_rxBuffer);
-								break;
-							}
-
-							case 4:
-							{
-								m_lm0->receiveMeasurement(m_rxBuffer);
-								break;
-							}
-						}
-
-						emit measurementChanged();
-					}
-				}
-
-				m_rxByteCount++;
-
-				if(m_rxByteCount == m_rxSigSize)
-				{
-					m_rxStatus = MSG_RX_MAGIC;
-					m_rxByteCount = 0;
-					m_rxMeasBytesLeft = 0;
-				}
-
-				break;
-			}
-		}
-	}
+	handleIncomingData(m_socket->readAll());
 }
