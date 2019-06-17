@@ -29,7 +29,7 @@ Item {
 	property bool settingsValid: false
 
 	Component.onCompleted: {
-		ZBNT.ip = Qt.binding(function() { return ipInput.text })
+		ZBNT.ip = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].ip : "" })
 	}
 
 	MessageDialog {
@@ -44,7 +44,7 @@ Item {
 		target: ZBNT
 
 		onConnectionError: {
-			errorDialog.text = "Error in connection to " + ipInput.text + " : " + error;
+			errorDialog.text = "Error in connection to " + ZBNT.ip + " : " + error;
 			errorDialog.open();
 		}
 	}
@@ -79,20 +79,40 @@ Item {
 				anchors.rightMargin: 5
 
 				Label {
-					text: "IP Address:"
+					text: "Device:"
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
-				TextField {
-					id: ipInput
+				ComboBox {
+					id: deviceSelector
+					model: ZBNT.deviceList
 					enabled: ZBNT.connected == ZBNT.Disconnected
 
-					color: !enabled ? DisabledLabel.color : (valid ? DefaultLabel.color : "#e53935")
-					property bool valid: validator.validate(text)
-					validator: IPValidator { }
-
 					Layout.fillWidth: true
+
+					delegate: ItemDelegate {
+						text: modelData.hostname + " (v" + modelData.version + " at " + modelData.ip + ")"
+						enabled: modelData.version == ZBNT.networkVersion
+						width: parent.width
+
+						onClicked: {
+							deviceSelector.currentIndex = index
+							deviceSelector.displayText = text
+						}
+					}
+
+					onCurrentIndexChanged: {
+						if(currentIndex == -1)
+						{
+							displayText = ""
+						}
+						else
+						{
+							var activeItem = ZBNT.deviceList[deviceSelector.currentIndex]
+							displayText = activeItem.hostname + " (v" + activeItem.version + " at " + activeItem.ip + ")"
+						}
+					}
 				}
 
 				Item {
@@ -103,15 +123,14 @@ Item {
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
 					Button {
-						text: "Autodetect"
+						text: "Rescan"
 						enabled: ZBNT.connected == ZBNT.Disconnected
 						focusPolicy: Qt.NoFocus
-						visible: false
 
 						Layout.alignment: Qt.AlignRight
 
 						onClicked: {
-							ZBNT.autodetectBoardIP()
+							ZBNT.scanDevices()
 						}
 					}
 
@@ -125,9 +144,19 @@ Item {
 						onClicked: {
 							if(ZBNT.connected == ZBNT.Disconnected)
 							{
-								if(!ipInput.valid)
+								if(!deviceSelector.currentIndex == -1)
 								{
-									errorDialog.text = "Invalid IP, please correct it and try again.";
+									errorDialog.text = "No device selected, try rescanning the network.";
+									errorDialog.open();
+								}
+								else if(ZBNT.deviceList[deviceSelector.currentIndex].version > ZBNT.networkVersion)
+								{
+									errorDialog.text = "The selected device is running a newer version of the network code.";
+									errorDialog.open();
+								}
+								else if(ZBNT.deviceList[deviceSelector.currentIndex].version < ZBNT.networkVersion)
+								{
+									errorDialog.text = "The selected device is running an older version of the network code.";
 									errorDialog.open();
 								}
 								else

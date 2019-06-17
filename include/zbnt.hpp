@@ -27,6 +27,7 @@
 
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
+#include <QDiscoveryClient.hpp>
 
 class ZBNT : public QObject, public MessageReceiver
 {
@@ -36,6 +37,9 @@ class ZBNT : public QObject, public MessageReceiver
 	Q_PROPERTY(quint8 connected MEMBER m_connected NOTIFY connectedChanged)
 
 	Q_PROPERTY(QString ip MEMBER m_ip NOTIFY settingsChanged)
+	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
+	Q_PROPERTY(quint32 networkVersion READ networkVersion CONSTANT)
+
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
 	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
 
@@ -67,13 +71,15 @@ public:
 public slots:
 	QString cyclesToTime(QString cycles);
 
-	void autodetectBoardIP();
+	void scanDevices();
 	void connectToBoard();
 	void disconnectFromBoard();
 
 	void startRun();
 	void stopRun();
 	void onRunEnd();
+
+	quint32 networkVersion();
 
 	QString runTime();
 	void setRunTime(QString time);
@@ -82,6 +88,7 @@ public slots:
 	void setCurrentTime(QString time);
 
 signals:
+	void devicesChanged();
 	void runningChanged();
 	void settingsChanged();
 	void connectedChanged();
@@ -90,13 +97,18 @@ signals:
 
 private slots:
 	void onMessageReceived(quint8 id, const QByteArray &data);
+	void onDeviceDiscovered(const QByteArray &data);
+
 	void onNetworkStateChanged(QAbstractSocket::SocketState state);
 	void onNetworkError(QAbstractSocket::SocketError error);
 	void onReadyRead();
 
 private:
+	QDiscoveryClient *m_discovery = nullptr;
 	QTcpSocket *m_socket = nullptr;
 	QByteArray m_readBuffer;
+
+	QVariantList m_deviceList;
 
 	bool m_running = false;
 	quint8 m_connected = 0;

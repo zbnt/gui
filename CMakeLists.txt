@@ -15,6 +15,7 @@ set(ZBNT_GUI_SRC
 
 	"src/zbnt.cpp"
 	"src/MessageReceiver.cpp"
+	"src/QDiscoveryClient.cpp"
 
 	"src/QStatsCollector.cpp"
 	"src/QTrafficGenerator.cpp"
@@ -27,6 +28,7 @@ set(ZBNT_GUI_SRC
 
 set(ZBNT_GUI_HDR
 	"include/zbnt.hpp"
+	"include/QDiscoveryClient.hpp"
 
 	"include/QStatsCollector.hpp"
 	"include/QTrafficGenerator.hpp"

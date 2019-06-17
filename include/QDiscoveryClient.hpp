@@ -18,32 +18,28 @@
 
 #pragma once
 
-#include <QString>
-#include <QAbstractSocket>
+#include <QUdpSocket>
+#include <Messages.hpp>
+#include <MessageReceiver.hpp>
 
-extern void cyclesToTime(quint64 cycles, QString &time);
-
-template<typename T>
-void sendAsBytes(QAbstractSocket *socket, T data)
+class QDiscoveryClient : public QObject, public MessageReceiver
 {
-	socket->write((const char*) &data, sizeof(T));
-}
+	Q_OBJECT
 
-template<typename T>
-void appendAsBytes(QByteArray *array, T data)
-{
-	array->append((const char*) &data, sizeof(T));
-}
+public:
+	QDiscoveryClient(QObject *parent = nullptr);
+	~QDiscoveryClient();
 
-template<typename T>
-T readAsNumber(const QByteArray &data, quint32 offset)
-{
-	T res = 0;
+	void findDevices();
+	quint64 scanTime();
 
-	for(int i = 0; i < sizeof(T); ++i)
-	{
-		res |= T(quint8(data[offset + i])) << (8 * i);
-	}
+	void onMessageReceived(quint8 id, const QByteArray &data);
+	void onReadyRead();
 
-	return res;
-}
+signals:
+	void deviceDiscovered(const QByteArray &data);
+
+private:
+	quint64 m_time = 0;
+	QUdpSocket *m_client = nullptr;
+};

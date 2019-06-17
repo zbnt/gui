@@ -18,6 +18,7 @@
 
 #include <zbnt.hpp>
 
+#include <QTimer>
 #include <QDateTime>
 
 #include <Utils.hpp>
@@ -36,12 +37,16 @@ ZBNT::ZBNT() : QObject(nullptr)
 	m_tg0->setIndex(0);
 	m_tg1->setIndex(1);
 
+	m_discovery = new QDiscoveryClient(this);
+	QTimer::singleShot(1000, this, &ZBNT::scanDevices);
+
 	m_socket = new QTcpSocket(this);
 	m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
 
 	connect(m_socket, &QTcpSocket::stateChanged, this, &ZBNT::onNetworkStateChanged);
 	connect(m_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), this, &ZBNT::onNetworkError);
 	connect(m_socket, &QTcpSocket::readyRead, this, &ZBNT::onReadyRead);
+	connect(m_discovery, &QDiscoveryClient::deviceDiscovered, this, &ZBNT::onDeviceDiscovered);
 }
 
 ZBNT::~ZBNT()
@@ -70,8 +75,12 @@ void ZBNT::sendSettings()
 
 	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
 	sendAsBytes<quint8>(m_socket, MSG_ID_START);
-	sendAsBytes<quint16>(m_socket, 8);
-	sendAsBytes(m_socket, m_runTime);
+	sendAsBytes<quint16>(m_socket, 12);
+	sendAsBytes<quint64>(m_socket, m_runTime);
+	sendAsBytes<quint8>(m_socket, 1);
+	sendAsBytes<quint8>(m_socket, 1);
+	sendAsBytes<quint8>(m_socket, 1);
+	sendAsBytes<quint8>(m_socket, 1);
 }
 
 QString ZBNT::cyclesToTime(QString cycles)
@@ -81,9 +90,10 @@ QString ZBNT::cyclesToTime(QString cycles)
 	return res;
 }
 
-void ZBNT::autodetectBoardIP()
+void ZBNT::scanDevices()
 {
-	// TODO
+	m_deviceList.clear();
+	m_discovery->findDevices();
 }
 
 void ZBNT::connectToBoard()
@@ -147,6 +157,11 @@ void ZBNT::onRunEnd()
 	emit runningChanged();
 }
 
+quint32 ZBNT::networkVersion()
+{
+	return MSG_VERSION;
+}
+
 QString ZBNT::runTime()
 {
 	return QString::number(m_runTime);
@@ -172,11 +187,6 @@ void ZBNT::onMessageReceived(quint8 id, const QByteArray &data)
 	switch(id)
 	{
 		case MSG_ID_HELLO:
-		{
-			break;
-		}
-
-		case MSG_ID_DISCOVERY_RESP:
 		{
 			break;
 		}
@@ -245,6 +255,48 @@ void ZBNT::onMessageReceived(quint8 id, const QByteArray &data)
 
 		default: return;
 	}
+}
+
+void ZBNT::onDeviceDiscovered(const QByteArray &data)
+{
+	quint32 version = readAsNumber<quint32>(data, 0);
+	quint8 hostLen = readAsNumber<quint8>(data, 4);
+	quint8 numIP4 = readAsNumber<quint8>(data, 5);
+	quint8 numIP6 = readAsNumber<quint8>(data, 6);
+	quint64 time = readAsNumber<quint64>(data, 7);
+
+	if(time != m_discovery->scanTime()) return;
+
+	QVariantMap device;
+	device["version"] = version;
+	device["hostname"] = QByteArray(data.constData() + 15, hostLen);
+
+	int i = 15 + hostLen;
+
+	for(quint8 j = 0; j < numIP4; ++j)
+	{
+		quint32 ip = readAsNumber<quint32>(data, i);
+		QHostAddress addr(ip);
+
+		device["ip"] = addr.toString();
+		m_deviceList.append(device);
+
+		i += 4;
+	}
+
+	for(quint8 j = 0; j < numIP6; ++j)
+	{
+		Q_IPV6ADDR ip;
+		memcpy(ip.c, data.constData() + i, 16);
+		QHostAddress addr(ip);
+
+		device["ip"] = addr.toString();
+		m_deviceList.append(device);
+
+		i += 16;
+	}
+
+	emit devicesChanged();
 }
 
 void ZBNT::onNetworkStateChanged(QAbstractSocket::SocketState state)
