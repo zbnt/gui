@@ -145,7 +145,7 @@ void ZBNT::stopRun()
 
 void ZBNT::onRunEnd()
 {
-	m_running = 0;
+	m_running = false;
 
 	m_sc0->disableLogging();
 	m_sc1->disableLogging();
@@ -316,6 +316,7 @@ void ZBNT::onNetworkStateChanged(QAbstractSocket::SocketState state)
 		case QAbstractSocket::UnconnectedState:
 		{
 			m_connected = Disconnected;
+			m_running = false;
 			break;
 		}
 
@@ -334,6 +335,7 @@ void ZBNT::onNetworkStateChanged(QAbstractSocket::SocketState state)
 		default: { }
 	}
 
+	emit runningChanged();
 	emit connectedChanged();
 }
 
