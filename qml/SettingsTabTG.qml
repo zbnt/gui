@@ -82,7 +82,7 @@ Item {
 
 		CheckBox {
 			id: enableInput
-			checked: true
+			checked: false
 			Layout.fillWidth: true
 		}
 

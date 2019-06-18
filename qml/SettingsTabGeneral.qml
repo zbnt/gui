@@ -30,6 +30,11 @@ Item {
 	Component.onCompleted: {
 		ZBNT.runTime = Qt.binding(function() { return runTimeInput.text })
 		ZBNT.exportResults = Qt.binding(function() { return exportFilesInput.checked })
+		ZBNT.enableSC0 = Qt.binding(function() { return enableSC0Input.checked })
+		ZBNT.enableSC1 = Qt.binding(function() { return enableSC1Input.checked })
+		ZBNT.enableSC2 = Qt.binding(function() { return enableSC2Input.checked })
+		ZBNT.enableSC3 = Qt.binding(function() { return enableSC3Input.checked })
+		ZBNT.bitstreamID = Qt.binding(function() { return bitstreamSelector.currentIndex + 1 })
 	}
 
 	GridLayout {
@@ -73,6 +78,28 @@ Item {
 		}
 
 		Label {
+			text: "Bitstream:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		ComboBox {
+			id: bitstreamSelector
+			Layout.fillWidth: true
+			Layout.columnSpan: 2
+
+			model: [
+				"DualTGen : 2 traffic generators + 1 latency measurer",
+				"QuadTGen : 4 traffic generators"
+			]
+		}
+
+		Item {
+			Layout.columnSpan: 3
+			Layout.minimumHeight: 6
+		}
+
+		Label {
 			text: "Export to CSV files:"
 			font.weight: Font.Bold
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
@@ -81,6 +108,55 @@ Item {
 		CheckBox {
 			id: exportFilesInput
 			checked: true
+			Layout.fillWidth: true
+			Layout.columnSpan: 2
+		}
+
+		Item {
+			Layout.columnSpan: 3
+			Layout.minimumHeight: 6
+		}
+
+		Label {
+			text: "Monitor stats:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		CheckBox {
+			id: enableSC0Input
+			checked: true
+			text: "eth0"
+			Layout.fillWidth: true
+			Layout.columnSpan: 2
+		}
+
+		Label { }
+
+		CheckBox {
+			id: enableSC1Input
+			checked: true
+			text: "eth1"
+			Layout.fillWidth: true
+			Layout.columnSpan: 2
+		}
+
+		Label { }
+
+		CheckBox {
+			id: enableSC2Input
+			checked: true
+			text: "eth2"
+			Layout.fillWidth: true
+			Layout.columnSpan: 2
+		}
+
+		Label { }
+
+		CheckBox {
+			id: enableSC3Input
+			checked: true
+			text: "eth3"
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
 		}

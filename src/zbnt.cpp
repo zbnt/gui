@@ -28,6 +28,8 @@ ZBNT::ZBNT() : QObject(nullptr)
 {
 	m_tg0 = new QTrafficGenerator(this);
 	m_tg1 = new QTrafficGenerator(this);
+	m_tg2 = new QTrafficGenerator(this);
+	m_tg3 = new QTrafficGenerator(this);
 	m_lm0 = new QLatencyMeasurer(this);
 	m_sc0 = new QStatsCollector(this);
 	m_sc1 = new QStatsCollector(this);
@@ -36,6 +38,8 @@ ZBNT::ZBNT() : QObject(nullptr)
 
 	m_tg0->setIndex(0);
 	m_tg1->setIndex(1);
+	m_tg2->setIndex(2);
+	m_tg3->setIndex(3);
 
 	m_discovery = new QDiscoveryClient(this);
 	QTimer::singleShot(1000, this, &ZBNT::scanDevices);
@@ -60,6 +64,13 @@ void ZBNT::sendSettings()
 	sendAsBytes<quint8>(m_socket, MSG_ID_STOP);
 	sendAsBytes<quint16>(m_socket, 0);
 
+	// Reprogram the board if needed
+
+	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
+	sendAsBytes<quint8>(m_socket, MSG_ID_SET_BITSTREAM);
+	sendAsBytes<quint16>(m_socket, 1);
+	sendAsBytes<quint8>(m_socket, m_bitstreamID);
+
 	// Traffic generators
 
 	m_tg0->sendSettings(m_socket);
@@ -67,9 +78,20 @@ void ZBNT::sendSettings()
 	m_tg0->sendHeaders(m_socket);
 	m_tg1->sendHeaders(m_socket);
 
+	if(m_bitstreamID == QuadTGen)
+	{
+		m_tg2->sendSettings(m_socket);
+		m_tg3->sendSettings(m_socket);
+		m_tg2->sendHeaders(m_socket);
+		m_tg3->sendHeaders(m_socket);
+	}
+
 	// Latency measurer
 
-	m_lm0->sendSettings(m_socket);
+	if(m_bitstreamID == DualTGen)
+	{
+		m_lm0->sendSettings(m_socket);
+	}
 
 	// Send start message
 
@@ -77,10 +99,10 @@ void ZBNT::sendSettings()
 	sendAsBytes<quint8>(m_socket, MSG_ID_START);
 	sendAsBytes<quint16>(m_socket, 12);
 	sendAsBytes<quint64>(m_socket, m_runTime);
-	sendAsBytes<quint8>(m_socket, 1);
-	sendAsBytes<quint8>(m_socket, 1);
-	sendAsBytes<quint8>(m_socket, 1);
-	sendAsBytes<quint8>(m_socket, 1);
+	sendAsBytes<quint8>(m_socket, m_enableSC0);
+	sendAsBytes<quint8>(m_socket, m_enableSC1);
+	sendAsBytes<quint8>(m_socket, m_enableSC2);
+	sendAsBytes<quint8>(m_socket, m_enableSC3);
 }
 
 QString ZBNT::cyclesToTime(QString cycles)
@@ -137,8 +159,8 @@ void ZBNT::startRun()
 void ZBNT::stopRun()
 {
 	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<uint8_t>(m_socket, MSG_ID_STOP);
-	sendAsBytes<uint16_t>(m_socket, 0);
+	sendAsBytes<quint8>(m_socket, MSG_ID_STOP);
+	sendAsBytes<quint16>(m_socket, 0);
 
 	onRunEnd();
 }
@@ -186,11 +208,6 @@ void ZBNT::onMessageReceived(quint8 id, const QByteArray &data)
 {
 	switch(id)
 	{
-		case MSG_ID_HELLO:
-		{
-			break;
-		}
-
 		case MSG_ID_DONE:
 		{
 			m_currentTime = m_runTime;

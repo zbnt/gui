@@ -61,6 +61,7 @@ void QTrafficGenerator::sendSettings(QTcpSocket *socket)
 void QTrafficGenerator::sendHeaders(QTcpSocket *socket)
 {
 	if(!socket) return;
+	if(!m_enable) return;
 
 	socket->write(MSG_MAGIC_IDENTIFIER, 4);
 	sendAsBytes<quint8>(socket, MSG_ID_TG_HEADERS);

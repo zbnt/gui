@@ -42,12 +42,19 @@ class ZBNT : public QObject, public MessageReceiver
 
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
 	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
+	Q_PROPERTY(bool enableSC0 MEMBER m_enableSC0 NOTIFY settingsChanged)
+	Q_PROPERTY(bool enableSC1 MEMBER m_enableSC1 NOTIFY settingsChanged)
+	Q_PROPERTY(bool enableSC2 MEMBER m_enableSC2 NOTIFY settingsChanged)
+	Q_PROPERTY(bool enableSC3 MEMBER m_enableSC3 NOTIFY settingsChanged)
+	Q_PROPERTY(quint8 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
 
 	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY measurementChanged)
 	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY measurementChanged)
 
 	Q_PROPERTY(QTrafficGenerator *tg0 MEMBER m_tg0 CONSTANT)
 	Q_PROPERTY(QTrafficGenerator *tg1 MEMBER m_tg1 CONSTANT)
+	Q_PROPERTY(QTrafficGenerator *tg2 MEMBER m_tg2 CONSTANT)
+	Q_PROPERTY(QTrafficGenerator *tg3 MEMBER m_tg3 CONSTANT)
 	Q_PROPERTY(QLatencyMeasurer *lm0 MEMBER m_lm0 CONSTANT)
 	Q_PROPERTY(QStatsCollector *sc0 MEMBER m_sc0 CONSTANT)
 	Q_PROPERTY(QStatsCollector *sc1 MEMBER m_sc1 CONSTANT)
@@ -66,7 +73,15 @@ public:
 		Connecting,
 		Connected
 	};
+
+	enum BitstreamID
+	{
+		DualTGen = 1,
+		QuadTGen
+	};
+
 	Q_ENUMS(ConnectionStatus)
+	Q_ENUMS(BitstreamID)
 
 public slots:
 	QString cyclesToTime(QString cycles);
@@ -108,20 +123,27 @@ private:
 	QTcpSocket *m_socket = nullptr;
 	QByteArray m_readBuffer;
 
-	QVariantList m_deviceList;
-
 	bool m_running = false;
 	quint8 m_connected = 0;
 
 	QString m_ip;
+	QVariantList m_deviceList;
+
 	quint64 m_runTime = 125000000ul;
 	bool m_exportResults = true;
+	bool m_enableSC0 = true;
+	bool m_enableSC1 = true;
+	bool m_enableSC2 = true;
+	bool m_enableSC3 = true;
+	quint8 m_bitstreamID = DualTGen;
 
 	quint64 m_currentTime = 0;
 	quint32 m_currentProgress = 0;
 
 	QTrafficGenerator *m_tg0 = nullptr;
 	QTrafficGenerator *m_tg1 = nullptr;
+	QTrafficGenerator *m_tg2 = nullptr;
+	QTrafficGenerator *m_tg3 = nullptr;
 	QLatencyMeasurer *m_lm0 = nullptr;
 	QStatsCollector *m_sc0 = nullptr;
 	QStatsCollector *m_sc1 = nullptr;

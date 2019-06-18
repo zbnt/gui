@@ -144,7 +144,7 @@ Item {
 						onClicked: {
 							if(ZBNT.connected == ZBNT.Disconnected)
 							{
-								if(!deviceSelector.currentIndex == -1)
+								if(ZBNT.deviceList.length == 0)
 								{
 									errorDialog.text = "No device selected, try rescanning the network.";
 									errorDialog.open();

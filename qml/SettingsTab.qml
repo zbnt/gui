@@ -25,7 +25,7 @@ import zbnt 1.0
 Item {
 	id: root
 
-	property bool ready: settingsGeneral.ready && settingsTG1.ready && settingsTG2.ready && settingsLM.ready
+	property bool ready: settingsGeneral.ready && settingsTG1.ready && settingsTG2.ready && (ZBNT.bitstreamID == ZBNT.DualTGen ? settingsLM.ready : (settingsTG3.ready && settingsTG4.ready))
 
 	ColumnLayout {
 		anchors.fill: parent
@@ -39,6 +39,8 @@ Item {
 				"General settings",
 				"Traffic generator (eth0)",
 				"Traffic generator (eth1)",
+				"Traffic generator (eth2)",
+				"Traffic generator (eth3)",
 				"Latency measurer (eth2, eth3)"
 			]
 		}
@@ -74,10 +76,22 @@ Item {
 					enabled: !ZBNT.running
 				}
 
+				SettingsTabTG {
+					id: settingsTG3
+					object: ZBNT.tg2
+					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.QuadTGen
+				}
+
+				SettingsTabTG {
+					id: settingsTG4
+					object: ZBNT.tg3
+					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.QuadTGen
+				}
+
 				SettingsTabLM {
 					id: settingsLM
 					object: ZBNT.lm0
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGen
 				}
 			}
 		}
