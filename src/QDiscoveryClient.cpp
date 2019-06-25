@@ -20,6 +20,7 @@
 
 #include <QDateTime>
 #include <QNetworkDatagram>
+#include <QNetworkInterface>
 
 #include <Utils.hpp>
 
@@ -44,7 +45,15 @@ void QDiscoveryClient::findDevices()
 	appendAsBytes<quint16>(&message, 8);
 	appendAsBytes<quint64>(&message, m_time);
 
-	m_client->writeDatagram(message, QHostAddress::Broadcast, MSG_UDP_PORT);
+	for(const QNetworkInterface &iface : QNetworkInterface::allInterfaces())
+	{
+		if(iface.type() == QNetworkInterface::Loopback) continue;
+
+		for(const QNetworkAddressEntry &address : iface.addressEntries())
+		{
+			m_client->writeDatagram(message, address.broadcast(), MSG_UDP_PORT);
+		}
+	}
 }
 
 quint64 QDiscoveryClient::scanTime()
