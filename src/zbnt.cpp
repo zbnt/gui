@@ -115,6 +115,8 @@ QString ZBNT::cyclesToTime(QString cycles)
 void ZBNT::scanDevices()
 {
 	m_deviceList.clear();
+	emit devicesChanged();
+
 	m_discovery->findDevices();
 }
 
