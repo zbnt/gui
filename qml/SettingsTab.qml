@@ -41,7 +41,8 @@ Item {
 				"Traffic generator (eth1)",
 				"Traffic generator (eth2)",
 				"Traffic generator (eth3)",
-				"Latency measurer (eth2, eth3)"
+				"Latency measurer (eth2, eth3)",
+				"Frame detector (eth2, eth3)"
 			]
 		}
 
@@ -91,7 +92,13 @@ Item {
 				SettingsTabLM {
 					id: settingsLM
 					object: ZBNT.lm0
-					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGen
+					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGenLM
+				}
+
+				SettingsTabFD {
+					id: settingsFD
+					object: ZBNT.fd0
+					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGenFD
 				}
 			}
 		}

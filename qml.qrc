@@ -6,6 +6,7 @@
 		<file>qml/SettingsTabGeneral.qml</file>
 		<file>qml/SettingsTabTG.qml</file>
 		<file>qml/SettingsTabLM.qml</file>
+		<file>qml/SettingsTabFD.qml</file>
 		<file>qml/TrafficTab.qml</file>
 		<file>qml/TrafficTabBox.qml</file>
 		<file>qml/LatencyTab.qml</file>

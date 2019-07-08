@@ -20,6 +20,7 @@ set(ZBNT_GUI_SRC
 	"src/QStatsCollector.cpp"
 	"src/QTrafficGenerator.cpp"
 	"src/QLatencyMeasurer.cpp"
+	"src/QFrameDetector.cpp"
 
 	"src/QIPValidator.cpp"
 	"src/QUInt64Validator.cpp"
@@ -33,6 +34,7 @@ set(ZBNT_GUI_HDR
 	"include/QStatsCollector.hpp"
 	"include/QTrafficGenerator.hpp"
 	"include/QLatencyMeasurer.hpp"
+	"include/QFrameDetector.hpp"
 
 	"include/QIPValidator.hpp"
 	"include/QUInt64Validator.hpp"

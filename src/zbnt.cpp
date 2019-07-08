@@ -35,6 +35,7 @@ ZBNT::ZBNT() : QObject(nullptr)
 	m_sc1 = new QStatsCollector(this);
 	m_sc2 = new QStatsCollector(this);
 	m_sc3 = new QStatsCollector(this);
+	m_fd0 = new QFrameDetector(this);
 
 	m_tg0->setIndex(0);
 	m_tg1->setIndex(1);
@@ -88,9 +89,17 @@ void ZBNT::sendSettings()
 
 	// Latency measurer
 
-	if(m_bitstreamID == DualTGen)
+	if(m_bitstreamID == DualTGenLM)
 	{
 		m_lm0->sendSettings(m_socket);
+	}
+
+	// Frame detector
+
+	if(m_bitstreamID == DualTGenFD)
+	{
+		m_fd0->sendSettings(m_socket);
+		m_fd0->sendPatterns(m_socket);
 	}
 
 	// Send start message
@@ -141,6 +150,7 @@ void ZBNT::startRun()
 		m_sc2->enableLogging(QString("measurements_") + timeStamp + "_sc2.csv");
 		m_sc3->enableLogging(QString("measurements_") + timeStamp + "_sc3.csv");
 		m_lm0->enableLogging(QString("measurements_") + timeStamp + "_lm0.csv");
+		m_fd0->enableLogging(QString("measurements_") + timeStamp + "_fd0.csv");
 	}
 
 	m_sc0->resetMeasurement();
@@ -176,6 +186,7 @@ void ZBNT::onRunEnd()
 	m_sc2->disableLogging();
 	m_sc3->disableLogging();
 	m_lm0->disableLogging();
+	m_fd0->disableLogging();
 
 	emit measurementChanged();
 	emit runningChanged();
@@ -233,6 +244,24 @@ void ZBNT::onMessageReceived(quint8 id, const QByteArray &data)
 			}
 
 			m_lm0->receiveMeasurement(data);
+
+			emit measurementChanged();
+			break;
+		}
+
+		case MSG_ID_MEASUREMENT_FD:
+		{
+			if(data.length() < 12) return;
+
+			quint64 time = readAsNumber<quint64>(data, 0);
+
+			if(time > m_currentTime)
+			{
+				m_currentTime = time;
+				m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
+			}
+
+			m_fd0->receiveMeasurement(data);
 
 			emit measurementChanged();
 			break;

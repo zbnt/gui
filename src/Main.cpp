@@ -27,6 +27,7 @@
 #include <QStatsCollector.hpp>
 #include <QTrafficGenerator.hpp>
 #include <QLatencyMeasurer.hpp>
+#include <QFrameDetector.hpp>
 
 #include <QIPValidator.hpp>
 #include <QUInt64Validator.hpp>
@@ -50,6 +51,7 @@ int main(int argc, char *argv[])
 	qmlRegisterType<QStatsCollector>("zbnt", 1, 0, "QStatsCollector");
 	qmlRegisterType<QTrafficGenerator>("zbnt", 1, 0, "QTrafficGenerator");
 	qmlRegisterType<QLatencyMeasurer>("zbnt", 1, 0, "QLatencyMeasurer");
+	qmlRegisterType<QFrameDetector>("zbnt", 1, 0, "QFrameDetector");
 
 	qmlRegisterType<QIPValidator>("zbnt", 1, 0, "IPValidator");
 	qmlRegisterType<QUInt64Validator>("zbnt", 1, 0, "UInt64Validator");

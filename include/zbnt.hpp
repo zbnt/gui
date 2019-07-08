@@ -24,6 +24,7 @@
 #include <QTrafficGenerator.hpp>
 #include <QLatencyMeasurer.hpp>
 #include <QStatsCollector.hpp>
+#include <QFrameDetector.hpp>
 
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
@@ -60,6 +61,7 @@ class ZBNT : public QObject, public MessageReceiver
 	Q_PROPERTY(QStatsCollector *sc1 MEMBER m_sc1 CONSTANT)
 	Q_PROPERTY(QStatsCollector *sc2 MEMBER m_sc2 CONSTANT)
 	Q_PROPERTY(QStatsCollector *sc3 MEMBER m_sc3 CONSTANT)
+	Q_PROPERTY(QFrameDetector *fd0 MEMBER m_fd0 CONSTANT)
 
 public:
 	ZBNT();
@@ -76,7 +78,8 @@ public:
 
 	enum BitstreamID
 	{
-		DualTGen = 1,
+		DualTGenLM = 1,
+		DualTGenFD,
 		QuadTGen
 	};
 
@@ -135,7 +138,7 @@ private:
 	bool m_enableSC1 = true;
 	bool m_enableSC2 = true;
 	bool m_enableSC3 = true;
-	quint8 m_bitstreamID = DualTGen;
+	quint8 m_bitstreamID = DualTGenLM;
 
 	quint64 m_currentTime = 0;
 	quint32 m_currentProgress = 0;
@@ -149,4 +152,5 @@ private:
 	QStatsCollector *m_sc1 = nullptr;
 	QStatsCollector *m_sc2 = nullptr;
 	QStatsCollector *m_sc3 = nullptr;
+	QFrameDetector *m_fd0 = nullptr;
 };

@@ -89,7 +89,8 @@ Item {
 			Layout.columnSpan: 2
 
 			model: [
-				"DualTGen : 2 traffic generators + 1 latency measurer",
+				"DualTGenLM : 2 traffic generators + 1 latency measurer",
+				"DualTGenFD : 2 traffic generators + 1 frame detector",
 				"QuadTGen : 4 traffic generators"
 			]
 		}
