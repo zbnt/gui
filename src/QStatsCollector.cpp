@@ -41,78 +41,91 @@ void QStatsCollector::disableLogging()
 	if(m_logFile.isOpen()) m_logFile.close();
 }
 
+void QStatsCollector::updateDisplayedValues()
+{
+	QMutexLocker lock(&m_mutex);
+
+	memcpy(&m_displayedValues, &m_currentValues, sizeof(Measurement));
+
+	emit measurementChanged();
+}
+
 void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
 {
-	quint64 time = readAsNumber<quint64>(measurement, 1);
+	m_mutex.lock();
 
-	m_txBytes = readAsNumber<quint64>(measurement, 9);
-	m_txGood = readAsNumber<quint64>(measurement, 17);
-	m_txBad = readAsNumber<quint64>(measurement, 25);
+	m_currentValues.time = readAsNumber<quint64>(measurement, 1);
 
-	m_rxBytes = readAsNumber<quint64>(measurement, 33);
-	m_rxGood = readAsNumber<quint64>(measurement, 41);
-	m_rxBad = readAsNumber<quint64>(measurement, 49);
+	m_currentValues.txBytes = readAsNumber<quint64>(measurement, 9);
+	m_currentValues.txGood = readAsNumber<quint64>(measurement, 17);
+	m_currentValues.txBad = readAsNumber<quint64>(measurement, 25);
+
+	m_currentValues.rxBytes = readAsNumber<quint64>(measurement, 33);
+	m_currentValues.rxGood = readAsNumber<quint64>(measurement, 41);
+	m_currentValues.rxBad = readAsNumber<quint64>(measurement, 49);
+
+	m_mutex.unlock();
 
 	if(m_logFile.isWritable())
 	{
-		m_logFile.write(QByteArray::number(time));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_txBytes));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_txGood));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_txBad));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_rxBytes));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_rxGood));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_rxBad));
-		m_logFile.write("\n");
+		m_logFile.write(QByteArray::number(m_currentValues.time));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.txBytes));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.txGood));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.txBad));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.rxBytes));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.rxGood));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.rxBad));
+		m_logFile.putChar('\n');
 	}
-
-	emit measurementChanged();
 }
 
 void QStatsCollector::resetMeasurement()
 {
-	m_txBytes = 0;
-	m_txGood = 0;
-	m_txBad = 0;
+	QMutexLocker lock(&m_mutex);
 
-	m_rxBytes = 0;
-	m_rxGood = 0;
-	m_rxBad = 0;
+	m_currentValues.time = 0;
 
-	emit measurementChanged();
+	m_currentValues.txBytes = 0;
+	m_currentValues.txGood = 0;
+	m_currentValues.txBad = 0;
+
+	m_currentValues.rxBytes = 0;
+	m_currentValues.rxGood = 0;
+	m_currentValues.rxBad = 0;
 }
 
 QString QStatsCollector::txBytes()
 {
-	return QString::number(m_txBytes);
+	return QString::number(m_displayedValues.txBytes);
 }
 
 QString QStatsCollector::txGood()
 {
-	return QString::number(m_txGood);
+	return QString::number(m_displayedValues.txGood);
 }
 
 QString QStatsCollector::txBad()
 {
-	return QString::number(m_txBad);
+	return QString::number(m_displayedValues.txBad);
 }
 
 QString QStatsCollector::rxBytes()
 {
-	return QString::number(m_rxBytes);
+	return QString::number(m_displayedValues.rxBytes);
 }
 
 QString QStatsCollector::rxGood()
 {
-	return QString::number(m_rxGood);
+	return QString::number(m_displayedValues.rxGood);
 }
 
 QString QStatsCollector::rxBad()
 {
-	return QString::number(m_rxBad);
+	return QString::number(m_displayedValues.rxBad);
 }

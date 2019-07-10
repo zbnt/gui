@@ -42,87 +42,100 @@ void QLatencyMeasurer::disableLogging()
 	if(m_logFile.isOpen()) m_logFile.close();
 }
 
-void QLatencyMeasurer::sendSettings(QTcpSocket *socket)
+void QLatencyMeasurer::updateDisplayedValues()
 {
-	if(!socket) return;
+	QMutexLocker lock(&m_mutex);
 
-	socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(socket, MSG_ID_LM_CFG);
-	sendAsBytes<quint16>(socket, 13);
+	memcpy(&m_displayedValues, &m_currentValues, sizeof(Measurement));
 
-	sendAsBytes<quint8>(socket, m_enable);
-	sendAsBytes<quint32>(socket, m_frameSize.toULong() - 30);
-	sendAsBytes<quint32>(socket, m_period.toULong());
-	sendAsBytes<quint32>(socket, m_timeout.toULong());
+	emit measurementChanged();
+}
+
+void QLatencyMeasurer::appendSettings(QByteArray *buffer)
+{
+	if(!buffer) return;
+
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_LM_CFG);
+	appendAsBytes<quint16>(buffer, 13);
+
+	appendAsBytes<quint8>(buffer, m_enable);
+	appendAsBytes<quint32>(buffer, m_frameSize.toULong() - 30);
+	appendAsBytes<quint32>(buffer, m_period.toULong());
+	appendAsBytes<quint32>(buffer, m_timeout.toULong());
 }
 
 void QLatencyMeasurer::receiveMeasurement(const QByteArray &measurement)
 {
-	quint64 time = readAsNumber<quint64>(measurement, 0);
+	m_mutex.lock();
 
-	m_lastPing = readAsNumber<quint32>(measurement, 8);
-	m_lastPong = readAsNumber<quint32>(measurement, 12);
+	m_currentValues.time = readAsNumber<quint64>(measurement, 0);
 
-	m_numPingPongs = readAsNumber<quint64>(measurement, 16);
-	m_numLostPings = readAsNumber<quint64>(measurement, 24);
-	m_numLostPongs = readAsNumber<quint64>(measurement, 32);
+	m_currentValues.lastPing = readAsNumber<quint32>(measurement, 8);
+	m_currentValues.lastPong = readAsNumber<quint32>(measurement, 12);
+
+	m_currentValues.numPingPongs = readAsNumber<quint64>(measurement, 16);
+	m_currentValues.numLostPings = readAsNumber<quint64>(measurement, 24);
+	m_currentValues.numLostPongs = readAsNumber<quint64>(measurement, 32);
+
+	m_mutex.unlock();
 
 	if(m_logFile.isWritable())
 	{
-		m_logFile.write(QByteArray::number(time));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_lastPing));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_lastPong));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_numPingPongs));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_numLostPings));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(m_numLostPongs));
-		m_logFile.write("\n");
+		m_logFile.write(QByteArray::number(m_currentValues.time));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.lastPing));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.lastPong));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.numPingPongs));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.numLostPings));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.numLostPongs));
+		m_logFile.putChar('\n');
 	}
-
-	emit measurementChanged();
 }
 
 void QLatencyMeasurer::resetMeasurement()
 {
-	m_lastPing = 0;
-	m_lastPong = 0;
+	QMutexLocker lock(&m_mutex);
 
-	m_numPingPongs = 0;
-	m_numLostPings = 0;
-	m_numLostPongs = 0;
+	m_currentValues.time = 0;
 
-	emit measurementChanged();
+	m_currentValues.lastPing = 0;
+	m_currentValues.lastPong = 0;
+
+	m_currentValues.numPingPongs = 0;
+	m_currentValues.numLostPings = 0;
+	m_currentValues.numLostPongs = 0;
 }
 
 QString QLatencyMeasurer::numPingPongs()
 {
-	return QString::number(m_numPingPongs);
+	return QString::number(m_currentValues.numPingPongs);
 }
 
 QString QLatencyMeasurer::numLostPings()
 {
-	return QString::number(m_numLostPings);
+	return QString::number(m_currentValues.numLostPings);
 }
 
 QString QLatencyMeasurer::numLostPongs()
 {
-	return QString::number(m_numLostPongs);
+	return QString::number(m_currentValues.numLostPongs);
 }
 
 QString QLatencyMeasurer::lastPong()
 {
 	QString res;
-	cyclesToTime(m_lastPong, res);
+	cyclesToTime(m_currentValues.lastPong, res);
 	return res;
 }
 
 QString QLatencyMeasurer::lastPing()
 {
 	QString res;
-	cyclesToTime(m_lastPing, res);
+	cyclesToTime(m_currentValues.lastPing, res);
 	return res;
 }

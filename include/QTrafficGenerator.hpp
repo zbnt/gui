@@ -20,7 +20,6 @@
 
 #include <QObject>
 #include <QUrl>
-#include <QTcpSocket>
 
 class QTrafficGenerator : public QObject
 {
@@ -50,8 +49,8 @@ public:
 
 	void setIndex(quint8 idx);
 
-	void sendSettings(QTcpSocket *socket);
-	void sendHeaders(QTcpSocket *socket);
+	void appendSettings(QByteArray *buffer);
+	void appendHeaders(QByteArray *buffer);
 
 public slots:
 	void loadHeaders(QUrl url);

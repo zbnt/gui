@@ -34,41 +34,41 @@ void QTrafficGenerator::setIndex(quint8 idx)
 	m_idx = idx;
 }
 
-void QTrafficGenerator::sendSettings(QTcpSocket *socket)
+void QTrafficGenerator::appendSettings(QByteArray *buffer)
 {
-	if(!socket) return;
+	if(!buffer) return;
 
-	socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(socket, MSG_ID_TG_CFG);
-	sendAsBytes<quint16>(socket, 28);
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_TG_CFG);
+	appendAsBytes<quint16>(buffer, 28);
 
-	sendAsBytes<quint8>(socket, m_idx);
-	sendAsBytes<quint8>(socket, m_enable);
+	appendAsBytes<quint8>(buffer, m_idx);
+	appendAsBytes<quint8>(buffer, m_enable);
 
-	sendAsBytes<quint8>(socket, m_paddingMethod);
-	sendAsBytes<quint16>(socket, m_paddingConstant);
-	sendAsBytes<quint16>(socket, m_paddingRangeBottom);
-	sendAsBytes<quint16>(socket, m_paddingRangeTop);
-	sendAsBytes<quint16>(socket, m_paddingAverage);
+	appendAsBytes<quint8>(buffer, m_paddingMethod);
+	appendAsBytes<quint16>(buffer, m_paddingConstant);
+	appendAsBytes<quint16>(buffer, m_paddingRangeBottom);
+	appendAsBytes<quint16>(buffer, m_paddingRangeTop);
+	appendAsBytes<quint16>(buffer, m_paddingAverage);
 
-	sendAsBytes<quint8>(socket, m_delayMethod);
-	sendAsBytes<quint32>(socket, m_delayConstant.toULong());
-	sendAsBytes<quint32>(socket, m_delayRangeBottom.toULong());
-	sendAsBytes<quint32>(socket, m_delayRangeTop.toULong());
-	sendAsBytes<quint32>(socket, m_delayAverage.toULong());
+	appendAsBytes<quint8>(buffer, m_delayMethod);
+	appendAsBytes<quint32>(buffer, m_delayConstant.toULong());
+	appendAsBytes<quint32>(buffer, m_delayRangeBottom.toULong());
+	appendAsBytes<quint32>(buffer, m_delayRangeTop.toULong());
+	appendAsBytes<quint32>(buffer, m_delayAverage.toULong());
 }
 
-void QTrafficGenerator::sendHeaders(QTcpSocket *socket)
+void QTrafficGenerator::appendHeaders(QByteArray *buffer)
 {
-	if(!socket) return;
+	if(!buffer) return;
 	if(!m_enable) return;
 
-	socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(socket, MSG_ID_TG_HEADERS);
-	sendAsBytes<quint16>(socket, m_headersLength + 1);
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_TG_HEADERS);
+	appendAsBytes<quint16>(buffer, m_headersLength + 1);
 
-	sendAsBytes<quint8>(socket, m_idx);
-	socket->write(m_headers);
+	appendAsBytes<quint8>(buffer, m_idx);
+	buffer->append(m_headers);
 }
 
 void QTrafficGenerator::loadHeaders(QUrl url)

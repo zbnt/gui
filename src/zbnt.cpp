@@ -45,13 +45,35 @@ ZBNT::ZBNT() : QObject(nullptr)
 	m_discovery = new QDiscoveryClient(this);
 	QTimer::singleShot(1000, this, &ZBNT::scanDevices);
 
-	m_socket = new QTcpSocket(this);
-	m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+	m_netThread = new QThread();
+	m_netThread->start();
 
-	connect(m_socket, &QTcpSocket::stateChanged, this, &ZBNT::onNetworkStateChanged);
-	connect(m_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), this, &ZBNT::onNetworkError);
-	connect(m_socket, &QTcpSocket::readyRead, this, &ZBNT::onReadyRead);
+	m_netWorker = new QNetworkWorker();
+	m_netWorker->setLatencyMeasurer(m_lm0);
+	m_netWorker->setStatsCollectors(m_sc0, m_sc1, m_sc2, m_sc3);
+	m_netWorker->setFrameDetector(m_fd0);
+	m_netWorker->moveToThread(m_netThread);
+	QTimer::singleShot(0, m_netWorker, &QNetworkWorker::startWork);
+
+	m_updateTimer = new QTimer(this);
+	m_updateTimer->setInterval(200);
+	m_updateTimer->setSingleShot(false);
+	m_updateTimer->start();
+
+	connect(m_updateTimer, &QTimer::timeout, this, &ZBNT::updateMeasurements);
+
 	connect(m_discovery, &QDiscoveryClient::deviceDiscovered, this, &ZBNT::onDeviceDiscovered);
+
+	connect(this, &ZBNT::reqConnectToBoard, m_netWorker, &QNetworkWorker::connectToBoard);
+	connect(this, &ZBNT::reqDisconnectFromBoard, m_netWorker, &QNetworkWorker::disconnectFromBoard);
+	connect(this, &ZBNT::reqSendData, m_netWorker, &QNetworkWorker::sendData);
+	connect(this, &ZBNT::reqStartRun, m_netWorker, &QNetworkWorker::startRun);
+	connect(this, &ZBNT::reqStopRun, m_netWorker, &QNetworkWorker::stopRun);
+
+	connect(m_netWorker, &QNetworkWorker::timeChanged, this, &ZBNT::onTimeChanged);
+	connect(m_netWorker, &QNetworkWorker::runningChanged, this, &ZBNT::onRunningChanged);
+	connect(m_netWorker, &QNetworkWorker::connectedChanged, this, &ZBNT::onConnectedChanged);
+	connect(m_netWorker, &QNetworkWorker::connectionError, this, &ZBNT::onConnectionError);
 }
 
 ZBNT::~ZBNT()
@@ -59,59 +81,65 @@ ZBNT::~ZBNT()
 
 void ZBNT::sendSettings()
 {
+	QByteArray txData;
+
 	// Send a stop message, this will reset the board peripherals
 
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_STOP);
-	sendAsBytes<quint16>(m_socket, 0);
+	txData.append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(&txData, MSG_ID_STOP);
+	appendAsBytes<quint16>(&txData, 0);
 
 	// Reprogram the board if needed
 
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_SET_BITSTREAM);
-	sendAsBytes<quint16>(m_socket, 1);
-	sendAsBytes<quint8>(m_socket, m_bitstreamID);
+	txData.append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(&txData, MSG_ID_SET_BITSTREAM);
+	appendAsBytes<quint16>(&txData, 1);
+	appendAsBytes<quint8>(&txData, m_bitstreamID);
 
 	// Traffic generators
 
-	m_tg0->sendSettings(m_socket);
-	m_tg1->sendSettings(m_socket);
-	m_tg0->sendHeaders(m_socket);
-	m_tg1->sendHeaders(m_socket);
+	m_tg0->appendSettings(&txData);
+	m_tg1->appendSettings(&txData);
+	m_tg0->appendHeaders(&txData);
+	m_tg1->appendHeaders(&txData);
 
 	if(m_bitstreamID == QuadTGen)
 	{
-		m_tg2->sendSettings(m_socket);
-		m_tg3->sendSettings(m_socket);
-		m_tg2->sendHeaders(m_socket);
-		m_tg3->sendHeaders(m_socket);
+		m_tg2->appendSettings(&txData);
+		m_tg3->appendSettings(&txData);
+		m_tg2->appendHeaders(&txData);
+		m_tg3->appendHeaders(&txData);
 	}
 
 	// Latency measurer
 
 	if(m_bitstreamID == DualTGenLM)
 	{
-		m_lm0->sendSettings(m_socket);
+		m_lm0->appendSettings(&txData);
 	}
 
 	// Frame detector
 
 	if(m_bitstreamID == DualTGenFD)
 	{
-		m_fd0->sendSettings(m_socket);
-		m_fd0->sendPatterns(m_socket);
+		m_fd0->appendSettings(&txData);
+		m_fd0->appendPatterns(&txData);
 	}
 
 	// Send start message
 
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_START);
-	sendAsBytes<quint16>(m_socket, 12);
-	sendAsBytes<quint64>(m_socket, m_runTime);
-	sendAsBytes<quint8>(m_socket, m_enableSC0);
-	sendAsBytes<quint8>(m_socket, m_enableSC1);
-	sendAsBytes<quint8>(m_socket, m_enableSC2);
-	sendAsBytes<quint8>(m_socket, m_enableSC3);
+	txData.append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(&txData, MSG_ID_START);
+	appendAsBytes<quint16>(&txData, 12);
+	appendAsBytes<quint64>(&txData, m_runTime);
+	appendAsBytes<quint8>(&txData, m_enableSC0);
+	appendAsBytes<quint8>(&txData, m_enableSC1);
+	appendAsBytes<quint8>(&txData, m_enableSC2);
+	appendAsBytes<quint8>(&txData, m_enableSC3);
+
+	// Send request to network thread
+
+	emit reqSendData(txData);
 }
 
 QString ZBNT::cyclesToTime(QString cycles)
@@ -121,75 +149,54 @@ QString ZBNT::cyclesToTime(QString cycles)
 	return res;
 }
 
+void ZBNT::connectToBoard()
+{
+	emit reqConnectToBoard(m_ip);
+}
+
+void ZBNT::disconnectFromBoard()
+{
+	emit reqDisconnectFromBoard();
+}
+
+void ZBNT::startRun()
+{
+	emit reqStartRun(m_exportResults);
+	sendSettings();
+}
+
+void ZBNT::stopRun()
+{
+	QByteArray txData;
+	txData.append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(&txData, MSG_ID_STOP);
+	appendAsBytes<quint16>(&txData, 0);
+	emit reqSendData(txData);
+
+	m_running = false;
+	emit reqStopRun();
+}
+
+void ZBNT::updateMeasurements()
+{
+	if(m_running)
+	{
+		m_lm0->updateDisplayedValues();
+		m_sc0->updateDisplayedValues();
+		m_sc1->updateDisplayedValues();
+		m_sc2->updateDisplayedValues();
+		m_sc3->updateDisplayedValues();
+		m_fd0->updateDisplayedValues();
+		m_netWorker->updateDisplayedValues();
+	}
+}
+
 void ZBNT::scanDevices()
 {
 	m_deviceList.clear();
 	emit devicesChanged();
 
 	m_discovery->findDevices();
-}
-
-void ZBNT::connectToBoard()
-{
-	m_socket->connectToHost(m_ip, MSG_TCP_PORT);
-}
-
-void ZBNT::disconnectFromBoard()
-{
-	m_socket->disconnectFromHost();
-}
-
-void ZBNT::startRun()
-{
-	if(m_exportResults)
-	{
-		QString timeStamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
-
-		m_sc0->enableLogging(QString("measurements_") + timeStamp + "_sc0.csv");
-		m_sc1->enableLogging(QString("measurements_") + timeStamp + "_sc1.csv");
-		m_sc2->enableLogging(QString("measurements_") + timeStamp + "_sc2.csv");
-		m_sc3->enableLogging(QString("measurements_") + timeStamp + "_sc3.csv");
-		m_lm0->enableLogging(QString("measurements_") + timeStamp + "_lm0.csv");
-		m_fd0->enableLogging(QString("measurements_") + timeStamp + "_fd0.csv");
-	}
-
-	m_sc0->resetMeasurement();
-	m_sc1->resetMeasurement();
-	m_sc2->resetMeasurement();
-	m_sc3->resetMeasurement();
-	m_lm0->resetMeasurement();
-
-	m_currentTime = 0;
-	m_currentProgress = 0;
-	emit measurementChanged();
-
-	sendSettings();
-	m_running = true;
-	emit runningChanged();
-}
-
-void ZBNT::stopRun()
-{
-	m_socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(m_socket, MSG_ID_STOP);
-	sendAsBytes<quint16>(m_socket, 0);
-
-	onRunEnd();
-}
-
-void ZBNT::onRunEnd()
-{
-	m_running = false;
-
-	m_sc0->disableLogging();
-	m_sc1->disableLogging();
-	m_sc2->disableLogging();
-	m_sc3->disableLogging();
-	m_lm0->disableLogging();
-	m_fd0->disableLogging();
-
-	emit measurementChanged();
-	emit runningChanged();
 }
 
 quint32 ZBNT::networkVersion()
@@ -217,102 +224,40 @@ void ZBNT::setCurrentTime(QString time)
 	m_currentTime = time.toULongLong();
 }
 
-void ZBNT::onMessageReceived(quint8 id, const QByteArray &data)
+void ZBNT::onTimeChanged(quint64 time)
 {
-	switch(id)
+	m_currentTime = time;
+	m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
+	emit timeChanged();
+}
+
+void ZBNT::onRunningChanged(bool running)
+{
+	if(!running)
 	{
-		case MSG_ID_DONE:
+		updateMeasurements();
+
+		if(m_running)
 		{
 			m_currentTime = m_runTime;
 			m_currentProgress = 2048;
-			onRunEnd();
-
-			emit measurementChanged();
-			break;
+			emit timeChanged();
 		}
-
-		case MSG_ID_MEASUREMENT_LM:
-		{
-			if(data.length() < 40) return;
-
-			quint64 time = readAsNumber<quint64>(data, 0);
-
-			if(time > m_currentTime)
-			{
-				m_currentTime = time;
-				m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
-			}
-
-			m_lm0->receiveMeasurement(data);
-
-			emit measurementChanged();
-			break;
-		}
-
-		case MSG_ID_MEASUREMENT_FD:
-		{
-			if(data.length() < 12) return;
-
-			quint64 time = readAsNumber<quint64>(data, 0);
-
-			if(time > m_currentTime)
-			{
-				m_currentTime = time;
-				m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
-			}
-
-			m_fd0->receiveMeasurement(data);
-
-			emit measurementChanged();
-			break;
-		}
-
-		case MSG_ID_MEASUREMENT_SC:
-		{
-			if(data.length() < 57) return;
-
-			quint8 idx = readAsNumber<quint8>(data, 0);
-			quint64 time = readAsNumber<quint64>(data, 1);
-
-			if(time > m_currentTime)
-			{
-				m_currentTime = time;
-				m_currentProgress = (m_currentTime / double(m_runTime)) * 2048;
-			}
-
-			switch(idx)
-			{
-				case 0:
-				{
-					m_sc0->receiveMeasurement(data);
-					break;
-				}
-
-				case 1:
-				{
-					m_sc1->receiveMeasurement(data);
-					break;
-				}
-
-				case 2:
-				{
-					m_sc2->receiveMeasurement(data);
-					break;
-				}
-
-				case 3:
-				{
-					m_sc3->receiveMeasurement(data);
-					break;
-				}
-			}
-
-			emit measurementChanged();
-			break;
-		}
-
-		default: return;
 	}
+
+	m_running = running;
+	emit runningChanged();
+}
+
+void ZBNT::onConnectedChanged(quint8 connected)
+{
+	m_connected = connected;
+	emit connectedChanged();
+}
+
+void ZBNT::onConnectionError(QString error)
+{
+	emit connectionError(error);
 }
 
 void ZBNT::onDeviceDiscovered(const QByteArray &data)
@@ -355,68 +300,4 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 	}
 
 	emit devicesChanged();
-}
-
-void ZBNT::onNetworkStateChanged(QAbstractSocket::SocketState state)
-{
-	switch(state)
-	{
-		case QAbstractSocket::UnconnectedState:
-		{
-			m_connected = Disconnected;
-			m_running = false;
-			break;
-		}
-
-		case QAbstractSocket::ConnectingState:
-		{
-			m_connected = Connecting;
-			break;
-		}
-
-		case QAbstractSocket::ConnectedState:
-		{
-			m_connected = Connected;
-			break;
-		}
-
-		default: { }
-	}
-
-	emit runningChanged();
-	emit connectedChanged();
-}
-
-void ZBNT::onNetworkError(QAbstractSocket::SocketError error)
-{
-	switch(error)
-	{
-		case QAbstractSocket::NetworkError:
-		{
-			emit connectionError("Unreachable address");
-			break;
-		}
-
-		case QAbstractSocket::SocketTimeoutError:
-		{
-			emit connectionError("Timeout");
-			break;
-		}
-
-		case QAbstractSocket::ConnectionRefusedError:
-		{
-			emit connectionError("Connection refused");
-			break;
-		}
-
-		default:
-		{
-			emit connectionError("Unknown error");
-		}
-	}
-}
-
-void ZBNT::onReadyRead()
-{
-	handleIncomingData(m_socket->readAll());
 }

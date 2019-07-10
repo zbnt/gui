@@ -19,6 +19,8 @@
 #pragma once
 
 #include <QTcpSocket>
+#include <QThread>
+#include <QTimer>
 #include <QUrl>
 
 #include <QTrafficGenerator.hpp>
@@ -29,8 +31,9 @@
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
 #include <QDiscoveryClient.hpp>
+#include <QNetworkWorker.hpp>
 
-class ZBNT : public QObject, public MessageReceiver
+class ZBNT : public QObject
 {
 	Q_OBJECT
 
@@ -49,8 +52,8 @@ class ZBNT : public QObject, public MessageReceiver
 	Q_PROPERTY(bool enableSC3 MEMBER m_enableSC3 NOTIFY settingsChanged)
 	Q_PROPERTY(quint8 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
 
-	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY measurementChanged)
-	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY measurementChanged)
+	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY timeChanged)
+	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY timeChanged)
 
 	Q_PROPERTY(QTrafficGenerator *tg0 MEMBER m_tg0 CONSTANT)
 	Q_PROPERTY(QTrafficGenerator *tg1 MEMBER m_tg1 CONSTANT)
@@ -95,7 +98,7 @@ public slots:
 
 	void startRun();
 	void stopRun();
-	void onRunEnd();
+	void updateMeasurements();
 
 	quint32 networkVersion();
 
@@ -105,26 +108,34 @@ public slots:
 	QString currentTime();
 	void setCurrentTime(QString time);
 
+	void onTimeChanged(quint64 time);
+	void onRunningChanged(bool running);
+	void onConnectedChanged(quint8 connected);
+	void onConnectionError(QString error);
+
 signals:
+	void timeChanged();
 	void devicesChanged();
-	void runningChanged();
 	void settingsChanged();
+
+	void runningChanged();
 	void connectedChanged();
-	void measurementChanged();
 	void connectionError(QString error);
 
-private slots:
-	void onMessageReceived(quint8 id, const QByteArray &data);
-	void onDeviceDiscovered(const QByteArray &data);
+	void reqConnectToBoard(const QString &ip);
+	void reqDisconnectFromBoard();
+	void reqSendData(const QByteArray &data);
+	void reqStartRun(bool exportResults);
+	void reqStopRun();
 
-	void onNetworkStateChanged(QAbstractSocket::SocketState state);
-	void onNetworkError(QAbstractSocket::SocketError error);
-	void onReadyRead();
+private slots:
+	void onDeviceDiscovered(const QByteArray &data);
 
 private:
 	QDiscoveryClient *m_discovery = nullptr;
-	QTcpSocket *m_socket = nullptr;
-	QByteArray m_readBuffer;
+	QNetworkWorker *m_netWorker = nullptr;
+	QThread *m_netThread = nullptr;
+	QTimer *m_updateTimer = nullptr;
 
 	bool m_running = false;
 	quint8 m_connected = 0;

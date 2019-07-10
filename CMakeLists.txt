@@ -14,6 +14,7 @@ set(ZBNT_GUI_SRC
 	"src/Utils.cpp"
 
 	"src/zbnt.cpp"
+	"src/QNetworkWorker.cpp"
 	"src/MessageReceiver.cpp"
 	"src/QDiscoveryClient.cpp"
 
@@ -29,6 +30,7 @@ set(ZBNT_GUI_SRC
 
 set(ZBNT_GUI_HDR
 	"include/zbnt.hpp"
+	"include/QNetworkWorker.hpp"
 	"include/QDiscoveryClient.hpp"
 
 	"include/QStatsCollector.hpp"
@@ -49,4 +51,4 @@ qt5_wrap_cpp(ZBNT_GUI_SRC_MOC ${ZBNT_GUI_HDR})
 qt5_add_resources(ZBNT_GUI_SRC_RES ${ZBNT_GUI_RES})
 
 add_executable(zbnt_gui ${ZBNT_GUI_SRC} ${ZBNT_GUI_SRC_RES} ${ZBNT_GUI_SRC_MOC})
-target_link_libraries(zbnt_gui Qt5::Core Qt5::Gui Qt5::Network Qt5::Qml Qt5::Widgets)
+target_link_libraries(zbnt_gui Qt5::Core Qt5::Gui Qt5::Network Qt5::Qml Qt5::Widgets -lpthread)

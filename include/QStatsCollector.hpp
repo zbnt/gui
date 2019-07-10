@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QObject>
+#include <QMutex>
 #include <QFile>
 
 class QStatsCollector : public QObject
@@ -32,12 +33,25 @@ class QStatsCollector : public QObject
 	Q_PROPERTY(QString rxGood READ rxGood NOTIFY measurementChanged)
 	Q_PROPERTY(QString rxBad READ rxBad NOTIFY measurementChanged)
 
+	struct Measurement
+	{
+		quint64 time = 0;
+		quint64 txBytes = 0;
+		quint64 txGood = 0;
+		quint64 txBad = 0;
+		quint64 rxBytes = 0;
+		quint64 rxGood = 0;
+		quint64 rxBad = 0;
+	};
+
 public:
 	QStatsCollector(QObject *parent = nullptr);
 	~QStatsCollector();
 
 	void enableLogging(const QString &fileName);
 	void disableLogging();
+
+	void updateDisplayedValues();
 
 	void receiveMeasurement(const QByteArray &measurement);
 	void resetMeasurement();
@@ -55,12 +69,8 @@ signals:
 	void measurementChanged();
 
 private:
-	quint64 m_txBytes = 0;
-	quint64 m_txGood = 0;
-	quint64 m_txBad = 0;
-	quint64 m_rxBytes = 0;
-	quint64 m_rxGood = 0;
-	quint64 m_rxBad = 0;
+	Measurement m_currentValues, m_displayedValues;
+	QMutex m_mutex;
 
 	QFile m_logFile;
 };

@@ -19,8 +19,8 @@
 #pragma once
 
 #include <QObject>
+#include <QMutex>
 #include <QFile>
-#include <QTcpSocket>
 
 class QLatencyMeasurer : public QObject
 {
@@ -37,6 +37,16 @@ class QLatencyMeasurer : public QObject
 	Q_PROPERTY(QString lastPing READ lastPing NOTIFY measurementChanged)
 	Q_PROPERTY(QString lastPong READ lastPong NOTIFY measurementChanged)
 
+	struct Measurement
+	{
+		quint64 time = 0;
+		quint64 numPingPongs = 0;
+		quint64 numLostPings = 0;
+		quint64 numLostPongs = 0;
+		quint64 lastPing = 0;
+		quint64 lastPong = 0;
+	};
+
 public:
 	QLatencyMeasurer(QObject *parent = nullptr);
 	~QLatencyMeasurer();
@@ -44,7 +54,9 @@ public:
 	void enableLogging(const QString &fileName);
 	void disableLogging();
 
-	void sendSettings(QTcpSocket *socket);
+	void updateDisplayedValues();
+
+	void appendSettings(QByteArray *buffer);
 	void receiveMeasurement(const QByteArray &measurement);
 	void resetMeasurement();
 
@@ -65,11 +77,8 @@ private:
 	QString m_period;
 	QString m_timeout;
 
-	quint64 m_numPingPongs = 0;
-	quint64 m_numLostPings = 0;
-	quint64 m_numLostPongs = 0;
-	quint64 m_lastPing = 0;
-	quint64 m_lastPong = 0;
+	Measurement m_currentValues, m_displayedValues;
+	QMutex m_mutex;
 
 	QFile m_logFile;
 };

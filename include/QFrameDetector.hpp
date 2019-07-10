@@ -22,8 +22,8 @@
 #include <QUrl>
 #include <QFile>
 #include <QList>
+#include <QMutex>
 #include <QVariant>
-#include <QTcpSocket>
 
 #define PATTERN_MEM_SIZE 1536
 
@@ -33,6 +33,12 @@ class QFrameDetector : public QObject
 
 	Q_PROPERTY(QVariantList patternPath MEMBER m_patternPath NOTIFY patternsChanged)
 
+	struct Measurement
+	{
+		quint64 time = 0;
+		quint32 matched = 0;
+	};
+
 public:
 	QFrameDetector(QObject *parent = nullptr);
 	~QFrameDetector();
@@ -40,8 +46,10 @@ public:
 	void enableLogging(const QString &fileName);
 	void disableLogging();
 
-	void sendSettings(QTcpSocket *socket);
-	void sendPatterns(QTcpSocket *socket);
+	void updateDisplayedValues();
+
+	void appendSettings(QByteArray *buffer);
+	void appendPatterns(QByteArray *buffer);
 	void receiveMeasurement(const QByteArray &measurement);
 
 public slots:
@@ -50,10 +58,15 @@ public slots:
 
 signals:
 	void patternsChanged();
+	void measurementChanged();
 
 private:
 	QVariantList m_patternPath;
 	quint32 m_patternsA[PATTERN_MEM_SIZE];
 	quint32 m_patternsB[PATTERN_MEM_SIZE];
+
+	Measurement m_currentValues, m_displayedValues;
+	QMutex m_mutex;
+
 	QFile m_logFile;
 };

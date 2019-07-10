@@ -53,9 +53,18 @@ void QFrameDetector::disableLogging()
 	if(m_logFile.isOpen()) m_logFile.close();
 }
 
-void QFrameDetector::sendSettings(QTcpSocket *socket)
+void QFrameDetector::updateDisplayedValues()
 {
-	if(!socket) return;
+	QMutexLocker lock(&m_mutex);
+
+	memcpy(&m_displayedValues, &m_currentValues, sizeof(Measurement));
+
+	emit measurementChanged();
+}
+
+void QFrameDetector::appendSettings(QByteArray *buffer)
+{
+	if(!buffer) return;
 
 	quint8 enable = 0;
 
@@ -67,44 +76,48 @@ void QFrameDetector::sendSettings(QTcpSocket *socket)
 		}
 	}
 
-	socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(socket, MSG_ID_FD_CFG);
-	sendAsBytes<quint16>(socket, 2);
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_FD_CFG);
+	appendAsBytes<quint16>(buffer, 2);
 
-	sendAsBytes<quint8>(socket, !!enable);
-	sendAsBytes<quint8>(socket, enable);
+	appendAsBytes<quint8>(buffer, !!enable);
+	appendAsBytes<quint8>(buffer, enable);
 }
 
-void QFrameDetector::sendPatterns(QTcpSocket *socket)
+void QFrameDetector::appendPatterns(QByteArray *buffer)
 {
-	if(!socket) return;
+	if(!buffer) return;
 
-	socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(socket, MSG_ID_FD_PATTERNS);
-	sendAsBytes<quint16>(socket, PATTERN_MEM_SIZE * 4 + 1);
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_FD_PATTERNS);
+	appendAsBytes<quint16>(buffer, PATTERN_MEM_SIZE * 4 + 1);
 
-	sendAsBytes<quint8>(socket, 0);
-	socket->write(QByteArray((const char*) m_patternsA, PATTERN_MEM_SIZE * 4));
+	appendAsBytes<quint8>(buffer, 0);
+	buffer->append(QByteArray((const char*) m_patternsA, PATTERN_MEM_SIZE * 4));
 
-	socket->write(MSG_MAGIC_IDENTIFIER, 4);
-	sendAsBytes<quint8>(socket, MSG_ID_FD_PATTERNS);
-	sendAsBytes<quint16>(socket, PATTERN_MEM_SIZE * 4 + 1);
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_FD_PATTERNS);
+	appendAsBytes<quint16>(buffer, PATTERN_MEM_SIZE * 4 + 1);
 
-	sendAsBytes<quint8>(socket, 1);
-	socket->write(QByteArray((const char*) m_patternsB, PATTERN_MEM_SIZE * 4));
+	appendAsBytes<quint8>(buffer, 1);
+	buffer->append(QByteArray((const char*) m_patternsB, PATTERN_MEM_SIZE * 4));
 }
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 {
-	quint64 time = readAsNumber<quint64>(measurement, 0);
-	quint32 matches = readAsNumber<quint32>(measurement, 8);
+	m_mutex.lock();
+
+	m_currentValues.time = readAsNumber<quint64>(measurement, 0);
+	m_currentValues.matched = readAsNumber<quint32>(measurement, 8);
+
+	m_mutex.unlock();
 
 	if(m_logFile.isWritable())
 	{
-		m_logFile.write(QByteArray::number(time));
-		m_logFile.write(",");
-		m_logFile.write(QByteArray::number(matches));
-		m_logFile.write("\n");
+		m_logFile.write(QByteArray::number(m_currentValues.time));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.matched));
+		m_logFile.putChar('\n');
 	}
 }
 
