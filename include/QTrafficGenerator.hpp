@@ -43,6 +43,10 @@ class QTrafficGenerator : public QObject
 	Q_PROPERTY(QString delayRangeBottom MEMBER m_delayRangeBottom NOTIFY settingsChanged)
 	Q_PROPERTY(QString delayAverage MEMBER m_delayAverage NOTIFY settingsChanged)
 
+	Q_PROPERTY(quint8 burstEnable MEMBER m_burstEnable NOTIFY settingsChanged)
+	Q_PROPERTY(QString burstOnTime MEMBER m_burstOnTime NOTIFY settingsChanged)
+	Q_PROPERTY(QString burstOffTime MEMBER m_burstOffTime NOTIFY settingsChanged)
+
 public:
 	QTrafficGenerator(QObject *parent = nullptr);
 	~QTrafficGenerator();
@@ -79,4 +83,8 @@ private:
 	QString m_delayRangeTop;
 	QString m_delayRangeBottom;
 	QString m_delayAverage;
+
+	quint8 m_burstEnable = 0;
+	QString m_burstOnTime;
+	QString m_burstOffTime;
 };

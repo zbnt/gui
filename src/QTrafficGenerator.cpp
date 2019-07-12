@@ -40,7 +40,7 @@ void QTrafficGenerator::appendSettings(QByteArray *buffer)
 
 	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
 	appendAsBytes<quint8>(buffer, MSG_ID_TG_CFG);
-	appendAsBytes<quint16>(buffer, 28);
+	appendAsBytes<quint16>(buffer, 33);
 
 	appendAsBytes<quint8>(buffer, m_idx);
 	appendAsBytes<quint8>(buffer, m_enable);
@@ -56,6 +56,10 @@ void QTrafficGenerator::appendSettings(QByteArray *buffer)
 	appendAsBytes<quint32>(buffer, m_delayRangeBottom.toULong());
 	appendAsBytes<quint32>(buffer, m_delayRangeTop.toULong());
 	appendAsBytes<quint32>(buffer, m_delayAverage.toULong());
+
+	appendAsBytes<quint8>(buffer, m_burstEnable);
+	appendAsBytes<quint16>(buffer, m_burstOnTime.toULong());
+	appendAsBytes<quint16>(buffer, m_burstOffTime.toULong());
 }
 
 void QTrafficGenerator::appendHeaders(QByteArray *buffer)

@@ -27,7 +27,7 @@ Item {
 	id: root
 
 	property var object: undefined
-	property bool ready: !enableInput.checked || (headersLoaded && delayMethodSelector.valid)
+	property bool ready: !enableInput.checked || (headersLoaded && delayMethodSelector.valid && (!burstEnableInput.checked || (burstOnTimeInput.valid && burstOffTimeInput.valid)))
 
 	property bool headersLoaded: object.headersLoaded
 	property string headersPath: object.headersPath
@@ -35,16 +35,22 @@ Item {
 
 	Component.onCompleted: {
 		object.enable = Qt.binding(function() { return enableInput.checked })
+
 		object.paddingMethod = Qt.binding(function() { return paddingMethodSelector.currentIndex })
 		object.paddingConstant = Qt.binding(function() { return paddingConstantInput.value })
 		object.paddingRangeBottom = Qt.binding(function() { return paddingRangeBottomInput.value })
 		object.paddingRangeTop = Qt.binding(function() { return paddingRangeTopInput.value })
 		object.paddingAverage = Qt.binding(function() { return paddingAverageInput.value })
+
 		object.delayMethod = Qt.binding(function() { return delayMethodSelector.currentIndex })
 		object.delayConstant = Qt.binding(function() { return delayConstantInput.text })
 		object.delayRangeBottom = Qt.binding(function() { return delayRangeBottomInput.text })
 		object.delayRangeTop = Qt.binding(function() { return delayRangeTopInput.text })
 		object.delayAverage = Qt.binding(function() { return delayAverageInput.text })
+
+		object.burstEnable = Qt.binding(function() { return burstEnableInput.checked })
+		object.burstOnTime = Qt.binding(function() { return burstOnTimeInput.text })
+		object.burstOffTime = Qt.binding(function() { return burstOffTimeInput.text })
 	}
 
 	FileDialog {
@@ -455,6 +461,99 @@ Item {
 			valid: delayAverageInput.valid
 			normalText: ZBNT.cyclesToTime(delayAverageInput.text) + " per frame"
 			errorText: delayAverageInput.validator.error
+		}
+
+		Item {
+			Layout.columnSpan: 2
+			Layout.minimumHeight: 12
+		}
+
+		Label {
+			text: "Burst mode:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		CheckBox {
+			id: burstEnableInput
+			checked: false
+			Layout.fillWidth: true
+		}
+
+		Label {
+			text: "Time on:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		RowLayout {
+			Layout.fillWidth: true
+
+			UInt64Field {
+				id: burstOnTimeInput
+				enabled: burstEnableInput.checked
+				horizontalAlignment: Qt.AlignHCenter
+
+				min: "1"
+				max: "65535"
+
+				Layout.fillWidth: true
+			}
+
+			Label {
+				text: " ms"
+			}
+		}
+
+		Label {
+			visible: !burstOnTimeInput.valid
+			Layout.minimumHeight: 24
+		}
+
+		ErrorLabel {
+			enabled: burstOnTimeInput.enabled
+			valid: burstOnTimeInput.valid
+			visible: !valid
+			normalText: ""
+			errorText: burstOnTimeInput.validator.error
+			Layout.alignment: Qt.AlignTop | Qt.AlignLeft
+		}
+
+		Label {
+			text: "Time off:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		RowLayout {
+			Layout.fillWidth: true
+
+			UInt64Field {
+				id: burstOffTimeInput
+				enabled: burstEnableInput.checked
+				horizontalAlignment: Qt.AlignHCenter
+
+				min: "1"
+				max: "65535"
+
+				Layout.fillWidth: true
+			}
+
+			Label {
+				text: " ms"
+			}
+		}
+
+		Label {
+			visible: !burstOffTimeInput.valid
+		}
+
+		ErrorLabel {
+			enabled: burstOffTimeInput.enabled
+			valid: burstOffTimeInput.valid
+			visible: !valid
+			normalText: ""
+			errorText: burstOffTimeInput.validator.error
 		}
 
 		Item { Layout.fillHeight: true }
