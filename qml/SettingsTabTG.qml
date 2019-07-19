@@ -27,7 +27,7 @@ Item {
 	id: root
 
 	property var object: undefined
-	property bool ready: !enableInput.checked || (headersLoaded && delayMethodSelector.valid && (!burstEnableInput.checked || (burstOnTimeInput.valid && burstOffTimeInput.valid)))
+	property bool ready: (!enableInput.checked && !ZBNT.streamMode) || (headersLoaded && delayMethodSelector.valid && (!burstEnableInput.checked || (burstOnTimeInput.valid && burstOffTimeInput.valid))) || (!ZBNT.streamMode && headersLoaded)
 
 	property bool headersLoaded: object.headersLoaded
 	property string headersPath: object.headersPath
@@ -89,6 +89,7 @@ Item {
 		CheckBox {
 			id: enableInput
 			checked: false
+			enabled: !ZBNT.streamMode
 			Layout.fillWidth: true
 		}
 
@@ -104,14 +105,14 @@ Item {
 			TextField {
 				readOnly: true
 				text: root.headersPath
-				enabled: enableInput.checked
+				enabled: enableInput.checked || ZBNT.streamMode
 				color: !enabled ? DisabledLabel.color : ((root.headersLength >= 14 && root.headersLength <= 1500) ? DefaultLabel.color : "#e53935")
 				Layout.fillWidth: true
 			}
 
 			Button {
 				text: "Open"
-				enabled: enableInput.checked
+				enabled: enableInput.checked || ZBNT.streamMode
 				focus: false
 				focusPolicy: Qt.NoFocus
 
@@ -125,7 +126,7 @@ Item {
 
 		ErrorLabel {
 			valid: root.headersLoaded && root.headersLength >= 14 && root.headersLength <= 1500
-			enabled: enableInput.checked
+			enabled: enableInput.checked || ZBNT.streamMode
 			normalText: root.headersLength + " bytes"
 			errorText: !root.headersLoaded ? "No file selected" : (normalText + " - Must be at " + (root.headersLength >= 14 ? "most 1500" : "least 64") + " bytes")
 			font.italic: true
@@ -144,7 +145,7 @@ Item {
 
 		ComboBox {
 			id: paddingMethodSelector
-			enabled: root.headersLoaded && enableInput.checked && root.headersLength >= 14 && root.headersLength < 1500
+			enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode && root.headersLength >= 14 && root.headersLength < 1500
 
 			Layout.fillWidth: true
 
@@ -173,7 +174,7 @@ Item {
 				to: 1500 - root.headersLength
 
 				editable: true
-				enabled: root.headersLoaded && enableInput.checked && root.headersLength >= 14 && root.headersLength < 1500
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode && root.headersLength >= 14 && root.headersLength < 1500
 
 				Layout.fillWidth: true
 			}
@@ -201,7 +202,7 @@ Item {
 				to: 1500 - root.headersLength
 
 				editable: true
-				enabled: root.headersLoaded && enableInput.checked
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 
 				onValueChanged: {
 					if(value > paddingRangeTopInput.value)
@@ -222,7 +223,7 @@ Item {
 				to: 1500 - root.headersLength
 
 				editable: true
-				enabled: root.headersLoaded && enableInput.checked
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 
 				onValueChanged: {
 					if(paddingRangeBottomInput.value > value)
@@ -255,7 +256,7 @@ Item {
 				to: 1500 - root.headersLength
 
 				editable: true
-				enabled: root.headersLoaded && enableInput.checked
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 
 				Layout.fillWidth: true
 			}
@@ -278,7 +279,7 @@ Item {
 
 		ComboBox {
 			id: delayMethodSelector
-			enabled: root.headersLoaded && enableInput.checked
+			enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 			Layout.fillWidth: true
 
 			property bool valid: [delayConstantInput.valid, delayRangeBottomInput.valid && delayRangeTopInput.valid && delayRangeValidator.valid, delayAverageInput.valid][currentIndex]
@@ -303,7 +304,7 @@ Item {
 
 			UInt64Field {
 				id: delayConstantInput
-				enabled: root.headersLoaded && enableInput.checked
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 				horizontalAlignment: Qt.AlignHCenter
 
 				min: "0"
@@ -342,7 +343,7 @@ Item {
 
 			UInt64Field {
 				id: delayRangeBottomInput
-				enabled: root.headersLoaded && enableInput.checked
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 				horizontalAlignment: Qt.AlignHCenter
 
 				text: "0"
@@ -358,7 +359,7 @@ Item {
 
 			UInt64Field {
 				id: delayRangeTopInput
-				enabled: root.headersLoaded && enableInput.checked
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 				horizontalAlignment: Qt.AlignHCenter
 
 				text: "1"
@@ -437,7 +438,7 @@ Item {
 
 			UInt64Field {
 				id: delayAverageInput
-				enabled: root.headersLoaded && enableInput.checked
+				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
 				horizontalAlignment: Qt.AlignHCenter
 
 				min: "0"
@@ -477,6 +478,7 @@ Item {
 		CheckBox {
 			id: burstEnableInput
 			checked: false
+			enabled: enableInput.checked && !ZBNT.streamMode
 			Layout.fillWidth: true
 		}
 
@@ -491,7 +493,7 @@ Item {
 
 			UInt64Field {
 				id: burstOnTimeInput
-				enabled: burstEnableInput.checked
+				enabled: burstEnableInput.checked && enableInput.checked && !ZBNT.streamMode
 				horizontalAlignment: Qt.AlignHCenter
 
 				min: "1"
@@ -530,7 +532,7 @@ Item {
 
 			UInt64Field {
 				id: burstOffTimeInput
-				enabled: burstEnableInput.checked
+				enabled: burstEnableInput.checked && enableInput.checked && !ZBNT.streamMode
 				horizontalAlignment: Qt.AlignHCenter
 
 				min: "1"

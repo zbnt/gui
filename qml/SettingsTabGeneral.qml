@@ -29,6 +29,8 @@ Item {
 
 	Component.onCompleted: {
 		ZBNT.runTime = Qt.binding(function() { return runTimeInput.text })
+		ZBNT.streamPeriod = Qt.binding(function() { return streamPeriodInput.text })
+		ZBNT.streamMode = Qt.binding(function() { return streamModeInput.checked })
 		ZBNT.exportResults = Qt.binding(function() { return exportFilesInput.checked })
 		ZBNT.enableSC0 = Qt.binding(function() { return enableSC0Input.checked })
 		ZBNT.enableSC1 = Qt.binding(function() { return enableSC1Input.checked })
@@ -44,13 +46,28 @@ Item {
 		anchors.fill: parent
 
 		Label {
-			text: "Run time:"
+			text: "Streaming mode:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		CheckBox {
+			id: streamModeInput
+			checked: false
+			Layout.fillWidth: true
+			Layout.columnSpan: 2
+		}
+
+		Label {
+			text: !streamModeInput.checked ? "Run time:" : "Stream period:"
 			font.weight: Font.Bold
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
 		UInt64Field {
 			id: runTimeInput
+			visible: enabled
+			enabled: !streamModeInput.checked
 
 			min: "125000000"
 			max: "1152921504606846975"
@@ -58,17 +75,38 @@ Item {
 			Layout.fillWidth: true
 		}
 
+		UInt64Field {
+			id: streamPeriodInput
+			visible: enabled
+			enabled: streamModeInput.checked
+
+			min: "1"
+			max: "1000"
+
+			Layout.fillWidth: true
+		}
+
 		Label {
-			text: "cycles"
+			text: !streamModeInput.checked ? "cycles" : "ms"
 		}
 
 		Label { }
 
 		ErrorLabel {
 			enabled: runTimeInput.enabled
+			visible: !streamModeInput.checked
 			valid: runTimeInput.valid
 			normalText: ZBNT.cyclesToTime(runTimeInput.text)
 			errorText: runTimeInput.validator.error
+			Layout.columnSpan: 2
+		}
+
+		ErrorLabel {
+			enabled: streamPeriodInput.enabled
+			visible: streamModeInput.checked
+			valid: streamPeriodInput.valid
+			normalText: ""
+			errorText: streamPeriodInput.validator.error
 			Layout.columnSpan: 2
 		}
 
@@ -109,6 +147,7 @@ Item {
 		CheckBox {
 			id: exportFilesInput
 			checked: true
+			enabled: !ZBNT.streamMode
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
 		}
@@ -127,6 +166,7 @@ Item {
 		CheckBox {
 			id: enableSC0Input
 			checked: true
+			enabled: !ZBNT.streamMode
 			text: "eth0"
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
@@ -137,6 +177,7 @@ Item {
 		CheckBox {
 			id: enableSC1Input
 			checked: true
+			enabled: !ZBNT.streamMode
 			text: "eth1"
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
@@ -147,6 +188,7 @@ Item {
 		CheckBox {
 			id: enableSC2Input
 			checked: true
+			enabled: !ZBNT.streamMode
 			text: "eth2"
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
@@ -157,9 +199,15 @@ Item {
 		CheckBox {
 			id: enableSC3Input
 			checked: true
+			enabled: !ZBNT.streamMode
 			text: "eth3"
 			Layout.fillWidth: true
 			Layout.columnSpan: 2
+		}
+
+		Item {
+			Layout.columnSpan: 3
+			Layout.minimumHeight: 10
 		}
 
 		Item { Layout.fillHeight: true }

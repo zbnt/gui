@@ -44,7 +44,9 @@ class ZBNT : public QObject
 	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
 	Q_PROPERTY(quint32 networkVersion READ networkVersion CONSTANT)
 
+	Q_PROPERTY(bool streamMode MEMBER m_streamMode NOTIFY settingsChanged)
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
+	Q_PROPERTY(QString streamPeriod READ streamPeriod WRITE setStreamPeriod NOTIFY settingsChanged)
 	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
 	Q_PROPERTY(bool enableSC0 MEMBER m_enableSC0 NOTIFY settingsChanged)
 	Q_PROPERTY(bool enableSC1 MEMBER m_enableSC1 NOTIFY settingsChanged)
@@ -105,6 +107,9 @@ public slots:
 	QString runTime();
 	void setRunTime(QString time);
 
+	QString streamPeriod();
+	void setStreamPeriod(QString period);
+
 	QString currentTime();
 	void setCurrentTime(QString time);
 
@@ -144,6 +149,8 @@ private:
 	QVariantList m_deviceList;
 
 	quint64 m_runTime = 125000000ul;
+	quint16 m_streamPeriod = 1;
+	bool m_streamMode = false;
 	bool m_exportResults = true;
 	bool m_enableSC0 = true;
 	bool m_enableSC1 = true;

@@ -65,7 +65,6 @@ void QTrafficGenerator::appendSettings(QByteArray *buffer)
 void QTrafficGenerator::appendHeaders(QByteArray *buffer)
 {
 	if(!buffer) return;
-	if(!m_enable) return;
 
 	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
 	appendAsBytes<quint8>(buffer, MSG_ID_TG_HEADERS);

@@ -98,29 +98,37 @@ void ZBNT::sendSettings()
 
 	// Traffic generators
 
-	m_tg0->appendSettings(&txData);
-	m_tg1->appendSettings(&txData);
+	if(!m_streamMode)
+	{
+		m_tg0->appendSettings(&txData);
+		m_tg1->appendSettings(&txData);
+	}
+
 	m_tg0->appendHeaders(&txData);
 	m_tg1->appendHeaders(&txData);
 
 	if(m_bitstreamID == QuadTGen)
 	{
-		m_tg2->appendSettings(&txData);
-		m_tg3->appendSettings(&txData);
+		if(!m_streamMode)
+		{
+			m_tg2->appendSettings(&txData);
+			m_tg3->appendSettings(&txData);
+		}
+
 		m_tg2->appendHeaders(&txData);
 		m_tg3->appendHeaders(&txData);
 	}
 
 	// Latency measurer
 
-	if(m_bitstreamID == DualTGenLM)
+	if(m_bitstreamID == DualTGenLM && !m_streamMode)
 	{
 		m_lm0->appendSettings(&txData);
 	}
 
 	// Frame detector
 
-	if(m_bitstreamID == DualTGenFD)
+	if(m_bitstreamID == DualTGenFD && !m_streamMode)
 	{
 		m_fd0->appendSettings(&txData);
 		m_fd0->appendPatterns(&txData);
@@ -128,14 +136,24 @@ void ZBNT::sendSettings()
 
 	// Send start message
 
-	txData.append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(&txData, MSG_ID_START);
-	appendAsBytes<quint16>(&txData, 12);
-	appendAsBytes<quint64>(&txData, m_runTime);
-	appendAsBytes<quint8>(&txData, m_enableSC0);
-	appendAsBytes<quint8>(&txData, m_enableSC1);
-	appendAsBytes<quint8>(&txData, m_enableSC2);
-	appendAsBytes<quint8>(&txData, m_enableSC3);
+	if(!m_streamMode)
+	{
+		txData.append(MSG_MAGIC_IDENTIFIER, 4);
+		appendAsBytes<quint8>(&txData, MSG_ID_START);
+		appendAsBytes<quint16>(&txData, 12);
+		appendAsBytes<quint64>(&txData, m_runTime);
+		appendAsBytes<quint8>(&txData, m_enableSC0);
+		appendAsBytes<quint8>(&txData, m_enableSC1);
+		appendAsBytes<quint8>(&txData, m_enableSC2);
+		appendAsBytes<quint8>(&txData, m_enableSC3);
+	}
+	else
+	{
+		txData.append(MSG_MAGIC_IDENTIFIER, 4);
+		appendAsBytes<quint8>(&txData, MSG_ID_START_STREAM);
+		appendAsBytes<quint16>(&txData, 2);
+		appendAsBytes<quint16>(&txData, m_streamPeriod);
+	}
 
 	// Send request to network thread
 
@@ -212,6 +230,16 @@ QString ZBNT::runTime()
 void ZBNT::setRunTime(QString time)
 {
 	m_runTime = time.toULongLong();
+}
+
+QString ZBNT::streamPeriod()
+{
+	return QString::number(m_streamPeriod);
+}
+
+void ZBNT::setStreamPeriod(QString period)
+{
+	m_streamPeriod = period.toUShort();
 }
 
 QString ZBNT::currentTime()

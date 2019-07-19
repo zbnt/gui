@@ -25,7 +25,7 @@ import zbnt 1.0
 Item {
 	id: root
 
-	property bool ready: settingsGeneral.ready && settingsTG1.ready && settingsTG2.ready && (ZBNT.bitstreamID == ZBNT.DualTGen ? settingsLM.ready : (settingsTG3.ready && settingsTG4.ready))
+	property bool ready: settingsGeneral.ready && settingsTG1.ready && settingsTG2.ready && (ZBNT.streamMode || (ZBNT.bitstreamID == ZBNT.DualTGen ? settingsLM.ready : (settingsTG3.ready && settingsTG4.ready)))
 
 	ColumnLayout {
 		anchors.fill: parent
@@ -92,13 +92,13 @@ Item {
 				SettingsTabLM {
 					id: settingsLM
 					object: ZBNT.lm0
-					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGenLM
+					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGenLM && !ZBNT.streamMode
 				}
 
 				SettingsTabFD {
 					id: settingsFD
 					object: ZBNT.fd0
-					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGenFD
+					enabled: !ZBNT.running && ZBNT.bitstreamID == ZBNT.DualTGenFD && !ZBNT.streamMode
 				}
 			}
 		}

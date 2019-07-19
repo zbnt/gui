@@ -201,6 +201,7 @@ Item {
 
 				Label {
 					text: "Time:"
+					visible: !ZBNT.streamMode
 					font.weight: Font.Bold
 					horizontalAlignment: Text.AlignRight
 					Layout.minimumWidth: parent.width / 2
@@ -208,13 +209,15 @@ Item {
 
 				Label {
 					text: ZBNT.currentTime
+					visible: !ZBNT.streamMode
 					Layout.fillWidth: true
 				}
 
 				ProgressBar {
 					from: 0
 					to: 2048
-					value: ZBNT.currentProgress
+					indeterminate: ZBNT.streamMode && ZBNT.running
+					value: !ZBNT.streamMode ? ZBNT.currentProgress : 0
 					Layout.columnSpan: 2
 					Layout.fillWidth: true
 				}
