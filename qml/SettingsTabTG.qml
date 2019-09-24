@@ -27,30 +27,23 @@ Item {
 	id: root
 
 	property var object: undefined
-	property bool ready: (!enableInput.checked && !ZBNT.streamMode) || (headersLoaded && delayMethodSelector.valid && (!burstEnableInput.checked || (burstOnTimeInput.valid && burstOffTimeInput.valid))) || (!ZBNT.streamMode && headersLoaded)
+	property bool ready: !ZBNT.streamMode && (!enableInput.checked || sizeInput.valid && delayInput.valid && (!burstEnableInput.checked || (burstOnTimeInput.valid && burstOffTimeInput.valid)) && seedInput.valid) || ZBNT.streamMode && seedInput.valid
 
-	property bool headersLoaded: object.headersLoaded
-	property string headersPath: object.headersPath
-	property int headersLength: object.headersLength
+	property bool templateLoaded: object.templateLoaded
+	property string templatePath: object.templatePath
+	property int templateLength: object.templateLength
 
 	Component.onCompleted: {
 		object.enable = Qt.binding(function() { return enableInput.checked })
 
-		object.paddingMethod = Qt.binding(function() { return paddingMethodSelector.currentIndex })
-		object.paddingConstant = Qt.binding(function() { return paddingConstantInput.value })
-		object.paddingRangeBottom = Qt.binding(function() { return paddingRangeBottomInput.value })
-		object.paddingRangeTop = Qt.binding(function() { return paddingRangeTopInput.value })
-		object.paddingAverage = Qt.binding(function() { return paddingAverageInput.value })
-
-		object.delayMethod = Qt.binding(function() { return delayMethodSelector.currentIndex })
-		object.delayConstant = Qt.binding(function() { return delayConstantInput.text })
-		object.delayRangeBottom = Qt.binding(function() { return delayRangeBottomInput.text })
-		object.delayRangeTop = Qt.binding(function() { return delayRangeTopInput.text })
-		object.delayAverage = Qt.binding(function() { return delayAverageInput.text })
+		object.frameSize = Qt.binding(function() { return sizeInput.text })
+		object.frameDelay = Qt.binding(function() { return delayInput.text })
 
 		object.burstEnable = Qt.binding(function() { return burstEnableInput.checked })
 		object.burstOnTime = Qt.binding(function() { return burstOnTimeInput.text })
 		object.burstOffTime = Qt.binding(function() { return burstOffTimeInput.text })
+
+		object.lfsrSeed = Qt.binding(function() { return seedInput.text })
 	}
 
 	FileDialog {
@@ -61,16 +54,10 @@ Item {
 		selectExisting: true
 		selectMultiple: false
 		selectFolder: false
-		nameFilters: ["Headers file (.bin, .hex) (*.bin *.hex)"]
+		nameFilters: ["Frame template file (.bin, .hex) (*.bin *.hex)"]
 
 		onAccepted: {
-			root.object.loadHeaders(fileUrl);
-
-			if(root.headersLength >= 1500)
-			{
-				paddingMethodSelector.currentIndex = 0;
-				paddingConstantInput.value = 0;
-			}
+			root.object.loadTemplate(fileUrl);
 		}
 	}
 
@@ -94,7 +81,7 @@ Item {
 		}
 
 		Label {
-			text: "Frame headers:"
+			text: "Frame template:"
 			font.weight: Font.Bold
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
@@ -104,9 +91,9 @@ Item {
 
 			TextField {
 				readOnly: true
-				text: root.headersPath
+				text: root.templatePath
 				enabled: enableInput.checked || ZBNT.streamMode
-				color: !enabled ? DisabledLabel.color : ((root.headersLength >= 14 && root.headersLength <= 1500) ? DefaultLabel.color : "#e53935")
+				color: !enabled ? DisabledLabel.color : (root.templateLength <= 1500 ? DefaultLabel.color : "#e53935")
 				Layout.fillWidth: true
 			}
 
@@ -125,10 +112,10 @@ Item {
 		Label { }
 
 		ErrorLabel {
-			valid: root.headersLoaded && root.headersLength >= 14 && root.headersLength <= 1500
+			valid: root.templateLoaded && root.templateLength <= 1500
 			enabled: enableInput.checked || ZBNT.streamMode
-			normalText: root.headersLength + " bytes"
-			errorText: !root.headersLoaded ? "No file selected" : (normalText + " - Must be at " + (root.headersLength >= 14 ? "most 1500" : "least 64") + " bytes")
+			normalText: root.templateLength + " bytes"
+			errorText: !root.templateLoaded ? "No file selected" : (normalText + " - Must be at most 1500 bytes")
 			font.italic: true
 		}
 
@@ -138,43 +125,21 @@ Item {
 		}
 
 		Label {
-			text: "Frame padding:"
+			text: "Frame size:"
 			font.weight: Font.Bold
-			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-		}
-
-		ComboBox {
-			id: paddingMethodSelector
-			enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode && root.headersLength >= 14 && root.headersLength < 1500
-
-			Layout.fillWidth: true
-
-			model: [
-				"Constant",
-				"Random - Uniform",
-				"Random - Poisson"
-			]
-		}
-
-		Label {
-			text: "Amount:"
-			font.weight: Font.Bold
-			visible: paddingMethodSelector.currentIndex == 0
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
 		RowLayout {
 			Layout.fillWidth: true
-			visible: paddingMethodSelector.currentIndex == 0
 
-			SpinBox {
-				id: paddingConstantInput
+			UInt64Field {
+				id: sizeInput
+				enabled: enableInput.checked && !ZBNT.streamMode
+				horizontalAlignment: Qt.AlignHCenter
 
-				from: 0
-				to: 1500 - root.headersLength
-
-				editable: true
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode && root.headersLength >= 14 && root.headersLength < 1500
+				min: "60"
+				max: "1500"
 
 				Layout.fillWidth: true
 			}
@@ -185,129 +150,33 @@ Item {
 		}
 
 		Label {
-			text: "Range:"
+			visible: !sizeInput.valid
+			Layout.minimumHeight: 14
+		}
+
+		ErrorLabel {
+			visible: !sizeInput.valid
+			enabled: sizeInput.enabled
+			valid: sizeInput.valid
+			normalText: ""
+			errorText: sizeInput.validator.error
+		}
+
+		Label {
+			text: "Frame delay:"
 			font.weight: Font.Bold
-			visible: paddingMethodSelector.currentIndex == 1
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
 		RowLayout {
 			Layout.fillWidth: true
-			visible: paddingMethodSelector.currentIndex == 1
-
-			SpinBox {
-				id: paddingRangeBottomInput
-
-				from: 0
-				to: 1500 - root.headersLength
-
-				editable: true
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
-
-				onValueChanged: {
-					if(value > paddingRangeTopInput.value)
-						value = paddingRangeTopInput.value;
-				}
-
-				Layout.fillWidth: true
-			}
-
-			Label {
-				text: " - "
-			}
-
-			SpinBox {
-				id: paddingRangeTopInput
-
-				from: 0
-				to: 1500 - root.headersLength
-
-				editable: true
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
-
-				onValueChanged: {
-					if(paddingRangeBottomInput.value > value)
-						paddingRangeBottomInput.value = value;
-				}
-
-				Layout.fillWidth: true
-			}
-
-			Label {
-				text: " bytes"
-			}
-		}
-
-		Label {
-			text: "Average:"
-			font.weight: Font.Bold
-			visible: paddingMethodSelector.currentIndex == 2
-			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-		}
-
-		RowLayout {
-			Layout.fillWidth: true
-			visible: paddingMethodSelector.currentIndex == 2
-
-			SpinBox {
-				id: paddingAverageInput
-
-				from: 0
-				to: 1500 - root.headersLength
-
-				editable: true
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
-
-				Layout.fillWidth: true
-			}
-
-			Label {
-				text: " bytes/frame"
-			}
-		}
-
-		Item {
-			Layout.columnSpan: 2
-			Layout.minimumHeight: 12
-		}
-
-		Label {
-			text: "Inter-frame delay:"
-			font.weight: Font.Bold
-			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-		}
-
-		ComboBox {
-			id: delayMethodSelector
-			enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
-			Layout.fillWidth: true
-
-			property bool valid: [delayConstantInput.valid, delayRangeBottomInput.valid && delayRangeTopInput.valid && delayRangeValidator.valid, delayAverageInput.valid][currentIndex]
-
-			model: [
-				"Constant",
-				"Random - Uniform",
-				"Random - Poisson"
-			]
-		}
-
-		Label {
-			text: "Amount:"
-			font.weight: Font.Bold
-			visible: delayMethodSelector.currentIndex == 0
-			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-		}
-
-		RowLayout {
-			Layout.fillWidth: true
-			visible: delayMethodSelector.currentIndex == 0
 
 			UInt64Field {
-				id: delayConstantInput
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
+				id: delayInput
+				enabled: enableInput.checked && !ZBNT.streamMode
 				horizontalAlignment: Qt.AlignHCenter
 
-				min: "0"
+				min: "12"
 				max: "4294967295"
 
 				Layout.fillWidth: true
@@ -318,150 +187,13 @@ Item {
 			}
 		}
 
-		Label {
-			visible: delayMethodSelector.currentIndex == 0
-		}
+		Label { }
 
 		ErrorLabel {
-			visible: delayMethodSelector.currentIndex == 0
-			enabled: delayConstantInput.enabled
-			valid: delayConstantInput.valid
-			normalText: ZBNT.cyclesToTime(delayConstantInput.text)
-			errorText: delayConstantInput.validator.error
-		}
-
-		Label {
-			text: "Range:"
-			font.weight: Font.Bold
-			visible: delayMethodSelector.currentIndex == 1
-			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-		}
-
-		RowLayout {
-			Layout.fillWidth: true
-			visible: delayMethodSelector.currentIndex == 1
-
-			UInt64Field {
-				id: delayRangeBottomInput
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
-				horizontalAlignment: Qt.AlignHCenter
-
-				text: "0"
-				min: "0"
-				max: "4294967295"
-
-				Layout.fillWidth: true
-			}
-
-			Label {
-				text: " - "
-			}
-
-			UInt64Field {
-				id: delayRangeTopInput
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
-				horizontalAlignment: Qt.AlignHCenter
-
-				text: "1"
-				min: "1"
-				max: "4294967295"
-
-				Layout.fillWidth: true
-
-				UInt64RangeValidator {
-					id: delayRangeValidator
-					top: delayRangeTopInput.text
-					bottom: delayRangeBottomInput.text
-				}
-			}
-
-			Label {
-				text: " cycles"
-			}
-		}
-
-		Label {
-			visible: delayMethodSelector.currentIndex == 1 && delayRangeBottomInput.valid && delayRangeTopInput.valid && delayRangeValidator.valid
-		}
-
-		Label {
-			visible: delayMethodSelector.currentIndex == 1 && delayRangeBottomInput.valid && delayRangeTopInput.valid && delayRangeValidator.valid
-			text: ZBNT.cyclesToTime(delayRangeBottomInput.text) + " to " + ZBNT.cyclesToTime(delayRangeTopInput.text)
-		}
-
-		Label {
-			visible: delayMethodSelector.currentIndex == 1 && !delayRangeBottomInput.valid
-		}
-
-		ErrorLabel {
-			visible: delayMethodSelector.currentIndex == 1 && !delayRangeBottomInput.valid
-			enabled: delayRangeBottomInput.enabled
-			valid: false
-			normalText: ""
-			errorText: delayRangeBottomInput.validator.error.replace("M", "Minimum m")
-		}
-
-		Label {
-			visible: delayMethodSelector.currentIndex == 1 && !delayRangeTopInput.valid
-		}
-
-		ErrorLabel {
-			visible: delayMethodSelector.currentIndex == 1 && !delayRangeTopInput.valid
-			enabled: delayRangeTopInput.enabled
-			valid: false
-			normalText: ""
-			errorText: delayRangeTopInput.validator.error.replace("M", "Maximum m")
-		}
-
-		Label {
-			visible: delayMethodSelector.currentIndex == 1 && !delayRangeValidator.valid
-		}
-
-		ErrorLabel {
-			visible: delayMethodSelector.currentIndex == 1 && !delayRangeValidator.valid
-			enabled: delayRangeTopInput.enabled
-			valid: false
-			normalText: ""
-			errorText: "Invalid range"
-		}
-
-		Label {
-			text: "Average:"
-			font.weight: Font.Bold
-			visible: delayMethodSelector.currentIndex == 2
-			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-		}
-
-		RowLayout {
-			Layout.fillWidth: true
-			visible: delayMethodSelector.currentIndex == 2
-
-			UInt64Field {
-				id: delayAverageInput
-				enabled: root.headersLoaded && enableInput.checked && !ZBNT.streamMode
-				horizontalAlignment: Qt.AlignHCenter
-
-				min: "0"
-				max: "4294967295"
-
-				Layout.fillWidth: true
-			}
-
-			Label {
-				text: " cycles/frame"
-			}
-		}
-
-		Label {
-			visible: delayMethodSelector.currentIndex == 2
-		}
-
-		ErrorLabel {
-			visible: delayMethodSelector.currentIndex == 2
-			enabled: delayAverageInput.enabled
-			valid: delayAverageInput.valid
-			normalText: ZBNT.cyclesToTime(delayAverageInput.text) + " per frame"
-			errorText: delayAverageInput.validator.error
+			enabled: delayInput.enabled
+			valid: delayInput.valid
+			normalText: ZBNT.cyclesToTime(delayInput.text)
+			errorText: delayInput.validator.error
 		}
 
 		Item {
@@ -556,6 +288,25 @@ Item {
 			visible: !valid
 			normalText: ""
 			errorText: burstOffTimeInput.validator.error
+		}
+
+		Item {
+			Layout.columnSpan: 2
+			Layout.minimumHeight: 12
+		}
+
+		Label {
+			text: "LFSR Seed:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		UInt64Field {
+			id: seedInput
+			enabled: enableInput.checked || ZBNT.streamMode
+			horizontalAlignment: Qt.AlignHCenter
+
+			Layout.fillWidth: true
 		}
 
 		Item { Layout.fillHeight: true }

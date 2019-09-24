@@ -64,7 +64,7 @@ Item {
 			id: frameSizeInput
 			enabled: enableInput.checked
 
-			min: "64"
+			min: "60"
 			max: "1500"
 
 			Layout.fillWidth: true

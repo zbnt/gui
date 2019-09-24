@@ -25,27 +25,20 @@ class QTrafficGenerator : public QObject
 {
 	Q_OBJECT
 
-	Q_PROPERTY(bool headersLoaded MEMBER m_headersLoaded NOTIFY headersChanged)
-	Q_PROPERTY(quint32 headersLength MEMBER m_headersLength NOTIFY headersChanged)
-	Q_PROPERTY(QString headersPath MEMBER m_headersPath NOTIFY headersChanged)
+	Q_PROPERTY(bool templateLoaded MEMBER m_templateLoaded NOTIFY templateChanged)
+	Q_PROPERTY(quint32 templateLength MEMBER m_templateLength NOTIFY templateChanged)
+	Q_PROPERTY(QString templatePath MEMBER m_templatePath NOTIFY templateChanged)
 
 	Q_PROPERTY(quint8 enable MEMBER m_enable NOTIFY settingsChanged)
 
-	Q_PROPERTY(quint8 paddingMethod MEMBER m_paddingMethod NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 paddingConstant MEMBER m_paddingConstant NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 paddingRangeTop MEMBER m_paddingRangeTop NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 paddingRangeBottom MEMBER m_paddingRangeBottom NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 paddingAverage MEMBER m_paddingAverage NOTIFY settingsChanged)
-
-	Q_PROPERTY(quint8 delayMethod MEMBER m_delayMethod NOTIFY settingsChanged)
-	Q_PROPERTY(QString delayConstant MEMBER m_delayConstant NOTIFY settingsChanged)
-	Q_PROPERTY(QString delayRangeTop MEMBER m_delayRangeTop NOTIFY settingsChanged)
-	Q_PROPERTY(QString delayRangeBottom MEMBER m_delayRangeBottom NOTIFY settingsChanged)
-	Q_PROPERTY(QString delayAverage MEMBER m_delayAverage NOTIFY settingsChanged)
+	Q_PROPERTY(QString frameSize MEMBER m_frameSize NOTIFY settingsChanged)
+	Q_PROPERTY(QString frameDelay MEMBER m_frameDelay NOTIFY settingsChanged)
 
 	Q_PROPERTY(quint8 burstEnable MEMBER m_burstEnable NOTIFY settingsChanged)
 	Q_PROPERTY(QString burstOnTime MEMBER m_burstOnTime NOTIFY settingsChanged)
 	Q_PROPERTY(QString burstOffTime MEMBER m_burstOffTime NOTIFY settingsChanged)
+
+	Q_PROPERTY(QString lfsrSeed MEMBER m_lfsrSeed NOTIFY settingsChanged)
 
 public:
 	QTrafficGenerator(QObject *parent = nullptr);
@@ -54,37 +47,32 @@ public:
 	void setIndex(quint8 idx);
 
 	void appendSettings(QByteArray *buffer);
-	void appendHeaders(QByteArray *buffer);
+	void appendFrame(QByteArray *buffer);
 
 public slots:
-	void loadHeaders(QUrl url);
+	void loadTemplate(QUrl url);
 
 signals:
-	void headersChanged();
+	void templateChanged();
 	void settingsChanged();
 
 private:
-	bool m_headersLoaded = false;
-	quint32 m_headersLength = 0;
-	QString m_headersPath;
-	QByteArray m_headers;
+	bool m_templateLoaded = false;
+	quint32 m_templateLength = 0;
+	QString m_templatePath;
+
+	QByteArray m_templateBytes;
+	quint8 m_templateMask[256];
 
 	quint8 m_idx = 0;
 	quint8 m_enable = 1;
 
-	quint8 m_paddingMethod = 0;
-	quint16 m_paddingConstant = 0;
-	quint16 m_paddingRangeTop = 0;
-	quint16 m_paddingRangeBottom = 0;
-	quint16 m_paddingAverage = 0;
-
-	quint8 m_delayMethod = 0;
-	QString m_delayConstant;
-	QString m_delayRangeTop;
-	QString m_delayRangeBottom;
-	QString m_delayAverage;
+	QString m_frameSize;
+	QString m_frameDelay;
 
 	quint8 m_burstEnable = 0;
 	QString m_burstOnTime;
 	QString m_burstOffTime;
+
+	QString m_lfsrSeed;
 };

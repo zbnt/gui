@@ -40,41 +40,41 @@ void QTrafficGenerator::appendSettings(QByteArray *buffer)
 
 	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
 	appendAsBytes<quint8>(buffer, MSG_ID_TG_CFG);
-	appendAsBytes<quint16>(buffer, 33);
+	appendAsBytes<quint16>(buffer, 21);
 
 	appendAsBytes<quint8>(buffer, m_idx);
 	appendAsBytes<quint8>(buffer, m_enable);
 
-	appendAsBytes<quint8>(buffer, m_paddingMethod);
-	appendAsBytes<quint16>(buffer, m_paddingConstant);
-	appendAsBytes<quint16>(buffer, m_paddingRangeBottom);
-	appendAsBytes<quint16>(buffer, m_paddingRangeTop);
-	appendAsBytes<quint16>(buffer, m_paddingAverage);
-
-	appendAsBytes<quint8>(buffer, m_delayMethod);
-	appendAsBytes<quint32>(buffer, m_delayConstant.toULong());
-	appendAsBytes<quint32>(buffer, m_delayRangeBottom.toULong());
-	appendAsBytes<quint32>(buffer, m_delayRangeTop.toULong());
-	appendAsBytes<quint32>(buffer, m_delayAverage.toULong());
+	appendAsBytes<quint16>(buffer, m_frameSize.toUShort());
+	appendAsBytes<quint32>(buffer, m_frameDelay.toUInt());
 
 	appendAsBytes<quint8>(buffer, m_burstEnable);
 	appendAsBytes<quint16>(buffer, m_burstOnTime.toULong());
 	appendAsBytes<quint16>(buffer, m_burstOffTime.toULong());
+
+	appendAsBytes<quint64>(buffer, m_lfsrSeed.toULongLong());
 }
 
-void QTrafficGenerator::appendHeaders(QByteArray *buffer)
+void QTrafficGenerator::appendFrame(QByteArray *buffer)
 {
 	if(!buffer) return;
 
 	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_TG_HEADERS);
-	appendAsBytes<quint16>(buffer, m_headersLength + 1);
+	appendAsBytes<quint8>(buffer, MSG_ID_TG_FRAME);
+	appendAsBytes<quint16>(buffer, m_templateLength + 1);
 
 	appendAsBytes<quint8>(buffer, m_idx);
-	buffer->append(m_headers);
+	buffer->append(m_templateBytes);
+
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_TG_PATTERN);
+	appendAsBytes<quint16>(buffer, 257);
+
+	appendAsBytes<quint8>(buffer, m_idx);
+	buffer->append((const char*) m_templateMask, 256);
 }
 
-void QTrafficGenerator::loadHeaders(QUrl url)
+void QTrafficGenerator::loadTemplate(QUrl url)
 {
 	QString selectedPath = url.toLocalFile();
 
@@ -88,16 +88,43 @@ void QTrafficGenerator::loadHeaders(QUrl url)
 	if(!headersFile.isOpen())
 		return;
 
+	memset(m_templateMask, 0, sizeof(m_templateMask));
+
 	if(selectedPath.endsWith(".hex"))
 	{
 		QByteArray fileContents = headersFile.readAll();
-		uint8_t num = 0x10;
+		quint8 num = 0x10, maskCount = 0;
+		quint16 maskOffset = 0;
+		bool inX = false;
 
-		m_headers.clear();
+		m_templateBytes.clear();
 
 		for(char c : fileContents)
 		{
-			if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
+			if(inX)
+			{
+				inX = false;
+				continue;
+			}
+
+			if(c == 'x' || c == 'X')
+			{
+				inX = true;
+				m_templateBytes.append('\0');
+
+				if(maskOffset <= 255)
+				{
+					m_templateMask[maskOffset] |= 1u << maskCount;
+					++maskCount;
+
+					if(maskCount >= 8)
+					{
+						maskCount = 0;
+						++maskOffset;
+					}
+				}
+			}
+			else if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
 			{
 				c = tolower(c) - '0';
 
@@ -106,8 +133,19 @@ void QTrafficGenerator::loadHeaders(QUrl url)
 
 				if(num <= 0xF)
 				{
-					m_headers.append((num << 4) | c);
+					m_templateBytes.append((num << 4) | c);
 					num = 0x10;
+
+					if(maskOffset <= 255)
+					{
+						++maskCount;
+
+						if(maskCount >= 8)
+						{
+							maskCount = 0;
+							++maskOffset;
+						}
+					}
 				}
 				else
 				{
@@ -118,12 +156,12 @@ void QTrafficGenerator::loadHeaders(QUrl url)
 	}
 	else
 	{
-		m_headers = headersFile.readAll();
+		m_templateBytes = headersFile.readAll();
 	}
 
-	m_headersLength = m_headers.length();
-	m_headersPath = selectedPath;
-	m_headersLoaded = true;
+	m_templateLength = m_templateBytes.length();
+	m_templatePath = selectedPath;
+	m_templateLoaded = true;
 
-	emit headersChanged();
+	emit templateChanged();
 }

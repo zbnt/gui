@@ -104,8 +104,8 @@ void ZBNT::sendSettings()
 		m_tg1->appendSettings(&txData);
 	}
 
-	m_tg0->appendHeaders(&txData);
-	m_tg1->appendHeaders(&txData);
+	m_tg0->appendFrame(&txData);
+	m_tg1->appendFrame(&txData);
 
 	if(m_bitstreamID == QuadTGen)
 	{
@@ -115,8 +115,8 @@ void ZBNT::sendSettings()
 			m_tg3->appendSettings(&txData);
 		}
 
-		m_tg2->appendHeaders(&txData);
-		m_tg3->appendHeaders(&txData);
+		m_tg2->appendFrame(&txData);
+		m_tg3->appendFrame(&txData);
 	}
 
 	// Latency measurer
