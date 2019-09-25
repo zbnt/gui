@@ -291,40 +291,29 @@ void ZBNT::onConnectionError(QString error)
 void ZBNT::onDeviceDiscovered(const QByteArray &data)
 {
 	quint32 version = readAsNumber<quint32>(data, 0);
-	quint8 hostLen = readAsNumber<quint8>(data, 4);
-	quint8 numIP4 = readAsNumber<quint8>(data, 5);
-	quint8 numIP6 = readAsNumber<quint8>(data, 6);
-	quint64 time = readAsNumber<quint64>(data, 7);
+	quint64 time = readAsNumber<quint64>(data, 4);
 
 	if(time != m_discovery->scanTime()) return;
 
 	QVariantMap device;
 	device["version"] = version;
-	device["hostname"] = QByteArray(data.constData() + 15, hostLen);
+	device["hostname"] = QByteArray(data.constData() + 32, data.size() - 32);
 
-	int i = 15 + hostLen;
+	quint32 ip4 = readAsNumber<quint32>(data, 12);
 
-	for(quint8 j = 0; j < numIP4; ++j)
+	if(ip4)
 	{
-		quint32 ip = readAsNumber<quint32>(data, i);
-		QHostAddress addr(ip);
-
-		device["ip"] = addr.toString();
+		device["ip"] = QHostAddress(ip4).toString();
 		m_deviceList.append(device);
-
-		i += 4;
 	}
 
-	for(quint8 j = 0; j < numIP6; ++j)
+	Q_IPV6ADDR ip6;
+	memcpy(ip6.c, data.constData() + 16, 16);
+
+	if(memcmp(ip6.c, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16))
 	{
-		Q_IPV6ADDR ip;
-		memcpy(ip.c, data.constData() + i, 16);
-		QHostAddress addr(ip);
-
-		device["ip"] = addr.toString();
+		device["ip"] = QHostAddress(ip6).toString();
 		m_deviceList.append(device);
-
-		i += 16;
 	}
 
 	emit devicesChanged();

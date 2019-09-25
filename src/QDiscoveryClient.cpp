@@ -63,7 +63,7 @@ quint64 QDiscoveryClient::scanTime()
 
 void QDiscoveryClient::onMessageReceived(quint8 id, const QByteArray &data)
 {
-	if(id == MSG_ID_DISCOVERY_RESP && data.length() >= 7)
+	if(id == MSG_ID_DISCOVERY_RESP && data.length() > 32)
 	{
 		emit deviceDiscovered(data);
 	}
