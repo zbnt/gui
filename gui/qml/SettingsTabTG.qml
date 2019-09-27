@@ -306,7 +306,22 @@ Item {
 			enabled: enableInput.checked || ZBNT.streamMode
 			horizontalAlignment: Qt.AlignHCenter
 
+			min: "0"
+			max: "255"
+
 			Layout.fillWidth: true
+		}
+
+		Label {
+			visible: !seedInput.valid && seedInput.text.length
+		}
+
+		ErrorLabel {
+			enabled: seedInput.enabled
+			valid: seedInput.valid || !seedInput.text.length
+			visible: !valid
+			normalText: ""
+			errorText: seedInput.validator.error
 		}
 
 		Item { Layout.fillHeight: true }
