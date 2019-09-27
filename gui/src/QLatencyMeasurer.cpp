@@ -60,7 +60,7 @@ void QLatencyMeasurer::appendSettings(QByteArray *buffer)
 	appendAsBytes<quint16>(buffer, 13);
 
 	appendAsBytes<quint8>(buffer, m_enable);
-	appendAsBytes<quint32>(buffer, m_frameSize.toULong() - 30);
+	appendAsBytes<quint32>(buffer, m_frameSize.toULong() - 26);
 	appendAsBytes<quint32>(buffer, m_period.toULong());
 	appendAsBytes<quint32>(buffer, m_timeout.toULong());
 }
