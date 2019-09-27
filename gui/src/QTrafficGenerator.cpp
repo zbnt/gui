@@ -88,7 +88,7 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 	if(!headersFile.isOpen())
 		return;
 
-	memset(m_templateMask, 0, sizeof(m_templateMask));
+	memset(m_templateMask, 0xFF, sizeof(m_templateMask));
 
 	if(selectedPath.endsWith(".hex"))
 	{
@@ -112,16 +112,12 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 				inX = true;
 				m_templateBytes.append('\0');
 
-				if(maskOffset <= 255)
-				{
-					m_templateMask[maskOffset] |= 1u << maskCount;
-					++maskCount;
+				++maskCount;
 
-					if(maskCount >= 8)
-					{
-						maskCount = 0;
-						++maskOffset;
-					}
+				if(maskCount >= 8)
+				{
+					maskCount = 0;
+					++maskOffset;
 				}
 			}
 			else if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
@@ -138,6 +134,7 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 
 					if(maskOffset <= 255)
 					{
+						m_templateMask[maskOffset] &= ~(1u << maskCount);
 						++maskCount;
 
 						if(maskCount >= 8)
