@@ -94,6 +94,7 @@ public:
 public slots:
 	QString cyclesToTime(QString cycles);
 	QString bytesToHumanReadable(QString bytes);
+	QString estimateDataRate(quint64 size, quint64 delay);
 
 	void scanDevices();
 	void connectToBoard();

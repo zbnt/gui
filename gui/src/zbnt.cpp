@@ -174,6 +174,14 @@ QString ZBNT::bytesToHumanReadable(QString bytes)
 	return res;
 }
 
+QString ZBNT::estimateDataRate(quint64 size, quint64 delay)
+{
+	QString res;
+	::bitsToHumanReadable(size * 1000000000 / (8 + size + delay + 4), res, true);
+	res.append("/s");
+	return res;
+}
+
 void ZBNT::connectToBoard()
 {
 	emit reqConnectToBoard(m_ip);

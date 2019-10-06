@@ -196,6 +196,14 @@ Item {
 			errorText: delayInput.validator.error
 		}
 
+		Label { }
+
+		Label {
+			enabled: delayInput.enabled
+			visible: delayInput.valid && sizeInput.valid // ZBNT.bitsToHumanReadable
+			text: "Estimated data rate: " + ZBNT.estimateDataRate(sizeInput.text, delayInput.text)
+		}
+
 		Item {
 			Layout.columnSpan: 2
 			Layout.minimumHeight: 12
