@@ -20,6 +20,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
+import zbnt 1.0
+
 GroupBox {
 	id: root
 	topPadding: 26
@@ -30,6 +32,7 @@ GroupBox {
 	label: Label {
 		y: 5
 		text: parent.title
+		font.weight: Font.Bold
 		verticalAlignment: Text.AlignTop
 		horizontalAlignment: Text.AlignHCenter
 		anchors.horizontalCenter: parent.horizontalCenter
@@ -43,77 +46,106 @@ GroupBox {
 
 		anchors.fill: parent
 		anchors.topMargin: 5
-		anchors.leftMargin: 5
-		anchors.rightMargin: 5
+		anchors.leftMargin: 20
+		anchors.rightMargin: 20
 
-		GridLayout {
-			columns: 2
-			rowSpacing: 5
-			columnSpacing: 10
-
-			Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
-
-			Label {
-				text: "TX:"
-				font.weight: Font.Bold
-				Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-			}
-
-			Label {
-				text: root.object.txBytes + " bytes"
-			}
-
-			Label {
-				Layout.rowSpan: 2
-			}
-
-			Label {
-				text: root.object.txGood + " good frames"
-			}
-
-			Label {
-				text: root.object.txBad + " bad frames"
-			}
+		Label {
+			text: "TX Rate:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
-		GridLayout {
-			columns: 2
-			rowSpacing: 5
-			columnSpacing: 10
+		Label {
+			text: root.object.txRate + "/s"
+			Layout.fillWidth: true
+		}
 
-			Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
+		Label {
+			text: "TX Bytes:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
 
-			Label {
-				text: "RX:"
-				font.weight: Font.Bold
-				Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-			}
+		Label {
+			text: root.object.txBytes + " (" + ZBNT.bytesToHumanReadable(root.object.txBytes) + ")"
+			Layout.fillWidth: true
+		}
 
-			Label {
-				text: root.object.rxBytes + " bytes"
-			}
+		Label {
+			text: "TX Good:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
 
-			Label {
-				Layout.rowSpan: 2
-			}
+		Label {
+			text: root.object.txGood
+			Layout.fillWidth: true
+		}
 
-			Label {
-				text: root.object.rxGood + " good frames"
-			}
+		Label {
+			text: "TX Bad:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
 
-			Label {
-				text: root.object.rxBad + " bad frames"
-			}
+		Label {
+			text: root.object.txBad
+			Layout.fillWidth: true
 		}
 
 		Item {
-			Layout.fillHeight: true
+			Layout.columnSpan: 2
+			Layout.minimumHeight: 6
+		}
+
+		Label {
+			text: "RX Rate:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		Label {
+			text: root.object.rxRate + "/s"
+			Layout.fillWidth: true
+		}
+
+		Label {
+			text: "RX Bytes:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		Label {
+			text: root.object.rxBytes + " (" + ZBNT.bytesToHumanReadable(root.object.rxBytes) + ")"
+			Layout.fillWidth: true
+		}
+
+		Label {
+			text: "RX Good:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		Label {
+			text: root.object.rxGood
+			Layout.fillWidth: true
+		}
+
+		Label {
+			text: "RX Bad:"
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		Label {
+			text: root.object.rxBad
 			Layout.fillWidth: true
 		}
 
 		Item {
 			Layout.fillHeight: true
 			Layout.fillWidth: true
+			Layout.columnSpan: 2
 		}
 	}
 }

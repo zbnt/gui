@@ -22,6 +22,8 @@
 #include <QAbstractSocket>
 
 extern void cyclesToTime(quint64 cycles, QString &time);
+extern void bytesToHumanReadable(quint64 bytes, QString &res, bool dec = false);
+extern void bitsToHumanReadable(quint64 bytes, QString &res, bool dec = false);
 
 template<typename T>
 void sendAsBytes(QAbstractSocket *socket, T data)

@@ -47,6 +47,16 @@ void QStatsCollector::updateDisplayedValues()
 
 	memcpy(&m_displayedValues, &m_currentValues, sizeof(Measurement));
 
+	if(m_currentValues.time - m_lastRateUpdate > 62500000)
+	{
+		m_txRate = (m_currentValues.txBytes - m_lastTxBytes) / (double(m_currentValues.time - m_lastRateUpdate) / 1000000000);
+		m_rxRate = (m_currentValues.rxBytes - m_lastRxBytes) / (double(m_currentValues.time - m_lastRateUpdate) / 1000000000);
+
+		m_lastRateUpdate = m_currentValues.time;
+		m_lastTxBytes = m_currentValues.txBytes;
+		m_lastRxBytes = m_currentValues.rxBytes;
+	}
+
 	emit measurementChanged();
 }
 
@@ -115,6 +125,13 @@ QString QStatsCollector::txBad()
 	return QString::number(m_displayedValues.txBad);
 }
 
+QString QStatsCollector::txRate()
+{
+	QString res;
+	bitsToHumanReadable(m_txRate, res, true);
+	return res;
+}
+
 QString QStatsCollector::rxBytes()
 {
 	return QString::number(m_displayedValues.rxBytes);
@@ -128,4 +145,11 @@ QString QStatsCollector::rxGood()
 QString QStatsCollector::rxBad()
 {
 	return QString::number(m_displayedValues.rxBad);
+}
+
+QString QStatsCollector::rxRate()
+{
+	QString res;
+	bitsToHumanReadable(m_rxRate, res, true);
+	return res;
 }

@@ -93,6 +93,7 @@ public:
 
 public slots:
 	QString cyclesToTime(QString cycles);
+	QString bytesToHumanReadable(QString bytes);
 
 	void scanDevices();
 	void connectToBoard();

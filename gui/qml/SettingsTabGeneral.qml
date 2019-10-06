@@ -66,7 +66,7 @@ Item {
 
 		UInt64Field {
 			id: runTimeInput
-			visible: enabled
+			visible: !streamModeInput.checked
 			enabled: !streamModeInput.checked
 
 			min: "125000000"
@@ -77,7 +77,7 @@ Item {
 
 		UInt64Field {
 			id: streamPeriodInput
-			visible: enabled
+			visible: streamModeInput.checked
 			enabled: streamModeInput.checked
 
 			min: "1"

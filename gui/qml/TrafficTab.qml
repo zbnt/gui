@@ -23,18 +23,25 @@ import QtQuick.Layouts 1.3
 import zbnt 1.0
 
 Item {
-	ColumnLayout {
+	GridLayout {
+		id: layout
 		anchors.fill: parent
-		spacing: 10
+		columns: 2
+		columnSpacing: 10
+		rowSpacing: 10
 
 		TrafficTabBox {
 			title: "eth0"
 			object: ZBNT.sc0
+			Layout.fillWidth: true
+			Layout.preferredWidth: layout.width / 2
 		}
 
 		TrafficTabBox {
 			title: "eth1"
 			object: ZBNT.sc1
+			Layout.fillWidth: true
+			Layout.preferredWidth: layout.width / 2
 		}
 
 		TrafficTabBox {

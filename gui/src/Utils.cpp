@@ -57,3 +57,68 @@ void cyclesToTime(quint64 cycles, QString &time)
 		cycles %= e.second;
 	}
 }
+
+void bytesToHumanReadable(quint64 bytes, QString &res, bool dec)
+{
+	static const std::vector<const char*> convTableBin =
+	{
+		"B",   "KiB", "MiB",
+		"GiB", "TiB", "PiB",
+		"EiB", "ZiB", "YiB"
+	};
+
+	static const std::vector<const char*> convTableDec =
+	{
+		"B",   "KB", "MB",
+		"GB", "TB", "PB",
+		"EB", "ZB", "YB"
+	};
+
+	int idx = 0;
+	float div = bytes;
+
+	if(!dec)
+	{
+		if(bytes & ~0x3FF)
+		{
+			while(bytes & ~0xFFFFF)
+			{
+				idx += 1;
+				bytes >>= 10;
+			}
+
+			idx++;
+			div = bytes / 1024.0;
+		}
+
+		res = QString::number(div, 'f', 2);
+		res += " ";
+		res += convTableBin[idx];
+	}
+	else
+	{
+		if(bytes >= 1000)
+		{
+			while(bytes >= 1'000'000)
+			{
+				idx += 1;
+				bytes /= 1000;
+			}
+
+			idx++;
+			div = bytes / 1000.0;
+		}
+
+		res = QString::number(div, 'f', 2);
+		res += " ";
+		res += convTableDec[idx];
+	}
+}
+
+void bitsToHumanReadable(quint64 bits, QString &res, bool dec)
+{
+	bytesToHumanReadable(bits, res, dec);
+
+	res.chop(1);
+	res.push_back('b');
+}

@@ -29,9 +29,12 @@ class QStatsCollector : public QObject
 	Q_PROPERTY(QString txBytes READ txBytes NOTIFY measurementChanged)
 	Q_PROPERTY(QString txGood READ txGood NOTIFY measurementChanged)
 	Q_PROPERTY(QString txBad READ txBad NOTIFY measurementChanged)
+	Q_PROPERTY(QString txRate READ txRate NOTIFY measurementChanged)
+
 	Q_PROPERTY(QString rxBytes READ rxBytes NOTIFY measurementChanged)
 	Q_PROPERTY(QString rxGood READ rxGood NOTIFY measurementChanged)
 	Q_PROPERTY(QString rxBad READ rxBad NOTIFY measurementChanged)
+	Q_PROPERTY(QString rxRate READ rxRate NOTIFY measurementChanged)
 
 	struct Measurement
 	{
@@ -60,9 +63,12 @@ public slots:
 	QString txBytes();
 	QString txGood();
 	QString txBad();
+	QString txRate();
+
 	QString rxBytes();
 	QString rxGood();
 	QString rxBad();
+	QString rxRate();
 
 signals:
 	void settingsChanged();
@@ -71,6 +77,12 @@ signals:
 private:
 	Measurement m_currentValues, m_displayedValues;
 	QMutex m_mutex;
+
+	quint64 m_lastRateUpdate = 0;
+	quint64 m_lastTxBytes = 0;
+	quint64 m_lastRxBytes = 0;
+	quint64 m_txRate = 0;
+	quint64 m_rxRate = 0;
 
 	QFile m_logFile;
 };

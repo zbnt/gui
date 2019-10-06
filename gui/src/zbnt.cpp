@@ -167,6 +167,13 @@ QString ZBNT::cyclesToTime(QString cycles)
 	return res;
 }
 
+QString ZBNT::bytesToHumanReadable(QString bytes)
+{
+	QString res;
+	::bytesToHumanReadable(bytes.toULongLong(), res);
+	return res;
+}
+
 void ZBNT::connectToBoard()
 {
 	emit reqConnectToBoard(m_ip);
