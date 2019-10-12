@@ -184,7 +184,7 @@ QString ZBNT::estimateDataRate(quint64 size, quint64 delay)
 
 void ZBNT::connectToBoard()
 {
-	emit reqConnectToBoard(m_ip);
+	emit reqConnectToBoard(m_ip, m_port);
 }
 
 void ZBNT::disconnectFromBoard()
@@ -312,7 +312,9 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 
 	QVariantMap device;
 	device["version"] = version;
-	device["hostname"] = QByteArray(data.constData() + 32, data.size() - 32);
+	device["hostname"] = QByteArray(data.constData() + 36, data.size() - 36);
+	device["mport"] = readAsNumber<quint16>(data, 32);
+	device["sport"] = readAsNumber<quint16>(data, 34);
 
 	quint32 ip4 = readAsNumber<quint32>(data, 12);
 

@@ -30,6 +30,7 @@ Item {
 
 	Component.onCompleted: {
 		ZBNT.ip = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].ip : "" })
+		ZBNT.port = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].mport : 0 })
 	}
 
 	MessageDialog {
@@ -92,7 +93,7 @@ Item {
 					Layout.fillWidth: true
 
 					delegate: ItemDelegate {
-						text: modelData.hostname + " (v" + modelData.version + " at " + modelData.ip + ")"
+						text: modelData.hostname + " (v" + modelData.version + " at " + modelData.ip + ":" + modelData.port + ")"
 						enabled: modelData.version == ZBNT.networkVersion
 						width: parent.width
 

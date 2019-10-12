@@ -74,9 +74,9 @@ void QNetworkWorker::updateDisplayedValues()
 	}
 }
 
-void QNetworkWorker::connectToBoard(const QString &ip)
+void QNetworkWorker::connectToBoard(const QString &ip, quint16 port)
 {
-	m_socket->connectToHost(ip, MSG_TCP_PORT);
+	m_socket->connectToHost(ip, port);
 }
 
 void QNetworkWorker::disconnectFromBoard()

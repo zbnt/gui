@@ -51,7 +51,7 @@ void QDiscoveryClient::findDevices()
 
 		for(const QNetworkAddressEntry &address : iface.addressEntries())
 		{
-			m_client->writeDatagram(message, address.broadcast(), MSG_UDP_PORT);
+			m_client->writeDatagram(message, address.broadcast(), MSG_DISCOVERY_PORT);
 		}
 	}
 }
@@ -63,7 +63,7 @@ quint64 QDiscoveryClient::scanTime()
 
 void QDiscoveryClient::onMessageReceived(quint8 id, const QByteArray &data)
 {
-	if(id == MSG_ID_DISCOVERY_RESP && data.length() > 32)
+	if(id == MSG_ID_DISCOVERY_RESP && data.length() > 36)
 	{
 		emit deviceDiscovered(data);
 	}

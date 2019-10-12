@@ -41,6 +41,7 @@ class ZBNT : public QObject
 	Q_PROPERTY(quint8 connected MEMBER m_connected NOTIFY connectedChanged)
 
 	Q_PROPERTY(QString ip MEMBER m_ip NOTIFY settingsChanged)
+	Q_PROPERTY(quint16 port MEMBER m_port NOTIFY settingsChanged)
 	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
 	Q_PROPERTY(quint32 networkVersion READ networkVersion CONSTANT)
 
@@ -129,7 +130,7 @@ signals:
 	void connectedChanged();
 	void connectionError(QString error);
 
-	void reqConnectToBoard(const QString &ip);
+	void reqConnectToBoard(const QString &ip, quint16 port);
 	void reqDisconnectFromBoard();
 	void reqSendData(const QByteArray &data);
 	void reqStartRun(bool exportResults);
@@ -148,6 +149,7 @@ private:
 	quint8 m_connected = 0;
 
 	QString m_ip;
+	quint16 m_port;
 	QVariantList m_deviceList;
 
 	quint64 m_runTime = 125000000ul;

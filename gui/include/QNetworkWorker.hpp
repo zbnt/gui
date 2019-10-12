@@ -47,7 +47,7 @@ public slots:
 
 	void updateDisplayedValues();
 
-	void connectToBoard(const QString &ip);
+	void connectToBoard(const QString &ip, quint16 port);
 	void disconnectFromBoard();
 
 	void sendData(const QByteArray &data);
