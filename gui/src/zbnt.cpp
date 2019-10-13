@@ -316,20 +316,22 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 	device["mport"] = readAsNumber<quint16>(data, 32);
 	device["sport"] = readAsNumber<quint16>(data, 34);
 
-	quint32 ip4 = readAsNumber<quint32>(data, 12);
-
-	if(ip4)
-	{
-		device["ip"] = QHostAddress(ip4).toString();
-		m_deviceList.append(device);
-	}
-
 	Q_IPV6ADDR ip6;
 	memcpy(ip6.c, data.constData() + 16, 16);
 
 	if(memcmp(ip6.c, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16))
 	{
 		device["ip"] = QHostAddress(ip6).toString();
+		device["fullAddr"] = "[" + device["ip"].toString() + "]:" + device["mport"].toString();
+		m_deviceList.append(device);
+	}
+
+	quint32 ip4 = readAsNumber<quint32>(data, 12);
+
+	if(ip4)
+	{
+		device["ip"] = QHostAddress(ip4).toString();
+		device["fullAddr"] = device["ip"].toString() + ":" + device["mport"].toString();
 		m_deviceList.append(device);
 	}
 

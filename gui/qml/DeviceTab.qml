@@ -93,7 +93,7 @@ Item {
 					Layout.fillWidth: true
 
 					delegate: ItemDelegate {
-						text: modelData.hostname + " (v" + modelData.version + " at " + modelData.ip + ":" + modelData.port + ")"
+						text: modelData.hostname + " (v" + modelData.version + " at " + modelData.fullAddr + ")"
 						enabled: modelData.version == ZBNT.networkVersion
 						width: parent.width
 
@@ -111,7 +111,7 @@ Item {
 						else
 						{
 							var activeItem = ZBNT.deviceList[deviceSelector.currentIndex]
-							displayText = activeItem.hostname + " (v" + activeItem.version + " at " + activeItem.ip + ")"
+							displayText = activeItem.hostname + " (v" + activeItem.version + " at " + activeItem.fullAddr + ")"
 						}
 					}
 				}

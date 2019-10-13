@@ -36,6 +36,9 @@
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
+	QCoreApplication::setOrganizationName("zbnt");
+	QCoreApplication::setOrganizationDomain("zbnt.oscar-rc.dev");
+	QCoreApplication::setApplicationName("zbnt_gui");
 
 	// Register QML types
 
