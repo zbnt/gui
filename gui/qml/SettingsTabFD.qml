@@ -172,6 +172,39 @@ Item {
 						root.object.removePattern(2)
 					}
 				}
+
+				Label {
+					text: "Pattern 4: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				TextField {
+					readOnly: true
+					text: root.object.patternPath[3]
+					Layout.fillWidth: true
+				}
+
+				Button {
+					icon.name: "folder-new"
+					focus: false
+					focusPolicy: Qt.NoFocus
+
+					onPressed: {
+						root.patternID = 3
+						filePicker.open()
+					}
+				}
+
+				Button {
+					icon.name: "delete"
+					focus: false
+					focusPolicy: Qt.NoFocus
+
+					onPressed: {
+						root.object.removePattern(3)
+					}
+				}
 			}
 		}
 
@@ -209,39 +242,6 @@ Item {
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[3]
-					Layout.fillWidth: true
-				}
-
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.patternID = 3
-						filePicker.open()
-					}
-				}
-
-				Button {
-					icon.name: "delete"
-					focus: false
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.object.removePattern(3)
-					}
-				}
-
-				Label {
-					text: "Pattern 2: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
-
-				TextField {
-					readOnly: true
 					text: root.object.patternPath[4]
 					Layout.fillWidth: true
 				}
@@ -268,7 +268,7 @@ Item {
 				}
 
 				Label {
-					text: "Pattern 3: "
+					text: "Pattern 2: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
@@ -297,6 +297,72 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(5)
+					}
+				}
+
+				Label {
+					text: "Pattern 3: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				TextField {
+					readOnly: true
+					text: root.object.patternPath[6]
+					Layout.fillWidth: true
+				}
+
+				Button {
+					icon.name: "folder-new"
+					focus: false
+					focusPolicy: Qt.NoFocus
+
+					onPressed: {
+						root.patternID = 6
+						filePicker.open()
+					}
+				}
+
+				Button {
+					icon.name: "delete"
+					focus: false
+					focusPolicy: Qt.NoFocus
+
+					onPressed: {
+						root.object.removePattern(6)
+					}
+				}
+
+				Label {
+					text: "Pattern 4: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				TextField {
+					readOnly: true
+					text: root.object.patternPath[7]
+					Layout.fillWidth: true
+				}
+
+				Button {
+					icon.name: "folder-new"
+					focus: false
+					focusPolicy: Qt.NoFocus
+
+					onPressed: {
+						root.patternID = 7
+						filePicker.open()
+					}
+				}
+
+				Button {
+					icon.name: "delete"
+					focus: false
+					focusPolicy: Qt.NoFocus
+
+					onPressed: {
+						root.object.removePattern(7)
 					}
 				}
 			}

@@ -25,15 +25,18 @@
 
 QFrameDetector::QFrameDetector(QObject *parent) : QObject(parent)
 {
-	for(int i = 0; i < 6; ++i)
+	for(int i = 0; i < 8; ++i)
 	{
 		m_patternPath.append("");
 	}
 
 	for(int i = 0; i < PATTERN_MEM_SIZE; ++i)
 	{
-		m_patternsA[i] = 0x15'00'00'00;
-		m_patternsB[i] = 0x15'00'00'00;
+		m_patternDataA[i] = 0;
+		m_patternDataB[i] = 0;
+
+		m_patternFlagsA[i] = 1;
+		m_patternFlagsB[i] = 1;
 	}
 }
 
@@ -68,7 +71,7 @@ void QFrameDetector::appendSettings(QByteArray *buffer)
 
 	quint8 enable = 0;
 
-	for(int i = 0; i < 6; ++i)
+	for(int i = 0; i < 8; ++i)
 	{
 		if(m_patternPath[i].toString().length())
 		{
@@ -93,14 +96,10 @@ void QFrameDetector::appendPatterns(QByteArray *buffer)
 	appendAsBytes<quint16>(buffer, PATTERN_MEM_SIZE * 4 + 1);
 
 	appendAsBytes<quint8>(buffer, 0);
-	buffer->append(QByteArray((const char*) m_patternsA, PATTERN_MEM_SIZE * 4));
-
-	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_FD_PATTERNS);
-	appendAsBytes<quint16>(buffer, PATTERN_MEM_SIZE * 4 + 1);
-
-	appendAsBytes<quint8>(buffer, 1);
-	buffer->append(QByteArray((const char*) m_patternsB, PATTERN_MEM_SIZE * 4));
+	buffer->append(QByteArray((const char*) m_patternDataA, PATTERN_MEM_SIZE));
+	buffer->append(QByteArray((const char*) m_patternFlagsA, PATTERN_MEM_SIZE));
+	buffer->append(QByteArray((const char*) m_patternDataB, PATTERN_MEM_SIZE));
+	buffer->append(QByteArray((const char*) m_patternFlagsB, PATTERN_MEM_SIZE));
 }
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
@@ -123,7 +122,7 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 
 void QFrameDetector::loadPattern(quint32 id, QUrl url)
 {
-	if(id >= 6) return;
+	if(id >= 8) return;
 
 	QString selectedPath = url.toLocalFile();
 
@@ -139,8 +138,9 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 
 	m_patternPath[id] = selectedPath;
 
-	quint32 *pattern = (id < 3 ? m_patternsA : m_patternsB);
-	if(id >= 3) id -= 3;
+	quint8 *patternData = (id < 8 ? m_patternDataA : m_patternDataB);
+	quint8 *patternFlags = (id < 8 ? m_patternFlagsA : m_patternFlagsB);
+	if(id >= 4) id -= 4;
 
 	QByteArray fileContents = patternFile.readAll();
 	uint32_t num = 0x10, i = 0;
@@ -150,8 +150,8 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 	{
 		if(i >= PATTERN_MEM_SIZE) break;
 
-		pattern[i] &= ~(0xFFu << 8*id);
-		pattern[i] &= ~(0b11u << (24 + 2*id));
+		patternData[i] = 0;
+		patternFlags[i] = 0;
 
 		if(inX)
 		{
@@ -161,13 +161,14 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 
 		if(c == '$')
 		{
-			if(!i)
+			if(i < 4)
 			{
-				pattern[i++] |= 0x1u << (25 + 2*id);
+				patternFlags[i] |= 0x2;
+				i += 4;
 			}
 			else
 			{
-				pattern[i-1] |= 0x1u << (25 + 2*id);
+				patternFlags[i-4] |= 0x2;
 			}
 
 			break;
@@ -175,7 +176,8 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 		else if(c == 'x' || c == 'X')
 		{
 			inX = true;
-			pattern[i++] |= 0x1u << (24 + 2*id);
+			patternFlags[i] |= 0x1;
+			i += 4;
 		}
 		else if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
 		{
@@ -186,8 +188,9 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 
 			if(num <= 0xF)
 			{
-				pattern[i++] |= ((num << 4) | c) << 8*id;
+				patternData[i] = (num << 4) | c;
 				num = 0x10;
+				i += 4;
 			}
 			else
 			{
@@ -196,11 +199,10 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 		}
 	}
 
-	for(; i < PATTERN_MEM_SIZE; ++i)
+	for(; i < PATTERN_MEM_SIZE; i += 4)
 	{
-		pattern[i] &= ~(0xFFu << 8*id);
-		pattern[i] &= ~(0x1u << (25 + 2*id));
-		pattern[i] |= 0x1u << (24 + 2*id);
+		patternData[i] = 0;
+		patternFlags[i] = 1;
 	}
 
 	emit patternsChanged();
@@ -208,28 +210,26 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 
 void QFrameDetector::removePattern(quint32 id)
 {
-	if(id >= 6) return;
+	if(id >= 8) return;
 
 	m_patternPath[id] = "";
 
-	if(id < 3)
+	if(id < 4)
 	{
-		for(int i = 0; i < PATTERN_MEM_SIZE; ++i)
+		for(int i = id; i < PATTERN_MEM_SIZE; i += 4)
 		{
-			m_patternsA[i] &= ~(0xFFu << 8*id);
-			m_patternsA[i] &= ~(0x1u << (25 + 2*id));
-			m_patternsA[i] |= 0x1u << (24 + 2*id);
+			m_patternDataA[i] = 0;
+			m_patternFlagsA[i] = 1;
 		}
 	}
 	else
 	{
-		id -= 3;
+		id -= 4;
 
-		for(int i = 0; i < PATTERN_MEM_SIZE; ++i)
+		for(int i = id; i < PATTERN_MEM_SIZE; i += 4)
 		{
-			m_patternsB[i] &= ~(0xFFu << 8*id);
-			m_patternsB[i] &= ~(0x1u << (25 + 2*id));
-			m_patternsB[i] |= 0x1u << (24 + 2*id);
+			m_patternDataB[i] = 0;
+			m_patternFlagsB[i] = 1;
 		}
 	}
 

@@ -25,7 +25,7 @@
 #include <QMutex>
 #include <QVariant>
 
-#define PATTERN_MEM_SIZE 1536
+#define PATTERN_MEM_SIZE 8192
 
 class QFrameDetector : public QObject
 {
@@ -62,8 +62,10 @@ signals:
 
 private:
 	QVariantList m_patternPath;
-	quint32 m_patternsA[PATTERN_MEM_SIZE];
-	quint32 m_patternsB[PATTERN_MEM_SIZE];
+	quint8 m_patternDataA[PATTERN_MEM_SIZE];
+	quint8 m_patternDataB[PATTERN_MEM_SIZE];
+	quint8 m_patternFlagsA[PATTERN_MEM_SIZE];
+	quint8 m_patternFlagsB[PATTERN_MEM_SIZE];
 
 	Measurement m_currentValues, m_displayedValues;
 	QMutex m_mutex;
