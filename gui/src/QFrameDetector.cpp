@@ -60,7 +60,7 @@ void QFrameDetector::updateDisplayedValues()
 {
 	QMutexLocker lock(&m_mutex);
 
-	memcpy(&m_displayedValues, &m_currentValues, sizeof(Measurement));
+	m_displayedValues = m_currentValues;
 
 	emit measurementChanged();
 }
@@ -107,7 +107,13 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	m_mutex.lock();
 
 	m_currentValues.time = readAsNumber<quint64>(measurement, 0);
-	m_currentValues.matched = readAsNumber<quint32>(measurement, 8);
+	m_currentValues.match_dir = readAsNumber<quint8>(measurement, 8);
+	m_currentValues.match_mask = readAsNumber<quint8>(measurement, 9);
+
+	quint8 ext_num = readAsNumber<quint8>(measurement, 10);
+	if(ext_num > 16) ext_num = 16;
+
+	m_currentValues.match_ext_data = measurement.mid(12, ext_num);
 
 	m_mutex.unlock();
 
@@ -115,7 +121,11 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	{
 		m_logFile.write(QByteArray::number(m_currentValues.time));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(m_currentValues.matched));
+		m_logFile.write(QByteArray::number(m_currentValues.match_dir));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(m_currentValues.match_mask));
+		m_logFile.putChar(',');
+		m_logFile.write(m_currentValues.match_ext_data.toHex());
 		m_logFile.putChar('\n');
 	}
 }
@@ -179,6 +189,12 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 			{
 				patternFlags[i-4] |= 0x5;
 			}
+		}
+		else if(c == '?')
+		{
+			inX = true;
+			patternFlags[i] |= 0x11;
+			i += 4;
 		}
 		else if(c == 'r' || c == 'R')
 		{

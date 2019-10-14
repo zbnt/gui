@@ -36,7 +36,9 @@ class QFrameDetector : public QObject
 	struct Measurement
 	{
 		quint64 time = 0;
-		quint32 matched = 0;
+		quint8 match_dir;
+		quint8 match_mask;
+		QByteArray match_ext_data;
 	};
 
 public:

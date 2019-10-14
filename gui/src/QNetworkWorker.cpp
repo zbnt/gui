@@ -156,7 +156,7 @@ void QNetworkWorker::onMessageReceived(quint8 id, const QByteArray &data)
 
 		case MSG_ID_MEASUREMENT_FD:
 		{
-			if(data.length() < 12) return;
+			if(data.length() < 28) return;
 
 			m_currentTime = readAsNumber<quint64>(data, 0);
 
