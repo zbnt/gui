@@ -138,8 +138,8 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 
 	m_patternPath[id] = selectedPath;
 
-	quint8 *patternData = (id < 8 ? m_patternDataA : m_patternDataB);
-	quint8 *patternFlags = (id < 8 ? m_patternFlagsA : m_patternFlagsB);
+	quint8 *patternData = (id < 4 ? m_patternDataA : m_patternDataB);
+	quint8 *patternFlags = (id < 4 ? m_patternFlagsA : m_patternFlagsB);
 	if(id >= 4) id -= 4;
 
 	QByteArray fileContents = patternFile.readAll();
@@ -172,6 +172,19 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 			}
 
 			break;
+		}
+		else if(c == '!')
+		{
+			if(i >= 4)
+			{
+				patternFlags[i-4] |= 0x5;
+			}
+		}
+		else if(c == 'r' || c == 'R')
+		{
+			inX = true;
+			patternFlags[i] |= 0x9;
+			i += 4;
 		}
 		else if(c == 'x' || c == 'X')
 		{
