@@ -81,10 +81,11 @@ void QFrameDetector::appendSettings(QByteArray *buffer)
 
 	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
 	appendAsBytes<quint8>(buffer, MSG_ID_FD_CFG);
-	appendAsBytes<quint16>(buffer, 2);
+	appendAsBytes<quint16>(buffer, 3);
 
 	appendAsBytes<quint8>(buffer, !!enable);
 	appendAsBytes<quint8>(buffer, enable);
+	appendAsBytes<quint8>(buffer, m_fixChecksums);
 }
 
 void QFrameDetector::appendPatterns(QByteArray *buffer)

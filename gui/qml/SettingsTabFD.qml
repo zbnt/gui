@@ -29,6 +29,10 @@ Item {
 	property var object: undefined
 	property int patternID: 0
 
+	Component.onCompleted: {
+		object.fixChecksums = Qt.binding(function() { return fixChecksumsInput.checked })
+	}
+
 	FileDialog {
 		id: filePicker
 		title: "Pick a file"
@@ -364,6 +368,48 @@ Item {
 					onPressed: {
 						root.object.removePattern(7)
 					}
+				}
+			}
+		}
+
+		GroupBox {
+			title: "Other settings"
+			topPadding: 26
+			bottomPadding: 15
+			Layout.columnSpan: 2
+
+			label: Label {
+				y: 5
+				text: parent.title
+				verticalAlignment: Text.AlignTop
+				horizontalAlignment: Text.AlignHCenter
+				anchors.horizontalCenter: parent.horizontalCenter
+			}
+
+			Layout.fillWidth: true
+
+			GridLayout {
+				columns: 3
+				rowSpacing: 10
+				columnSpacing: 5
+
+				anchors.fill: parent
+				anchors.topMargin: 5
+				anchors.leftMargin: 5
+				anchors.rightMargin: 5
+
+				Item {
+					Layout.fillWidth: true
+				}
+
+				CheckBox {
+					id: fixChecksumsInput
+					checked: true
+					text: "Fix TCP/UDP/ICMP/ICMPv6 checksums if needed"
+				}
+
+				Item {
+					Layout.fillWidth: true
 				}
 			}
 		}

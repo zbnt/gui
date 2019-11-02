@@ -32,6 +32,7 @@ class QFrameDetector : public QObject
 	Q_OBJECT
 
 	Q_PROPERTY(QVariantList patternPath MEMBER m_patternPath NOTIFY patternsChanged)
+	Q_PROPERTY(bool fixChecksums MEMBER m_fixChecksums NOTIFY settingsChanged);
 
 	struct Measurement
 	{
@@ -60,6 +61,7 @@ public slots:
 
 signals:
 	void patternsChanged();
+	void settingsChanged();
 	void measurementChanged();
 
 private:
@@ -68,6 +70,7 @@ private:
 	quint8 m_patternDataB[PATTERN_MEM_SIZE];
 	quint8 m_patternFlagsA[PATTERN_MEM_SIZE];
 	quint8 m_patternFlagsB[PATTERN_MEM_SIZE];
+	bool m_fixChecksums = true;
 
 	Measurement m_currentValues, m_displayedValues;
 	QMutex m_mutex;
