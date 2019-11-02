@@ -153,7 +153,7 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 	if(id >= 4) id -= 4;
 
 	QByteArray fileContents = patternFile.readAll();
-	uint32_t num = 0x10, i = 0;
+	uint32_t num = 0x10, i = id;
 	bool inX = false;
 
 	for(char c : fileContents)
@@ -188,6 +188,21 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 			if(i >= 4)
 			{
 				patternFlags[i-4] |= 0x5;
+			}
+		}
+		else if(c == '+')
+		{
+			if(i >= 4)
+			{
+				if((patternFlags[i-4] & 0x60) == 0x20)
+				{
+					patternFlags[i-4] |= 0x40;
+					patternFlags[i-4] &= ~0x20;
+				}
+				else if(!(patternFlags[i-4] & 0x60))
+				{
+					patternFlags[i-4] |= 0x20;
+				}
 			}
 		}
 		else if(c == '?')
