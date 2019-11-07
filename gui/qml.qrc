@@ -4,6 +4,8 @@
 		<file>qml/DeviceTab.qml</file>
 		<file>qml/SettingsTab.qml</file>
 		<file>qml/SettingsTabGeneral.qml</file>
+		<file>qml/SettingsTabSC.qml</file>
+		<file>qml/SettingsTabSCBox.qml</file>
 		<file>qml/SettingsTabTG.qml</file>
 		<file>qml/SettingsTabLM.qml</file>
 		<file>qml/SettingsTabFD.qml</file>

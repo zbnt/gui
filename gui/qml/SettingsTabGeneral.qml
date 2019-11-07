@@ -32,10 +32,6 @@ Item {
 		ZBNT.streamPeriod = Qt.binding(function() { return streamPeriodInput.text })
 		ZBNT.streamMode = Qt.binding(function() { return streamModeInput.checked })
 		ZBNT.exportResults = Qt.binding(function() { return exportFilesInput.checked })
-		ZBNT.enableSC0 = Qt.binding(function() { return enableSC0Input.checked })
-		ZBNT.enableSC1 = Qt.binding(function() { return enableSC1Input.checked })
-		ZBNT.enableSC2 = Qt.binding(function() { return enableSC2Input.checked })
-		ZBNT.enableSC3 = Qt.binding(function() { return enableSC3Input.checked })
 		ZBNT.bitstreamID = Qt.binding(function() { return bitstreamSelector.currentIndex + 1 })
 	}
 
@@ -153,64 +149,8 @@ Item {
 		}
 
 		Item {
+			Layout.fillHeight: true
 			Layout.columnSpan: 3
-			Layout.minimumHeight: 6
 		}
-
-		Label {
-			text: "Monitor stats:"
-			font.weight: Font.Bold
-			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-		}
-
-		CheckBox {
-			id: enableSC0Input
-			checked: true
-			enabled: !ZBNT.streamMode
-			text: "eth0"
-			Layout.fillWidth: true
-			Layout.columnSpan: 2
-		}
-
-		Label { }
-
-		CheckBox {
-			id: enableSC1Input
-			checked: true
-			enabled: !ZBNT.streamMode
-			text: "eth1"
-			Layout.fillWidth: true
-			Layout.columnSpan: 2
-		}
-
-		Label { }
-
-		CheckBox {
-			id: enableSC2Input
-			checked: true
-			enabled: !ZBNT.streamMode
-			text: "eth2"
-			Layout.fillWidth: true
-			Layout.columnSpan: 2
-		}
-
-		Label { }
-
-		CheckBox {
-			id: enableSC3Input
-			checked: true
-			enabled: !ZBNT.streamMode
-			text: "eth3"
-			Layout.fillWidth: true
-			Layout.columnSpan: 2
-		}
-
-		Item {
-			Layout.columnSpan: 3
-			Layout.minimumHeight: 10
-		}
-
-		Item { Layout.fillHeight: true }
-		Item { Layout.fillHeight: true }
 	}
 }

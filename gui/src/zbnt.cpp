@@ -26,21 +26,16 @@
 
 ZBNT::ZBNT() : QObject(nullptr)
 {
-	m_tg0 = new QTrafficGenerator(this);
-	m_tg1 = new QTrafficGenerator(this);
-	m_tg2 = new QTrafficGenerator(this);
-	m_tg3 = new QTrafficGenerator(this);
+	m_tg0 = new QTrafficGenerator(0, this);
+	m_tg1 = new QTrafficGenerator(1, this);
+	m_tg2 = new QTrafficGenerator(2, this);
+	m_tg3 = new QTrafficGenerator(3, this);
+	m_sc0 = new QStatsCollector(0, this);
+	m_sc1 = new QStatsCollector(1, this);
+	m_sc2 = new QStatsCollector(2, this);
+	m_sc3 = new QStatsCollector(3, this);
 	m_lm0 = new QLatencyMeasurer(this);
-	m_sc0 = new QStatsCollector(this);
-	m_sc1 = new QStatsCollector(this);
-	m_sc2 = new QStatsCollector(this);
-	m_sc3 = new QStatsCollector(this);
 	m_fd0 = new QFrameDetector(this);
-
-	m_tg0->setIndex(0);
-	m_tg1->setIndex(1);
-	m_tg2->setIndex(2);
-	m_tg3->setIndex(3);
 
 	m_discovery = new QDiscoveryClient(this);
 	QTimer::singleShot(1000, this, &ZBNT::scanDevices);
@@ -96,6 +91,13 @@ void ZBNT::sendSettings()
 	appendAsBytes<quint16>(&txData, 1);
 	appendAsBytes<quint8>(&txData, m_bitstreamID);
 
+	// Stats collectors
+
+	m_sc0->appendSettings(&txData);
+	m_sc1->appendSettings(&txData);
+	m_sc2->appendSettings(&txData);
+	m_sc3->appendSettings(&txData);
+
 	// Traffic generators
 
 	if(!m_streamMode)
@@ -140,12 +142,8 @@ void ZBNT::sendSettings()
 	{
 		txData.append(MSG_MAGIC_IDENTIFIER, 4);
 		appendAsBytes<quint8>(&txData, MSG_ID_START);
-		appendAsBytes<quint16>(&txData, 12);
+		appendAsBytes<quint16>(&txData, 8);
 		appendAsBytes<quint64>(&txData, m_runTime);
-		appendAsBytes<quint8>(&txData, m_enableSC0);
-		appendAsBytes<quint8>(&txData, m_enableSC1);
-		appendAsBytes<quint8>(&txData, m_enableSC2);
-		appendAsBytes<quint8>(&txData, m_enableSC3);
 	}
 	else
 	{

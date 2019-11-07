@@ -42,9 +42,8 @@ class QTrafficGenerator : public QObject
 
 public:
 	QTrafficGenerator(QObject *parent = nullptr);
+	QTrafficGenerator(quint8 idx, QObject *parent = nullptr);
 	~QTrafficGenerator();
-
-	void setIndex(quint8 idx);
 
 	void appendSettings(QByteArray *buffer);
 	void appendFrame(QByteArray *buffer);

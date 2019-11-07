@@ -23,16 +23,16 @@
 #include <Utils.hpp>
 #include <Messages.hpp>
 
-QTrafficGenerator::QTrafficGenerator(QObject *parent) : QObject(parent)
+QTrafficGenerator::QTrafficGenerator(QObject *parent)
+	: QObject(parent)
+{ }
+
+QTrafficGenerator::QTrafficGenerator(quint8 idx, QObject *parent)
+	: QObject(parent), m_idx(idx)
 { }
 
 QTrafficGenerator::~QTrafficGenerator()
 { }
-
-void QTrafficGenerator::setIndex(quint8 idx)
-{
-	m_idx = idx;
-}
 
 void QTrafficGenerator::appendSettings(QByteArray *buffer)
 {

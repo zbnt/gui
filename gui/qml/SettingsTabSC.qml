@@ -1,5 +1,5 @@
 /*
-	zbnt_sw
+	zbnt_gui
 	Copyright (C) 2019 Oscar R.
 
 	This program is free software: you can redistribute it and/or modify
@@ -16,39 +16,48 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
+import QtQuick 2.12
+import QtQuick.Controls 2.3
+import QtQuick.Layouts 1.3
+import QtQuick.Dialogs 1.3
 
-#define MSG_VERSION           20191107
-#define MSG_DISCOVERY_PORT    5466
-#define MSG_MAGIC_IDENTIFIER  "\x4D\x60\x64\x5A"
+import zbnt 1.0
 
-enum MessageID
-{
-	MSG_ID_DISCOVERY = 1,
-	MSG_ID_DISCOVERY_RESP,
+Item {
+	id: root
 
-	MSG_ID_START,
-	MSG_ID_START_STREAM,
-	MSG_ID_STOP,
-	MSG_ID_SET_BITSTREAM,
+	ColumnLayout {
+		anchors.fill: parent
+		spacing: 10
 
-	MSG_ID_SC_CFG,
-	MSG_ID_TG_CFG,
-	MSG_ID_TG_FRAME,
-	MSG_ID_TG_PATTERN,
-	MSG_ID_LM_CFG,
-	MSG_ID_FD_CFG,
-	MSG_ID_FD_PATTERNS,
+		SettingsTabSCBox {
+			id: box0
+			title: "eth0"
+			object: ZBNT.sc0
+			Layout.fillWidth: true
+		}
 
-	MSG_ID_MEASUREMENT_LM,
-	MSG_ID_MEASUREMENT_FD,
-	MSG_ID_MEASUREMENT_SC,
-	MSG_ID_DONE
-};
+		SettingsTabSCBox {
+			id: box1
+			title: "eth1"
+			object: ZBNT.sc1
+			Layout.fillWidth: true
+		}
 
-enum RxStatus
-{
-	MSG_RX_MAGIC,
-	MSG_RX_HEADER,
-	MSG_RX_DATA
-};
+		SettingsTabSCBox {
+			id: box2
+			title: "eth2"
+			object: ZBNT.sc2
+			Layout.fillWidth: true
+		}
+
+		SettingsTabSCBox {
+			id: box3
+			title: "eth3"
+			object: ZBNT.sc3
+			Layout.fillWidth: true
+		}
+
+		Item { Layout.fillHeight: true }
+	}
+}

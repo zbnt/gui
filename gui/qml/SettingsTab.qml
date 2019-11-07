@@ -37,6 +37,7 @@ Item {
 
 			model: [
 				"General settings",
+				"Statistics collector (eth0, eth1, eth2, eth3)",
 				"Traffic generator (eth0)",
 				"Traffic generator (eth1)",
 				"Traffic generator (eth2)",
@@ -62,6 +63,11 @@ Item {
 
 				SettingsTabGeneral {
 					id: settingsGeneral
+					enabled: !ZBNT.running
+				}
+
+				SettingsTabSC {
+					id: settingsSC
 					enabled: !ZBNT.running
 				}
 

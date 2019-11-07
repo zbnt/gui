@@ -49,10 +49,6 @@ class ZBNT : public QObject
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
 	Q_PROPERTY(QString streamPeriod READ streamPeriod WRITE setStreamPeriod NOTIFY settingsChanged)
 	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
-	Q_PROPERTY(bool enableSC0 MEMBER m_enableSC0 NOTIFY settingsChanged)
-	Q_PROPERTY(bool enableSC1 MEMBER m_enableSC1 NOTIFY settingsChanged)
-	Q_PROPERTY(bool enableSC2 MEMBER m_enableSC2 NOTIFY settingsChanged)
-	Q_PROPERTY(bool enableSC3 MEMBER m_enableSC3 NOTIFY settingsChanged)
 	Q_PROPERTY(quint8 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
 
 	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY timeChanged)
@@ -156,10 +152,6 @@ private:
 	quint16 m_streamPeriod = 1;
 	bool m_streamMode = false;
 	bool m_exportResults = true;
-	bool m_enableSC0 = true;
-	bool m_enableSC1 = true;
-	bool m_enableSC2 = true;
-	bool m_enableSC3 = true;
 	quint8 m_bitstreamID = DualTGenLM;
 
 	quint64 m_currentTime = 0;

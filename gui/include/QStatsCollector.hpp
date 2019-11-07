@@ -26,6 +26,9 @@ class QStatsCollector : public QObject
 {
 	Q_OBJECT
 
+	Q_PROPERTY(quint8 enable MEMBER m_enable NOTIFY settingsChanged)
+	Q_PROPERTY(QString samplePeriod MEMBER m_samplePeriod NOTIFY settingsChanged)
+
 	Q_PROPERTY(QString txBytes READ txBytes NOTIFY measurementChanged)
 	Q_PROPERTY(QString txGood READ txGood NOTIFY measurementChanged)
 	Q_PROPERTY(QString txBad READ txBad NOTIFY measurementChanged)
@@ -49,6 +52,7 @@ class QStatsCollector : public QObject
 
 public:
 	QStatsCollector(QObject *parent = nullptr);
+	QStatsCollector(quint8 idx, QObject *parent = nullptr);
 	~QStatsCollector();
 
 	void enableLogging(const QString &fileName);
@@ -56,6 +60,7 @@ public:
 
 	void updateDisplayedValues();
 
+	void appendSettings(QByteArray *buffer);
 	void receiveMeasurement(const QByteArray &measurement);
 	void resetMeasurement();
 
@@ -75,6 +80,10 @@ signals:
 	void measurementChanged();
 
 private:
+	quint8 m_idx = 0;
+	quint8 m_enable = 1;
+	QString m_samplePeriod = "1";
+
 	Measurement m_currentValues, m_displayedValues;
 	QMutex m_mutex;
 

@@ -21,8 +21,14 @@
 #include <QString>
 
 #include <Utils.hpp>
+#include <Messages.hpp>
 
-QStatsCollector::QStatsCollector(QObject *parent) : QObject(parent)
+QStatsCollector::QStatsCollector(QObject *parent)
+	: QObject(parent)
+{ }
+
+QStatsCollector::QStatsCollector(quint8 idx, QObject *parent)
+	: QObject(parent), m_idx(idx)
 { }
 
 QStatsCollector::~QStatsCollector()
@@ -58,6 +64,19 @@ void QStatsCollector::updateDisplayedValues()
 	}
 
 	emit measurementChanged();
+}
+
+void QStatsCollector::appendSettings(QByteArray *buffer)
+{
+	if(!buffer) return;
+
+	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint8>(buffer, MSG_ID_SC_CFG);
+	appendAsBytes<quint16>(buffer, 6);
+
+	appendAsBytes<quint8>(buffer, m_idx);
+	appendAsBytes<quint8>(buffer, m_enable);
+	appendAsBytes<quint32>(buffer, m_samplePeriod.toUInt());
 }
 
 void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
