@@ -63,6 +63,10 @@ ApplicationWindow {
 				text: "Latency"
 			}
 
+			TabButton {
+				text: "Detector"
+			}
+
 			background: Item { }
 		}
 
@@ -90,6 +94,11 @@ ApplicationWindow {
 				LatencyTab {
 					id: latencyTab
 					object: ZBNT.lm0
+				}
+
+				DetectorTab {
+					id: detectorTab
+					object: ZBNT.fd0
 				}
 			}
 		}

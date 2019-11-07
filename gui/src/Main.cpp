@@ -29,6 +29,7 @@
 #include <QLatencyMeasurer.hpp>
 #include <QFrameDetector.hpp>
 
+#include <QTableModel.hpp>
 #include <QIPValidator.hpp>
 #include <QUInt64Validator.hpp>
 #include <QUInt64RangeValidator.hpp>
@@ -56,6 +57,7 @@ int main(int argc, char *argv[])
 	qmlRegisterType<QLatencyMeasurer>("zbnt", 1, 0, "QLatencyMeasurer");
 	qmlRegisterType<QFrameDetector>("zbnt", 1, 0, "QFrameDetector");
 
+	qmlRegisterType<QTableModel>("zbnt", 1, 0, "QTableModel");
 	qmlRegisterType<QIPValidator>("zbnt", 1, 0, "IPValidator");
 	qmlRegisterType<QUInt64Validator>("zbnt", 1, 0, "UInt64Validator");
 	qmlRegisterType<QUInt64RangeValidator>("zbnt", 1, 0, "UInt64RangeValidator");

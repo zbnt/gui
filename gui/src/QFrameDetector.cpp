@@ -28,6 +28,8 @@ QFrameDetector::QFrameDetector(QObject *parent) : QObject(parent)
 	for(int i = 0; i < 8; ++i)
 	{
 		m_patternPath.append("");
+		m_detectionCounters.append(0);
+		m_detectionCountersStr.append("0");
 	}
 
 	for(int i = 0; i < PATTERN_MEM_SIZE; ++i)
@@ -38,6 +40,9 @@ QFrameDetector::QFrameDetector(QObject *parent) : QObject(parent)
 		m_patternFlagsA[i] = 1;
 		m_patternFlagsB[i] = 1;
 	}
+
+	m_detectionListA = new QTableModel(3, this);
+	m_detectionListB = new QTableModel(3, this);
 }
 
 QFrameDetector::~QFrameDetector()
@@ -58,9 +63,29 @@ void QFrameDetector::disableLogging()
 
 void QFrameDetector::updateDisplayedValues()
 {
-	QMutexLocker lock(&m_mutex);
+	m_mutex.lock();
 
-	m_displayedValues = m_currentValues;
+	m_detectionListA->prependRows(m_pendingDetections[0]);
+	m_detectionListB->prependRows(m_pendingDetections[1]);
+	m_pendingDetections[0].clear();
+	m_pendingDetections[1].clear();
+
+	for(int i = 0; i < 8; ++i)
+	{
+		m_detectionCountersStr[i] = QString::number(m_detectionCounters[i]);
+	}
+
+	m_mutex.unlock();
+
+	if(m_detectionListA->rowCount() > 1000)
+	{
+		m_detectionListA->erase(1000, m_detectionListA->rowCount() - 1);
+	}
+
+	if(m_detectionListB->rowCount() > 1000)
+	{
+		m_detectionListB->erase(1000, m_detectionListB->rowCount() - 1);
+	}
 
 	emit measurementChanged();
 }
@@ -86,6 +111,23 @@ void QFrameDetector::appendSettings(QByteArray *buffer)
 	appendAsBytes<quint8>(buffer, !!enable);
 	appendAsBytes<quint8>(buffer, enable);
 	appendAsBytes<quint8>(buffer, m_fixChecksums);
+
+	m_mutex.lock();
+
+	m_pendingDetections[0].clear();
+	m_pendingDetections[1].clear();
+	m_detectionListA->erase(0, m_detectionListA->rowCount() - 1);
+	m_detectionListB->erase(0, m_detectionListB->rowCount() - 1);
+
+	for(int i = 0; i < 8; ++i)
+	{
+		m_detectionCounters[i] = 0;
+		m_detectionCountersStr[i] = "0";
+	}
+
+	m_mutex.unlock();
+
+	emit measurementChanged();
 }
 
 void QFrameDetector::appendPatterns(QByteArray *buffer)
@@ -105,28 +147,62 @@ void QFrameDetector::appendPatterns(QByteArray *buffer)
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 {
+	quint64 time = readAsNumber<quint64>(measurement, 0);
+	quint8 match_dir = readAsNumber<quint8>(measurement, 8);
+	quint8 match_mask = readAsNumber<quint8>(measurement, 9);
+	quint8 ext_num = readAsNumber<quint8>(measurement, 10);
+	QByteArray match_ext_data = measurement.mid(12, ext_num).toHex();
+
+	if(ext_num > 16)
+		ext_num = 16;
+
+	if(match_dir > 1)
+		match_dir = 1;
+
+	QString match_mask_str;
+	bool first = true;
+
+	for(int i = 0; i < 4; ++i)
+	{
+		if(match_mask & (1 << i))
+		{
+			if(!first) match_mask_str.append(", ");
+			match_mask_str.append(QString::number(i + 1));
+		}
+
+		first = false;
+	}
+
+	QStringList matchInfo =
+	{
+		QString::number(time * 8),
+		match_mask_str,
+		QString::fromUtf8(match_ext_data),
+	};
+
 	m_mutex.lock();
 
-	m_currentValues.time = readAsNumber<quint64>(measurement, 0);
-	m_currentValues.match_dir = readAsNumber<quint8>(measurement, 8);
-	m_currentValues.match_mask = readAsNumber<quint8>(measurement, 9);
+	m_pendingDetections[match_dir].append(matchInfo);
 
-	quint8 ext_num = readAsNumber<quint8>(measurement, 10);
-	if(ext_num > 16) ext_num = 16;
-
-	m_currentValues.match_ext_data = measurement.mid(12, ext_num);
+	for(int i = 0; i < 4; ++i)
+	{
+		if(match_mask & (1 << i))
+		{
+			m_detectionCounters[i + 4*match_dir] += 1;
+		}
+	}
 
 	m_mutex.unlock();
 
 	if(m_logFile.isWritable())
 	{
-		m_logFile.write(QByteArray::number(m_currentValues.time));
+		m_logFile.write(QByteArray::number(time));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(m_currentValues.match_dir));
+		m_logFile.write(QByteArray::number(match_dir));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(m_currentValues.match_mask));
+		m_logFile.write(QByteArray::number(match_mask));
 		m_logFile.putChar(',');
-		m_logFile.write(m_currentValues.match_ext_data.toHex());
+		m_logFile.write(match_ext_data);
 		m_logFile.putChar('\n');
 	}
 }

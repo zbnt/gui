@@ -56,7 +56,7 @@ ZBNT::ZBNT() : QObject(nullptr)
 	QTimer::singleShot(0, m_netWorker, &QNetworkWorker::startWork);
 
 	m_updateTimer = new QTimer(this);
-	m_updateTimer->setInterval(200);
+	m_updateTimer->setInterval(250);
 	m_updateTimer->setSingleShot(false);
 	m_updateTimer->start();
 

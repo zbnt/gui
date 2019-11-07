@@ -25,6 +25,8 @@
 #include <QMutex>
 #include <QVariant>
 
+#include <QTableModel.hpp>
+
 #define PATTERN_MEM_SIZE 8192
 
 class QFrameDetector : public QObject
@@ -32,15 +34,11 @@ class QFrameDetector : public QObject
 	Q_OBJECT
 
 	Q_PROPERTY(QVariantList patternPath MEMBER m_patternPath NOTIFY patternsChanged)
-	Q_PROPERTY(bool fixChecksums MEMBER m_fixChecksums NOTIFY settingsChanged);
+	Q_PROPERTY(bool fixChecksums MEMBER m_fixChecksums NOTIFY settingsChanged)
 
-	struct Measurement
-	{
-		quint64 time = 0;
-		quint8 match_dir;
-		quint8 match_mask;
-		QByteArray match_ext_data;
-	};
+	Q_PROPERTY(QStringList detectionCounters MEMBER m_detectionCountersStr NOTIFY measurementChanged)
+	Q_PROPERTY(QTableModel *detectionListA MEMBER m_detectionListA NOTIFY measurementChanged)
+	Q_PROPERTY(QTableModel *detectionListB MEMBER m_detectionListB NOTIFY measurementChanged)
 
 public:
 	QFrameDetector(QObject *parent = nullptr);
@@ -72,8 +70,13 @@ private:
 	quint8 m_patternFlagsB[PATTERN_MEM_SIZE];
 	bool m_fixChecksums = true;
 
-	Measurement m_currentValues, m_displayedValues;
-	QMutex m_mutex;
+	QList<QStringList> m_pendingDetections[2];
+	QList<quint64> m_detectionCounters;
 
+	QTableModel *m_detectionListA = nullptr;
+	QTableModel *m_detectionListB = nullptr;
+	QStringList m_detectionCountersStr;
+
+	QMutex m_mutex;
 	QFile m_logFile;
 };

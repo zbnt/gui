@@ -4,6 +4,7 @@ find_package(Qt5 COMPONENTS Core Gui Network Qml Widgets REQUIRED)
 set(ZBNT_GUI_SRC
 	"src/Main.cpp"
 	"src/Utils.cpp"
+	"src/QTableModel.cpp"
 
 	"src/zbnt.cpp"
 	"src/QNetworkWorker.cpp"
@@ -21,6 +22,8 @@ set(ZBNT_GUI_SRC
 )
 
 set(ZBNT_GUI_HDR
+	"include/QTableModel.hpp"
+
 	"include/zbnt.hpp"
 	"include/QNetworkWorker.hpp"
 	"include/QDiscoveryClient.hpp"
