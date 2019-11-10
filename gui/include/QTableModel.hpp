@@ -37,7 +37,8 @@ public:
 	QHash<int, QByteArray> roleNames() const override;
 
 	void prependRows(const QList<QStringList> &rows);
-	void erase(quint16 start, quint16 end);
+	void removeRows(quint16 start, quint16 end);
+	void clearRows();
 
 private:
 	QList<QStringList> m_items;

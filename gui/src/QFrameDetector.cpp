@@ -79,12 +79,12 @@ void QFrameDetector::updateDisplayedValues()
 
 	if(m_detectionListA->rowCount() > 1000)
 	{
-		m_detectionListA->erase(1000, m_detectionListA->rowCount() - 1);
+		m_detectionListA->removeRows(1000, m_detectionListA->rowCount());
 	}
 
 	if(m_detectionListB->rowCount() > 1000)
 	{
-		m_detectionListB->erase(1000, m_detectionListB->rowCount() - 1);
+		m_detectionListB->removeRows(1000, m_detectionListB->rowCount());
 	}
 
 	emit measurementChanged();
@@ -116,8 +116,8 @@ void QFrameDetector::appendSettings(QByteArray *buffer)
 
 	m_pendingDetections[0].clear();
 	m_pendingDetections[1].clear();
-	m_detectionListA->erase(0, m_detectionListA->rowCount() - 1);
-	m_detectionListB->erase(0, m_detectionListB->rowCount() - 1);
+	m_detectionListA->clearRows();
+	m_detectionListB->clearRows();
 
 	for(int i = 0; i < 8; ++i)
 	{

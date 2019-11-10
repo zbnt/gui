@@ -74,11 +74,18 @@ void QTableModel::prependRows(const QList<QStringList> &rows)
 	endInsertRows();
 }
 
-void QTableModel::erase(quint16 start, quint16 end)
+void QTableModel::removeRows(quint16 start, quint16 end)
 {
-	if(start >= end || end >= m_items.size()) return;
+	if(start >= end || end > m_items.size()) return;
 
 	beginRemoveRows(QModelIndex(), start, end);
-	m_items.erase(m_items.begin() + start, m_items.begin() + end + 1);
+	m_items.erase(m_items.begin() + start, m_items.begin() + end);
 	endRemoveRows();
+}
+
+void QTableModel::clearRows()
+{
+	beginResetModel();
+	m_items.clear();
+	endResetModel();
 }
