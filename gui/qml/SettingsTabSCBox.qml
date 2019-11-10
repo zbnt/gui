@@ -79,6 +79,7 @@ GroupBox {
 			enabled: enableInput.checked
 			horizontalAlignment: Qt.AlignHCenter
 
+			text: "12500000"
 			min: "1"
 			max: "4294967295"
 
@@ -86,18 +87,15 @@ GroupBox {
 		}
 
 		Label {
-			text: " ms"
+			text: " cycles"
 		}
 
-		Label {
-			visible: !samplePeriodInput.valid
-		}
+		Label { }
 
 		ErrorLabel {
-			visible: !samplePeriodInput.valid
 			enabled: samplePeriodInput.enabled
 			valid: samplePeriodInput.valid
-			normalText: ""
+			normalText: ZBNT.cyclesToTime(samplePeriodInput.text)
 			errorText: samplePeriodInput.validator.error
 			Layout.columnSpan: 2
 		}

@@ -82,7 +82,7 @@ signals:
 private:
 	quint8 m_idx = 0;
 	quint8 m_enable = 1;
-	QString m_samplePeriod = "1";
+	QString m_samplePeriod = "12500000";
 
 	Measurement m_currentValues, m_displayedValues;
 	QMutex m_mutex;
