@@ -273,12 +273,12 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 			{
 				if((patternFlags[i-4] & 0x60) == 0x20)
 				{
-					patternFlags[i-4] |= 0x40;
+					patternFlags[i-4] |= 0x41;
 					patternFlags[i-4] &= ~0x20;
 				}
 				else if(!(patternFlags[i-4] & 0x60))
 				{
-					patternFlags[i-4] |= 0x20;
+					patternFlags[i-4] |= 0x21;
 				}
 			}
 		}
