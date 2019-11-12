@@ -112,10 +112,10 @@ Item {
 		Label { }
 
 		ErrorLabel {
-			valid: root.templateLoaded && root.templateLength <= 1500
+			valid: root.templateLoaded && root.templateLength <= 2048
 			enabled: enableInput.checked || ZBNT.streamMode
 			normalText: root.templateLength + " bytes"
-			errorText: !root.templateLoaded ? "No file selected" : (normalText + " - Must be at most 1500 bytes")
+			errorText: !root.templateLoaded ? "No file selected" : (normalText + " - Must be at most 2048 bytes")
 			font.italic: true
 		}
 
@@ -139,7 +139,7 @@ Item {
 				horizontalAlignment: Qt.AlignHCenter
 
 				min: "60"
-				max: "1500"
+				max: "65531"
 
 				Layout.fillWidth: true
 			}
@@ -151,7 +151,6 @@ Item {
 
 		Label {
 			visible: !sizeInput.valid
-			Layout.minimumHeight: 14
 		}
 
 		ErrorLabel {
@@ -160,6 +159,19 @@ Item {
 			valid: sizeInput.valid
 			normalText: ""
 			errorText: sizeInput.validator.error
+		}
+
+		Label {
+			visible: sizeInput.text > 1514 && sizeInput.valid
+		}
+
+		ErrorLabel {
+			visible: sizeInput.text > 1514 && sizeInput.valid
+			enabled: sizeInput.enabled
+			valid: false
+			wrapMode: Label.WordWrap
+			text: "Frame larger than 1514 bytes, make sure the destination device has an appropriate MTU value"
+			Layout.maximumWidth: sizeInput.width
 		}
 
 		Label {
