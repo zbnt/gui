@@ -33,7 +33,7 @@ public:
 	void findDevices();
 	quint64 scanTime();
 
-	void onMessageReceived(quint8 id, const QByteArray &data);
+	void onMessageReceived(quint16 id, const QByteArray &data);
 	void onReadyRead();
 
 signals:

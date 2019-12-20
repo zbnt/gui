@@ -49,6 +49,12 @@ add_executable(zbnt_gui ${ZBNT_GUI_SRC} ${ZBNT_GUI_SRC_RES} ${ZBNT_GUI_SRC_MOC})
 target_link_libraries(zbnt_gui Qt5::Core Qt5::Gui Qt5::Network Qt5::Qml Qt5::Widgets -lpthread)
 target_include_directories(zbnt_gui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
+target_compile_definitions(
+	zbnt_gui PUBLIC
+	ZBNT_VERSION="${PROJECT_VERSION}"
+	ZBNT_VERSION_INT=${ZBNT_VERSION_INT}
+)
+
 install(
 	TARGETS zbnt_gui
 	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ

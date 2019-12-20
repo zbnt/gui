@@ -122,3 +122,13 @@ void bitsToHumanReadable(quint64 bits, QString &res, bool dec)
 	res.chop(1);
 	res.push_back('b');
 }
+
+void setDeviceProperty(QByteArray *array, quint8 devID, PropertyID propID, const QByteArray &value)
+{
+	array->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint16>(array, MSG_ID_SET_PROPERTY);
+	appendAsBytes<quint16>(array, 3 + value.length());
+	appendAsBytes<quint8>(array, devID);
+	appendAsBytes<quint16>(array, propID);
+	array->append(value);
+}

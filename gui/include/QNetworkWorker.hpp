@@ -55,7 +55,7 @@ public slots:
 	void stopRun();
 
 private slots:
-	void onMessageReceived(quint8 id, const QByteArray &data);
+	void onMessageReceived(quint16 id, const QByteArray &data);
 	void onNetworkStateChanged(QAbstractSocket::SocketState state);
 	void onNetworkError(QAbstractSocket::SocketError error);
 	void onReadyRead();

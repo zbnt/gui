@@ -41,7 +41,7 @@ void QDiscoveryClient::findDevices()
 	m_time = QDateTime::currentDateTime().toSecsSinceEpoch();
 
 	message.append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(&message, MSG_ID_DISCOVERY);
+	appendAsBytes<quint16>(&message, MSG_ID_DISCOVERY);
 	appendAsBytes<quint16>(&message, 8);
 	appendAsBytes<quint64>(&message, m_time);
 
@@ -61,9 +61,9 @@ quint64 QDiscoveryClient::scanTime()
 	return m_time;
 }
 
-void QDiscoveryClient::onMessageReceived(quint8 id, const QByteArray &data)
+void QDiscoveryClient::onMessageReceived(quint16 id, const QByteArray &data)
 {
-	if(id == MSG_ID_DISCOVERY_RESP && data.length() > 36)
+	if(id == MSG_ID_DISCOVERY && data.length() > 36)
 	{
 		emit deviceDiscovered(data);
 	}

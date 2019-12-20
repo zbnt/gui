@@ -94,23 +94,26 @@ void QFrameDetector::appendSettings(QByteArray *buffer)
 {
 	if(!buffer) return;
 
-	quint8 enable = 0;
+	quint32 enable = 0;
 
 	for(int i = 0; i < 8; ++i)
 	{
 		if(m_patternPath[i].toString().length())
 		{
-			enable |= 1 << i;
+			if(i < 4)
+			{
+				enable |= 1 << i;
+			}
+			else
+			{
+				enable |= 1 << (i + 12);
+			}
 		}
 	}
 
-	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_FD_CFG);
-	appendAsBytes<quint16>(buffer, 3);
-
-	appendAsBytes<quint8>(buffer, !!enable);
-	appendAsBytes<quint8>(buffer, enable);
-	appendAsBytes<quint8>(buffer, m_fixChecksums);
+	setDeviceProperty<quint8>(buffer, 6, PROP_ENABLE_CSUM_FIX, m_fixChecksums);
+	setDeviceProperty<quint32>(buffer, 6, PROP_ENABLE_PATTERN, enable);
+	setDeviceProperty<quint8>(buffer, 6, PROP_ENABLE, !!enable);
 
 	m_mutex.lock();
 
@@ -134,15 +137,41 @@ void QFrameDetector::appendPatterns(QByteArray *buffer)
 {
 	if(!buffer) return;
 
-	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_FD_PATTERNS);
-	appendAsBytes<quint16>(buffer, PATTERN_MEM_SIZE * 4 + 1);
+	for(const quint8 *ptr : {m_patternDataA, m_patternDataB})
+	{
+		for(int idx = 0; idx < 4; ++idx)
+		{
+			QByteArray msg;
 
-	appendAsBytes<quint8>(buffer, 0);
-	buffer->append(QByteArray((const char*) m_patternDataA, PATTERN_MEM_SIZE));
-	buffer->append(QByteArray((const char*) m_patternFlagsA, PATTERN_MEM_SIZE));
-	buffer->append(QByteArray((const char*) m_patternDataB, PATTERN_MEM_SIZE));
-	buffer->append(QByteArray((const char*) m_patternFlagsB, PATTERN_MEM_SIZE));
+			appendAsBytes<quint8>(&msg, ptr == m_patternDataB);
+			appendAsBytes<quint8>(&msg, idx);
+
+			for(int j = idx; j < PATTERN_MEM_SIZE; j += 4)
+			{
+				msg.append(ptr[j]);
+			}
+
+			setDeviceProperty(buffer, 6, PROP_FRAME_PATTERN, msg);
+		}
+	}
+
+	for(const quint8 *ptr : {m_patternFlagsA, m_patternFlagsB})
+	{
+		for(int idx = 0; idx < 4; ++idx)
+		{
+			QByteArray msg;
+
+			appendAsBytes<quint8>(&msg, ptr == m_patternFlagsB);
+			appendAsBytes<quint8>(&msg, idx);
+
+			for(int j = idx; j < PATTERN_MEM_SIZE; j += 4)
+			{
+				msg.append(ptr[j]);
+			}
+
+			setDeviceProperty(buffer, 6, PROP_FRAME_PATTERN_FLAGS, msg);
+		}
+	}
 }
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
@@ -150,14 +179,13 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	quint64 time = readAsNumber<quint64>(measurement, 0);
 	quint8 match_dir = readAsNumber<quint8>(measurement, 8);
 	quint8 match_mask = readAsNumber<quint8>(measurement, 9);
-	quint8 ext_num = readAsNumber<quint8>(measurement, 10);
+	quint16 ext_num = readAsNumber<quint16>(measurement, 10);
 	QByteArray match_ext_data = measurement.mid(12, ext_num).toHex();
 
 	if(ext_num > 16)
 		ext_num = 16;
 
-	if(match_dir > 1)
-		match_dir = 1;
+	match_dir = (match_dir == 'A');
 
 	QString match_mask_str;
 	bool first = true;

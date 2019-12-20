@@ -70,28 +70,25 @@ void QStatsCollector::appendSettings(QByteArray *buffer)
 {
 	if(!buffer) return;
 
-	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_SC_CFG);
-	appendAsBytes<quint16>(buffer, 6);
-
-	appendAsBytes<quint8>(buffer, m_idx);
-	appendAsBytes<quint8>(buffer, m_enable);
-	appendAsBytes<quint32>(buffer, m_samplePeriod.toUInt());
+	// TODO
+	setDeviceProperty<quint8>(buffer, m_idx, PROP_ENABLE_LOG, 1);
+	setDeviceProperty<quint32>(buffer, m_idx, PROP_SAMPLE_PERIOD, m_samplePeriod.toUInt());
+	setDeviceProperty<quint8>(buffer, m_idx, PROP_ENABLE, 1);
 }
 
 void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
 {
 	m_mutex.lock();
 
-	m_currentValues.time = readAsNumber<quint64>(measurement, 1);
+	m_currentValues.time = readAsNumber<quint64>(measurement, 0);
 
-	m_currentValues.txBytes = readAsNumber<quint64>(measurement, 9);
-	m_currentValues.txGood = readAsNumber<quint64>(measurement, 17);
-	m_currentValues.txBad = readAsNumber<quint64>(measurement, 25);
+	m_currentValues.txBytes = readAsNumber<quint64>(measurement, 8);
+	m_currentValues.txGood = readAsNumber<quint64>(measurement, 16);
+	m_currentValues.txBad = readAsNumber<quint64>(measurement, 24);
 
-	m_currentValues.rxBytes = readAsNumber<quint64>(measurement, 33);
-	m_currentValues.rxGood = readAsNumber<quint64>(measurement, 41);
-	m_currentValues.rxBad = readAsNumber<quint64>(measurement, 49);
+	m_currentValues.rxBytes = readAsNumber<quint64>(measurement, 32);
+	m_currentValues.rxGood = readAsNumber<quint64>(measurement, 40);
+	m_currentValues.rxBad = readAsNumber<quint64>(measurement, 48);
 
 	m_mutex.unlock();
 

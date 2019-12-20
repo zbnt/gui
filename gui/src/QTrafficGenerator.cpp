@@ -38,40 +38,24 @@ void QTrafficGenerator::appendSettings(QByteArray *buffer)
 {
 	if(!buffer) return;
 
-	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_TG_CFG);
-	appendAsBytes<quint16>(buffer, 14);
+	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_SIZE, m_frameSize.toUShort());
+	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_GAP, m_frameSize.toUInt());
 
-	appendAsBytes<quint8>(buffer, m_idx);
-	appendAsBytes<quint8>(buffer, m_enable);
+	setDeviceProperty(buffer, 4 + m_idx, PROP_BURST_TIME_ON, m_burstOnTime.toULong());
+	setDeviceProperty(buffer, 4 + m_idx, PROP_BURST_TIME_OFF, m_burstOffTime.toULong());
+	setDeviceProperty(buffer, 4 + m_idx, PROP_ENABLE_BURST, m_burstEnable);
 
-	appendAsBytes<quint16>(buffer, m_frameSize.toUShort());
-	appendAsBytes<quint32>(buffer, m_frameDelay.toUInt());
+	setDeviceProperty(buffer, 4 + m_idx, PROP_LFSR_SEED, m_lfsrSeed.toUInt());
 
-	appendAsBytes<quint8>(buffer, m_burstEnable);
-	appendAsBytes<quint16>(buffer, m_burstOnTime.toULong());
-	appendAsBytes<quint16>(buffer, m_burstOffTime.toULong());
-
-	appendAsBytes<quint8>(buffer, m_lfsrSeed.toUInt());
+	setDeviceProperty(buffer, 4 + m_idx, PROP_ENABLE, m_enable);
 }
 
 void QTrafficGenerator::appendFrame(QByteArray *buffer)
 {
 	if(!buffer) return;
 
-	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_TG_FRAME);
-	appendAsBytes<quint16>(buffer, m_templateLength + 1);
-
-	appendAsBytes<quint8>(buffer, m_idx);
-	buffer->append(m_templateBytes);
-
-	buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_TG_PATTERN);
-	appendAsBytes<quint16>(buffer, 257);
-
-	appendAsBytes<quint8>(buffer, m_idx);
-	buffer->append((const char*) m_templateMask, 256);
+	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_TEMPLATE, m_templateBytes);
+	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_PATTERN, QByteArray((const char*) m_templateMask, 256));
 }
 
 void QTrafficGenerator::loadTemplate(QUrl url)

@@ -134,74 +134,72 @@ void QNetworkWorker::stopRun()
 	emit runningChanged(false);
 }
 
-void QNetworkWorker::onMessageReceived(quint8 id, const QByteArray &data)
+void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 {
 	switch(id)
 	{
-		case MSG_ID_DONE:
+		case MSG_ID_TIME_OVER:
 		{
 			stopRun();
 			break;
 		}
 
-		case MSG_ID_MEASUREMENT_LM:
+		default:
 		{
-			if(data.length() < 40) return;
-
-			m_currentTime = readAsNumber<quint64>(data, 0);
-
-			m_lm0->receiveMeasurement(data);
-			break;
-		}
-
-		case MSG_ID_MEASUREMENT_FD:
-		{
-			if(data.length() < 28) return;
-
-			m_currentTime = readAsNumber<quint64>(data, 0);
-
-			m_fd0->receiveMeasurement(data);
-			break;
-		}
-
-		case MSG_ID_MEASUREMENT_SC:
-		{
-			if(data.length() < 57) return;
-
-			quint8 idx = readAsNumber<quint8>(data, 0);
-			m_currentTime = readAsNumber<quint64>(data, 1);
-
-			switch(idx)
+			if(id & MSG_ID_MEASUREMENT)
 			{
-				case 0:
-				{
-					m_sc0->receiveMeasurement(data);
-					break;
-				}
+				quint16 devID = id & ~MSG_ID_MEASUREMENT;
 
-				case 1:
+				switch(devID)
 				{
-					m_sc1->receiveMeasurement(data);
-					break;
-				}
+					case 0:
+					{
+						if(data.length() < 56) break;
 
-				case 2:
-				{
-					m_sc2->receiveMeasurement(data);
-					break;
-				}
+						m_currentTime = readAsNumber<quint64>(data, 0);
+						m_sc0->receiveMeasurement(data);
+						break;
+					}
 
-				case 3:
-				{
-					m_sc3->receiveMeasurement(data);
-					break;
+					case 1:
+					{
+						if(data.length() < 56) break;
+
+						m_currentTime = readAsNumber<quint64>(data, 0);
+						m_sc1->receiveMeasurement(data);
+						break;
+					}
+
+					case 2:
+					{
+						if(data.length() < 56) break;
+
+						m_currentTime = readAsNumber<quint64>(data, 0);
+						m_sc2->receiveMeasurement(data);
+						break;
+					}
+
+					case 3:
+					{
+						if(data.length() < 56) break;
+
+						m_currentTime = readAsNumber<quint64>(data, 0);
+						m_sc3->receiveMeasurement(data);
+						break;
+					}
+
+					case 6:
+					{
+						if(data.length() < 12) return;
+
+						// TODO
+						m_currentTime = readAsNumber<quint64>(data, 0);
+						m_fd0->receiveMeasurement(data);
+						break;
+					}
 				}
 			}
-
-			break;
 		}
-
-		default: return;
 	}
 }
 

@@ -21,6 +21,8 @@
 #include <QString>
 #include <QAbstractSocket>
 
+#include <Messages.hpp>
+
 extern void cyclesToTime(quint64 cycles, QString &time);
 extern void bytesToHumanReadable(quint64 bytes, QString &res, bool dec = false);
 extern void bitsToHumanReadable(quint64 bytes, QString &res, bool dec = false);
@@ -36,6 +38,19 @@ void appendAsBytes(QByteArray *array, T data)
 {
 	array->append((const char*) &data, sizeof(T));
 }
+
+template<typename T>
+void setDeviceProperty(QByteArray *array, quint8 devID, PropertyID propID, T value)
+{
+	array->append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<quint16>(array, MSG_ID_SET_PROPERTY);
+	appendAsBytes<quint16>(array, 3 + sizeof(T));
+	appendAsBytes<quint8>(array, devID);
+	appendAsBytes<quint16>(array, propID);
+	appendAsBytes(array, value);
+}
+
+extern void setDeviceProperty(QByteArray *array, quint8 devID, PropertyID propID, const QByteArray &value);
 
 template<typename T>
 T readAsNumber(const QByteArray &data, quint32 offset)
