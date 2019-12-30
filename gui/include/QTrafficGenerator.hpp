@@ -45,8 +45,8 @@ public:
 	QTrafficGenerator(quint8 idx, QObject *parent = nullptr);
 	~QTrafficGenerator();
 
-	void appendSettings(QByteArray *buffer);
-	void appendFrame(QByteArray *buffer);
+	void appendSettings(QByteArray &buffer);
+	void appendFrame(QByteArray &buffer);
 
 public slots:
 	void loadTemplate(QUrl url);

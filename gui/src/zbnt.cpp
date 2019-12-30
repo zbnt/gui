@@ -93,20 +93,20 @@ void ZBNT::sendSettings()
 
 	// Stats collectors
 
-	m_sc0->appendSettings(&txData);
-	m_sc1->appendSettings(&txData);
-	m_sc2->appendSettings(&txData);
-	m_sc3->appendSettings(&txData);
+	m_sc0->appendSettings(txData);
+	m_sc1->appendSettings(txData);
+	m_sc2->appendSettings(txData);
+	m_sc3->appendSettings(txData);
 
 	// Traffic generators
 
-	m_tg0->appendFrame(&txData);
-	m_tg1->appendFrame(&txData);
+	m_tg0->appendFrame(txData);
+	m_tg1->appendFrame(txData);
 
 	if(!m_streamMode)
 	{
-		m_tg0->appendSettings(&txData);
-		m_tg1->appendSettings(&txData);
+		m_tg0->appendSettings(txData);
+		m_tg1->appendSettings(txData);
 	}
 
 	/*if(m_bitstreamID == QuadTGen)
@@ -132,14 +132,14 @@ void ZBNT::sendSettings()
 
 	/*if(m_bitstreamID == DualTGenFD && !m_streamMode)
 	{*/
-	m_fd0->appendPatterns(&txData);
-	m_fd0->appendSettings(&txData);
+	m_fd0->appendPatterns(txData);
+	m_fd0->appendSettings(txData);
 	//}
 
 	// Send start message
 
-	setDeviceProperty(&txData, 0xFF, PROP_TIMER_LIMIT, m_runTime);
-	setDeviceProperty(&txData, 0xFF, PROP_ENABLE, 1);
+	setDeviceProperty(txData, 0xFF, PROP_TIMER_LIMIT, m_runTime);
+	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 1);
 
 	if(!m_streamMode)
 	{
@@ -205,7 +205,7 @@ void ZBNT::stopRun()
 	/*txData.append(MSG_MAGIC_IDENTIFIER, 4);
 	appendAsBytes<quint8>(&txData, MSG_ID_STOP);
 	appendAsBytes<quint16>(&txData, 0);*/
-	setDeviceProperty(&txData, 0xFF, PROP_ENABLE, 0);
+	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 0);
 	emit reqSendData(txData);
 
 	m_running = false;

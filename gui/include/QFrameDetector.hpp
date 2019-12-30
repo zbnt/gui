@@ -49,8 +49,8 @@ public:
 
 	void updateDisplayedValues();
 
-	void appendSettings(QByteArray *buffer);
-	void appendPatterns(QByteArray *buffer);
+	void appendSettings(QByteArray &buffer);
+	void appendPatterns(QByteArray &buffer);
 	void receiveMeasurement(const QByteArray &measurement);
 
 public slots:

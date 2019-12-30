@@ -66,10 +66,8 @@ void QStatsCollector::updateDisplayedValues()
 	emit measurementChanged();
 }
 
-void QStatsCollector::appendSettings(QByteArray *buffer)
+void QStatsCollector::appendSettings(QByteArray &buffer)
 {
-	if(!buffer) return;
-
 	// TODO
 	setDeviceProperty<quint8>(buffer, m_idx, PROP_ENABLE_LOG, 1);
 	setDeviceProperty<quint32>(buffer, m_idx, PROP_SAMPLE_PERIOD, m_samplePeriod.toUInt());

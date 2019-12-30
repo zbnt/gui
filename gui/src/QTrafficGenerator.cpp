@@ -34,10 +34,8 @@ QTrafficGenerator::QTrafficGenerator(quint8 idx, QObject *parent)
 QTrafficGenerator::~QTrafficGenerator()
 { }
 
-void QTrafficGenerator::appendSettings(QByteArray *buffer)
+void QTrafficGenerator::appendSettings(QByteArray &buffer)
 {
-	if(!buffer) return;
-
 	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_SIZE, m_frameSize.toUShort());
 	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_GAP, m_frameSize.toUInt());
 
@@ -50,10 +48,8 @@ void QTrafficGenerator::appendSettings(QByteArray *buffer)
 	setDeviceProperty(buffer, 4 + m_idx, PROP_ENABLE, m_enable);
 }
 
-void QTrafficGenerator::appendFrame(QByteArray *buffer)
+void QTrafficGenerator::appendFrame(QByteArray &buffer)
 {
-	if(!buffer) return;
-
 	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_TEMPLATE, m_templateBytes);
 	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_PATTERN, QByteArray((const char*) m_templateMask, 256));
 }

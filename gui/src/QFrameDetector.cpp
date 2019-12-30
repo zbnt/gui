@@ -90,10 +90,8 @@ void QFrameDetector::updateDisplayedValues()
 	emit measurementChanged();
 }
 
-void QFrameDetector::appendSettings(QByteArray *buffer)
+void QFrameDetector::appendSettings(QByteArray &buffer)
 {
-	if(!buffer) return;
-
 	quint32 enable = 0;
 
 	for(int i = 0; i < 8; ++i)
@@ -133,18 +131,15 @@ void QFrameDetector::appendSettings(QByteArray *buffer)
 	emit measurementChanged();
 }
 
-void QFrameDetector::appendPatterns(QByteArray *buffer)
+void QFrameDetector::appendPatterns(QByteArray &buffer)
 {
-	if(!buffer) return;
-
 	for(const quint8 *ptr : {m_patternDataA, m_patternDataB})
 	{
 		for(int idx = 0; idx < 4; ++idx)
 		{
 			QByteArray msg;
-
-			appendAsBytes<quint8>(&msg, ptr == m_patternDataB);
-			appendAsBytes<quint8>(&msg, idx);
+			appendAsBytes<quint8>(msg, ptr == m_patternDataB);
+			appendAsBytes<quint8>(msg, idx);
 
 			for(int j = idx; j < PATTERN_MEM_SIZE; j += 4)
 			{
@@ -160,9 +155,8 @@ void QFrameDetector::appendPatterns(QByteArray *buffer)
 		for(int idx = 0; idx < 4; ++idx)
 		{
 			QByteArray msg;
-
-			appendAsBytes<quint8>(&msg, ptr == m_patternFlagsB);
-			appendAsBytes<quint8>(&msg, idx);
+			appendAsBytes<quint8>(msg, ptr == m_patternFlagsB);
+			appendAsBytes<quint8>(msg, idx);
 
 			for(int j = idx; j < PATTERN_MEM_SIZE; j += 4)
 			{

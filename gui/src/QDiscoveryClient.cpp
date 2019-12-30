@@ -41,9 +41,9 @@ void QDiscoveryClient::findDevices()
 	m_time = QDateTime::currentDateTime().toSecsSinceEpoch();
 
 	message.append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint16>(&message, MSG_ID_DISCOVERY);
-	appendAsBytes<quint16>(&message, 8);
-	appendAsBytes<quint64>(&message, m_time);
+	appendAsBytes<quint16>(message, MSG_ID_DISCOVERY);
+	appendAsBytes<quint16>(message, 8);
+	appendAsBytes<quint64>(message, m_time);
 
 	for(const QNetworkInterface &iface : QNetworkInterface::allInterfaces())
 	{

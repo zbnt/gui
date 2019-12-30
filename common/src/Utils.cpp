@@ -1,5 +1,5 @@
 /*
-	zbnt_gui
+	zbnt_sw
 	Copyright (C) 2019 Oscar R.
 
 	This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,68 @@
 
 #include <vector>
 
-void cyclesToTime(quint64 cycles, QString &time)
+#include <QFile>
+#include <QVector>
+#include <QTextStream>
+
+void buildMessage(QByteArray &array, MessageID msgID, const QByteArray &value)
 {
-	static const std::vector<std::pair<const char*, quint64>> convTable =
+	array.append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<uint16_t>(array, msgID);
+	appendAsBytes<uint16_t>(array, value.size());
+	array.append(value);
+}
+
+void setDeviceProperty(QByteArray &array, uint8_t devID, PropertyID propID, const QByteArray &value)
+{
+	array.append(MSG_MAGIC_IDENTIFIER, 4);
+	appendAsBytes<uint16_t>(array, MSG_ID_SET_PROPERTY);
+	appendAsBytes<uint16_t>(array, 3 + value.size());
+	appendAsBytes<uint8_t>(array, devID);
+	appendAsBytes<uint16_t>(array, propID);
+	array.append(value);
+}
+
+int64_t getMemoryUsage()
+{
+	QFile statusFile("/proc/self/status");
+
+	if(statusFile.open(QIODevice::ReadOnly))
+	{
+		QTextStream statusStream(&statusFile);
+		QString line;
+
+		while(!(line = statusStream.readLine()).isNull())
+		{
+			QVector<QStringRef> lineFields = line.splitRef(QRegExp("\\s+"), QString::SkipEmptyParts);
+
+			if(lineFields.size() == 3 && lineFields[0] == "VmSize:")
+			{
+				bool ok = false;
+				int64_t res = lineFields[1].toLongLong(&ok);
+
+				if(ok)
+				{
+					for(const char *u : {"B", "kB", "MB", "GB", "TB"})
+					{
+						if(lineFields[2] == u)
+						{
+							return res;
+						}
+
+						res *= 1000;
+					}
+				}
+			}
+		}
+	}
+
+	return -1;
+}
+
+void cyclesToTime(uint64_t cycles, QString &time)
+{
+	static const std::vector<std::pair<const char*, uint64_t>> convTable =
 	{
 		{"d", 24 * 60 * 60 * 1'000'000'000ull},
 		{"h", 60 * 60 * 1'000'000'000ull},
@@ -38,7 +97,7 @@ void cyclesToTime(quint64 cycles, QString &time)
 
 	for(const auto &e : convTable)
 	{
-		quint64 step = cycles / e.second;
+		uint64_t step = cycles / e.second;
 
 		if(step || (first && e.second == 1))
 		{
@@ -58,7 +117,7 @@ void cyclesToTime(quint64 cycles, QString &time)
 	}
 }
 
-void bytesToHumanReadable(quint64 bytes, QString &res, bool dec)
+void bytesToHumanReadable(uint64_t bytes, QString &res, bool dec)
 {
 	static const std::vector<const char*> convTableBin =
 	{
@@ -69,7 +128,7 @@ void bytesToHumanReadable(quint64 bytes, QString &res, bool dec)
 
 	static const std::vector<const char*> convTableDec =
 	{
-		"B",   "KB", "MB",
+		"B",  "KB", "MB",
 		"GB", "TB", "PB",
 		"EB", "ZB", "YB"
 	};
@@ -115,20 +174,10 @@ void bytesToHumanReadable(quint64 bytes, QString &res, bool dec)
 	}
 }
 
-void bitsToHumanReadable(quint64 bits, QString &res, bool dec)
+void bitsToHumanReadable(uint64_t bits, QString &res, bool dec)
 {
 	bytesToHumanReadable(bits, res, dec);
 
 	res.chop(1);
 	res.push_back('b');
-}
-
-void setDeviceProperty(QByteArray *array, quint8 devID, PropertyID propID, const QByteArray &value)
-{
-	array->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint16>(array, MSG_ID_SET_PROPERTY);
-	appendAsBytes<quint16>(array, 3 + value.length());
-	appendAsBytes<quint8>(array, devID);
-	appendAsBytes<quint16>(array, propID);
-	array->append(value);
 }

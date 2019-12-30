@@ -3,7 +3,6 @@ find_package(Qt5 COMPONENTS Core Gui Network Qml Widgets REQUIRED)
 
 set(ZBNT_GUI_SRC
 	"src/Main.cpp"
-	"src/Utils.cpp"
 	"src/QTableModel.cpp"
 
 	"src/zbnt.cpp"
@@ -19,6 +18,8 @@ set(ZBNT_GUI_SRC
 	"src/QIPValidator.cpp"
 	"src/QUInt64Validator.cpp"
 	"src/QUInt64RangeValidator.cpp"
+
+	"../common/src/Utils.cpp"
 )
 
 set(ZBNT_GUI_HDR
