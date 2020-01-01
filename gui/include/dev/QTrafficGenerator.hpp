@@ -21,7 +21,9 @@
 #include <QObject>
 #include <QUrl>
 
-class QTrafficGenerator : public QObject
+#include <dev/QAbstractDevice.hpp>
+
+class QTrafficGenerator : public QAbstractDevice
 {
 	Q_OBJECT
 
@@ -42,11 +44,17 @@ class QTrafficGenerator : public QObject
 
 public:
 	QTrafficGenerator(QObject *parent = nullptr);
-	QTrafficGenerator(quint8 idx, QObject *parent = nullptr);
 	~QTrafficGenerator();
+
+	void enableLogging(const QString &path);
+	void disableLogging();
+
+	void updateDisplayedValues();
 
 	void appendSettings(QByteArray &buffer);
 	void appendFrame(QByteArray &buffer);
+	void receiveMeasurement(const QByteArray &measurement);
+	void resetMeasurement();
 
 public slots:
 	void loadTemplate(QUrl url);

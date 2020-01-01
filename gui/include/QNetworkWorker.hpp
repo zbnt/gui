@@ -20,16 +20,25 @@
 
 #include <QHostAddress>
 #include <QTcpSocket>
+#include <QVector>
 #include <QThread>
 #include <QMutex>
+#include <QTimer>
 
-#include <QTrafficGenerator.hpp>
-#include <QLatencyMeasurer.hpp>
-#include <QStatsCollector.hpp>
-#include <QFrameDetector.hpp>
+#include <dev/QTrafficGenerator.hpp>
+#include <dev/QLatencyMeasurer.hpp>
+#include <dev/QStatsCollector.hpp>
+#include <dev/QFrameDetector.hpp>
+#include <dev/QAbstractDevice.hpp>
 
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
+
+struct sadas
+{
+	QString name;
+	QVector<QPair<DeviceType, uint32_t>> devices;
+};
 
 class QNetworkWorker : public QObject, public MessageReceiver
 {
@@ -41,9 +50,7 @@ public:
 
 public slots:
 	void startWork();
-	void setLatencyMeasurer(QLatencyMeasurer *lm);
-	void setStatsCollectors(QStatsCollector *sc0, QStatsCollector *sc1, QStatsCollector *sc2, QStatsCollector *sc3);
-	void setFrameDetector(QFrameDetector *fd);
+	void setDevices(const QVector<QAbstractDevice*> &devList);
 
 	void updateDisplayedValues();
 
@@ -58,26 +65,26 @@ private slots:
 	void onMessageReceived(quint16 id, const QByteArray &data);
 	void onNetworkStateChanged(QAbstractSocket::SocketState state);
 	void onNetworkError(QAbstractSocket::SocketError error);
+	void onHelloTimeout();
 	void onReadyRead();
 
 signals:
-	void timeChanged(quint64 time);
+	void timeChanged(uint64_t time);
 	void runningChanged(bool running);
-	void connectedChanged(quint8 connected);
+	void connectedChanged(uint8_t connected);
 	void connectionError(QString error);
+	void bitstreamsChanged(BitstreamNameList names, QVector<BitstreamDevList> devLists);
 
 private:
 	QTcpSocket *m_socket = nullptr;
 	QMutex m_mutex;
 
-	quint64 m_currentTime = 0;
-	quint64 m_displayedTime = 0;
+	uint64_t m_currentTime = 0;
+	uint64_t m_displayedTime = 0;
 
-	QLatencyMeasurer *m_lm0 = nullptr;
-	QStatsCollector *m_sc0 = nullptr;
-	QStatsCollector *m_sc1 = nullptr;
-	QStatsCollector *m_sc2 = nullptr;
-	QStatsCollector *m_sc3 = nullptr;
-	QFrameDetector *m_fd0 = nullptr;
+	QVector<QAbstractDevice*> m_devices;
+
+	QTimer *m_helloTimer = nullptr;
+	bool m_helloReceived = false;
 };
 

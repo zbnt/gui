@@ -26,17 +26,6 @@
 
 ZBNT::ZBNT() : QObject(nullptr)
 {
-	m_tg0 = new QTrafficGenerator(0, this);
-	m_tg1 = new QTrafficGenerator(1, this);
-	m_tg2 = new QTrafficGenerator(2, this);
-	m_tg3 = new QTrafficGenerator(3, this);
-	m_sc0 = new QStatsCollector(0, this);
-	m_sc1 = new QStatsCollector(1, this);
-	m_sc2 = new QStatsCollector(2, this);
-	m_sc3 = new QStatsCollector(3, this);
-	m_lm0 = new QLatencyMeasurer(this);
-	m_fd0 = new QFrameDetector(this);
-
 	m_discovery = new QDiscoveryClient(this);
 	QTimer::singleShot(1000, this, &ZBNT::scanDevices);
 
@@ -44,9 +33,6 @@ ZBNT::ZBNT() : QObject(nullptr)
 	m_netThread->start();
 
 	m_netWorker = new QNetworkWorker();
-	m_netWorker->setLatencyMeasurer(m_lm0);
-	m_netWorker->setStatsCollectors(m_sc0, m_sc1, m_sc2, m_sc3);
-	m_netWorker->setFrameDetector(m_fd0);
 	m_netWorker->moveToThread(m_netThread);
 	QTimer::singleShot(0, m_netWorker, &QNetworkWorker::startWork);
 
@@ -132,7 +118,7 @@ void ZBNT::sendSettings()
 
 	/*if(m_bitstreamID == DualTGenFD && !m_streamMode)
 	{*/
-	m_fd0->appendPatterns(txData);
+	//m_fd0->appendPatterns(txData);
 	m_fd0->appendSettings(txData);
 	//}
 

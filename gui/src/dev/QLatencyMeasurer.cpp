@@ -16,24 +16,25 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QLatencyMeasurer.hpp>
+#include <dev/QLatencyMeasurer.hpp>
 
 #include <QString>
 
 #include <Utils.hpp>
 #include <Messages.hpp>
 
-QLatencyMeasurer::QLatencyMeasurer(QObject *parent) : QObject(parent)
+QLatencyMeasurer::QLatencyMeasurer(QObject *parent)
+	: QAbstractDevice(parent)
 { }
 
 QLatencyMeasurer::~QLatencyMeasurer()
 { }
 
-void QLatencyMeasurer::enableLogging(const QString &fileName)
+void QLatencyMeasurer::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(fileName);
+	m_logFile.setFileName(path);
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 
@@ -51,10 +52,8 @@ void QLatencyMeasurer::updateDisplayedValues()
 	emit measurementChanged();
 }
 
-void QLatencyMeasurer::appendSettings(QByteArray *buffer)
+void QLatencyMeasurer::appendSettings(QByteArray &buffer)
 {
-	if(!buffer) return;
-
 	/*buffer->append(MSG_MAGIC_IDENTIFIER, 4);
 	appendAsBytes<quint8>(buffer, MSG_ID_LM_CFG);
 	appendAsBytes<quint16>(buffer, 13);

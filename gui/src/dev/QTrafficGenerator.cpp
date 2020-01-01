@@ -16,7 +16,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QTrafficGenerator.hpp>
+#include <dev/QTrafficGenerator.hpp>
 
 #include <QFile>
 
@@ -24,14 +24,21 @@
 #include <Messages.hpp>
 
 QTrafficGenerator::QTrafficGenerator(QObject *parent)
-	: QObject(parent)
-{ }
-
-QTrafficGenerator::QTrafficGenerator(quint8 idx, QObject *parent)
-	: QObject(parent), m_idx(idx)
+	: QAbstractDevice(parent)
 { }
 
 QTrafficGenerator::~QTrafficGenerator()
+{ }
+
+void QTrafficGenerator::enableLogging(const QString &path)
+{
+	Q_UNUSED(path);
+}
+
+void QTrafficGenerator::disableLogging()
+{ }
+
+void QTrafficGenerator::updateDisplayedValues()
 { }
 
 void QTrafficGenerator::appendSettings(QByteArray &buffer)
@@ -142,3 +149,11 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 
 	emit templateChanged();
 }
+
+void QTrafficGenerator::receiveMeasurement(const QByteArray &measurement)
+{
+	Q_UNUSED(measurement);
+}
+
+void QTrafficGenerator::resetMeasurement()
+{ }

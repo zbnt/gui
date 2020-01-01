@@ -21,10 +21,11 @@
 #include <QDir>
 #include <QDateTime>
 
-#include <QTrafficGenerator.hpp>
-#include <QLatencyMeasurer.hpp>
-#include <QStatsCollector.hpp>
-#include <QFrameDetector.hpp>
+#include <dev/QTrafficGenerator.hpp>
+#include <dev/QLatencyMeasurer.hpp>
+#include <dev/QStatsCollector.hpp>
+#include <dev/QFrameDetector.hpp>
+#include <dev/QAbstractDevice.hpp>
 
 #include <zbnt.hpp>
 #include <Utils.hpp>
@@ -40,27 +41,19 @@ void QNetworkWorker::startWork()
 	m_socket = new QTcpSocket(this);
 	m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
 
+	m_helloTimer = new QTimer(this);
+	m_helloTimer->setInterval(MSG_HELLO_TIMEOUT);
+	m_helloTimer->setSingleShot(false);
+
+	connect(m_helloTimer, &QTimer::timeout, this, &QNetworkWorker::onHelloTimeout);
 	connect(m_socket, &QTcpSocket::stateChanged, this, &QNetworkWorker::onNetworkStateChanged);
 	connect(m_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), this, &QNetworkWorker::onNetworkError);
 	connect(m_socket, &QTcpSocket::readyRead, this, &QNetworkWorker::onReadyRead);
 }
 
-void QNetworkWorker::setLatencyMeasurer(QLatencyMeasurer *lm)
+void QNetworkWorker::setDevices(const QVector<QAbstractDevice*> &devList)
 {
-	m_lm0 = lm;
-}
-
-void QNetworkWorker::setStatsCollectors(QStatsCollector *sc0, QStatsCollector *sc1, QStatsCollector *sc2, QStatsCollector *sc3)
-{
-	m_sc0 = sc0;
-	m_sc1 = sc1;
-	m_sc2 = sc2;
-	m_sc3 = sc3;
-}
-
-void QNetworkWorker::setFrameDetector(QFrameDetector *fd)
-{
-	m_fd0 = fd;
+	m_devices = devList;
 }
 
 void QNetworkWorker::updateDisplayedValues()
@@ -98,19 +91,16 @@ void QNetworkWorker::startRun(bool exportResults)
 		QDir measurementDir;
 		measurementDir.mkpath("measurements/" + timeStamp);
 
-		m_sc0->enableLogging("measurements/" + timeStamp + "/sc0.csv");
-		m_sc1->enableLogging("measurements/" + timeStamp + "/sc1.csv");
-		m_sc2->enableLogging("measurements/" + timeStamp + "/sc2.csv");
-		m_sc3->enableLogging("measurements/" + timeStamp + "/sc3.csv");
-		m_lm0->enableLogging("measurements/" + timeStamp + "/lm0.csv");
-		m_fd0->enableLogging("measurements/" + timeStamp + "/fd0.csv");
+		for(QAbstractDevice *dev : m_devices)
+		{
+			dev->enableLogging("measurements/" + timeStamp);
+		}
 	}
 
-	m_sc0->resetMeasurement();
-	m_sc1->resetMeasurement();
-	m_sc2->resetMeasurement();
-	m_sc3->resetMeasurement();
-	m_lm0->resetMeasurement();
+	for(QAbstractDevice *dev : m_devices)
+	{
+		dev->resetMeasurement();
+	}
 
 	m_currentTime = 0;
 	m_displayedTime = 0;
@@ -121,12 +111,10 @@ void QNetworkWorker::startRun(bool exportResults)
 
 void QNetworkWorker::stopRun()
 {
-	m_sc0->disableLogging();
-	m_sc1->disableLogging();
-	m_sc2->disableLogging();
-	m_sc3->disableLogging();
-	m_lm0->disableLogging();
-	m_fd0->disableLogging();
+	for(QAbstractDevice *dev : m_devices)
+	{
+		dev->disableLogging();
+	}
 
 	m_currentTime = 0;
 	m_displayedTime = 0;
@@ -136,8 +124,62 @@ void QNetworkWorker::stopRun()
 
 void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 {
+	if(!(m_helloReceived ^ (id == MSG_ID_HELLO))) return;
+
 	switch(id)
 	{
+		case MSG_ID_HELLO:
+		{
+			if(data.size() < 2) break;
+
+			BitstreamNameList bitstreamList;
+			QVector<BitstreamDevList> devLists;
+
+			int idx = 2;
+			uint16_t numBitstreams = readAsNumber<uint16_t>(data, 0);
+
+			for(int i = 0; i < numBitstreams; ++i)
+			{
+				if(idx + 1 >= data.size()) return;
+
+				uint16_t nameLength = readAsNumber<uint16_t>(data, idx);
+				idx += 2;
+
+				if(!nameLength || idx + nameLength - 1 >= data.size()) return;
+
+				QByteArray name = data.mid(idx, nameLength);
+				idx += nameLength;
+
+				if(idx + 1 >= data.size()) return;
+
+				uint16_t numDevices = readAsNumber<uint16_t>(data, idx);
+				idx += 2;
+
+				BitstreamDevList devList;
+
+				for(int j = 0; j < numDevices; ++j)
+				{
+					if(idx + 4 >= data.size()) return;
+
+					uint8_t devType = readAsNumber<uint8_t>(data, idx);
+					uint32_t devPorts = readAsNumber<uint32_t>(data, idx + 1);
+					idx += 5;
+
+					devList.append(qMakePair(DeviceType(devType), devPorts));
+				}
+
+				bitstreamList.append(QString::fromUtf8(name));
+				devLists.append(devList);
+			}
+
+			emit bitstreamsChanged(bitstreamList, devLists);
+
+			m_helloTimer->stop();
+			m_helloReceived = true;
+			emit connectedChanged(ZBNT::Connected);
+			break;
+		}
+
 		case MSG_ID_TIME_OVER:
 		{
 			stopRun();
@@ -150,54 +192,11 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 			{
 				quint16 devID = id & ~MSG_ID_MEASUREMENT;
 
-				switch(devID)
+				if(devID < m_devices.size() && data.size() >= 8)
 				{
-					case 0:
-					{
-						if(data.length() < 56) break;
-
-						m_currentTime = readAsNumber<quint64>(data, 0);
-						m_sc0->receiveMeasurement(data);
-						break;
-					}
-
-					case 1:
-					{
-						if(data.length() < 56) break;
-
-						m_currentTime = readAsNumber<quint64>(data, 0);
-						m_sc1->receiveMeasurement(data);
-						break;
-					}
-
-					case 2:
-					{
-						if(data.length() < 56) break;
-
-						m_currentTime = readAsNumber<quint64>(data, 0);
-						m_sc2->receiveMeasurement(data);
-						break;
-					}
-
-					case 3:
-					{
-						if(data.length() < 56) break;
-
-						m_currentTime = readAsNumber<quint64>(data, 0);
-						m_sc3->receiveMeasurement(data);
-						break;
-					}
-
-					case 6:
-					{
-						if(data.length() < 12) return;
-
-						// TODO
-						m_currentTime = readAsNumber<quint64>(data, 0);
-						m_fd0->receiveMeasurement(data);
-						break;
-					}
-				}
+					m_currentTime = readAsNumber<quint64>(data, 0);
+					m_devices[devID]->receiveMeasurement(data);
+				} // 56
 			}
 		}
 	}
@@ -222,7 +221,9 @@ void QNetworkWorker::onNetworkStateChanged(QAbstractSocket::SocketState state)
 
 		case QAbstractSocket::ConnectedState:
 		{
-			emit connectedChanged(ZBNT::Connected);
+			writeMessage(m_socket, MSG_ID_HELLO, QByteArray());
+			m_helloReceived = false;
+			m_helloTimer->start();
 			break;
 		}
 
@@ -257,6 +258,13 @@ void QNetworkWorker::onNetworkError(QAbstractSocket::SocketError error)
 			emit connectionError("Unknown error");
 		}
 	}
+}
+
+void QNetworkWorker::onHelloTimeout()
+{
+	emit connectionError("Server timeout, HELLO message not received");
+	m_helloTimer->stop();
+	m_socket->abort();
 }
 
 void QNetworkWorker::onReadyRead()

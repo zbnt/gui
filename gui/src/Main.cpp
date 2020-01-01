@@ -24,10 +24,10 @@
 #include <QDebug>
 
 #include <zbnt.hpp>
-#include <QStatsCollector.hpp>
-#include <QTrafficGenerator.hpp>
-#include <QLatencyMeasurer.hpp>
-#include <QFrameDetector.hpp>
+#include <dev/QStatsCollector.hpp>
+#include <dev/QTrafficGenerator.hpp>
+#include <dev/QLatencyMeasurer.hpp>
+#include <dev/QFrameDetector.hpp>
 
 #include <QTableModel.hpp>
 #include <QIPValidator.hpp>

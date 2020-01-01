@@ -16,7 +16,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QStatsCollector.hpp>
+#include <dev/QStatsCollector.hpp>
 
 #include <QString>
 
@@ -24,21 +24,17 @@
 #include <Messages.hpp>
 
 QStatsCollector::QStatsCollector(QObject *parent)
-	: QObject(parent)
-{ }
-
-QStatsCollector::QStatsCollector(quint8 idx, QObject *parent)
-	: QObject(parent), m_idx(idx)
+	: QAbstractDevice(parent)
 { }
 
 QStatsCollector::~QStatsCollector()
 { }
 
-void QStatsCollector::enableLogging(const QString &fileName)
+void QStatsCollector::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(fileName);
+	m_logFile.setFileName(path);
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 

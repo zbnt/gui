@@ -22,7 +22,9 @@
 #include <QMutex>
 #include <QFile>
 
-class QLatencyMeasurer : public QObject
+#include <dev/QAbstractDevice.hpp>
+
+class QLatencyMeasurer : public QAbstractDevice
 {
 	Q_OBJECT
 
@@ -51,12 +53,12 @@ public:
 	QLatencyMeasurer(QObject *parent = nullptr);
 	~QLatencyMeasurer();
 
-	void enableLogging(const QString &fileName);
+	void enableLogging(const QString &path);
 	void disableLogging();
 
 	void updateDisplayedValues();
 
-	void appendSettings(QByteArray *buffer);
+	void appendSettings(QByteArray &buffer);
 	void receiveMeasurement(const QByteArray &measurement);
 	void resetMeasurement();
 

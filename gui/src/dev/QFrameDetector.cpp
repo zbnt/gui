@@ -16,14 +16,15 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QFrameDetector.hpp>
+#include <dev/QFrameDetector.hpp>
 
 #include <QFile>
 
 #include <Utils.hpp>
 #include <Messages.hpp>
 
-QFrameDetector::QFrameDetector(QObject *parent) : QObject(parent)
+QFrameDetector::QFrameDetector(QObject *parent)
+	: QAbstractDevice(parent)
 {
 	for(int i = 0; i < 8; ++i)
 	{
@@ -48,11 +49,11 @@ QFrameDetector::QFrameDetector(QObject *parent) : QObject(parent)
 QFrameDetector::~QFrameDetector()
 { }
 
-void QFrameDetector::enableLogging(const QString &fileName)
+void QFrameDetector::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(fileName);
+	m_logFile.setFileName(path); // TODO
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 
@@ -131,7 +132,7 @@ void QFrameDetector::appendSettings(QByteArray &buffer)
 	emit measurementChanged();
 }
 
-void QFrameDetector::appendPatterns(QByteArray &buffer)
+/*void QFrameDetector::appendPatterns(QByteArray &buffer)
 {
 	for(const quint8 *ptr : {m_patternDataA, m_patternDataB})
 	{
@@ -166,10 +167,12 @@ void QFrameDetector::appendPatterns(QByteArray &buffer)
 			setDeviceProperty(buffer, 6, PROP_FRAME_PATTERN_FLAGS, msg);
 		}
 	}
-}
+}*/ // TODO
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 {
+	if(measurement.size() < 12) return;
+
 	quint64 time = readAsNumber<quint64>(measurement, 0);
 	quint8 match_dir = readAsNumber<quint8>(measurement, 8);
 	quint8 match_mask = readAsNumber<quint8>(measurement, 9);
@@ -229,6 +232,9 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	}
 }
 
+void QFrameDetector::resetMeasurement()
+{ }
+
 void QFrameDetector::loadPattern(quint32 id, QUrl url)
 {
 	if(id >= 8) return;
@@ -252,7 +258,7 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 	if(id >= 4) id -= 4;
 
 	QByteArray fileContents = patternFile.readAll();
-	uint32_t num = 0x10, i = id;
+	quint32 num = 0x10, i = id;
 	bool inX = false;
 
 	for(char c : fileContents)

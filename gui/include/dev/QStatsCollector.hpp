@@ -22,7 +22,9 @@
 #include <QMutex>
 #include <QFile>
 
-class QStatsCollector : public QObject
+#include <dev/QAbstractDevice.hpp>
+
+class QStatsCollector : public QAbstractDevice
 {
 	Q_OBJECT
 
@@ -52,10 +54,9 @@ class QStatsCollector : public QObject
 
 public:
 	QStatsCollector(QObject *parent = nullptr);
-	QStatsCollector(quint8 idx, QObject *parent = nullptr);
 	~QStatsCollector();
 
-	void enableLogging(const QString &fileName);
+	void enableLogging(const QString &path);
 	void disableLogging();
 
 	void updateDisplayedValues();

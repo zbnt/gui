@@ -26,10 +26,11 @@
 #include <QVariant>
 
 #include <QTableModel.hpp>
+#include <dev/QAbstractDevice.hpp>
 
 #define PATTERN_MEM_SIZE 8192
 
-class QFrameDetector : public QObject
+class QFrameDetector : public QAbstractDevice
 {
 	Q_OBJECT
 
@@ -44,14 +45,14 @@ public:
 	QFrameDetector(QObject *parent = nullptr);
 	~QFrameDetector();
 
-	void enableLogging(const QString &fileName);
+	void enableLogging(const QString &path);
 	void disableLogging();
 
 	void updateDisplayedValues();
 
 	void appendSettings(QByteArray &buffer);
-	void appendPatterns(QByteArray &buffer);
 	void receiveMeasurement(const QByteArray &measurement);
+	void resetMeasurement();
 
 public slots:
 	void loadPattern(quint32 id, QUrl url);

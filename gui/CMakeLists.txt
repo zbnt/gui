@@ -10,14 +10,15 @@ set(ZBNT_GUI_SRC
 	"src/MessageReceiver.cpp"
 	"src/QDiscoveryClient.cpp"
 
-	"src/QStatsCollector.cpp"
-	"src/QTrafficGenerator.cpp"
-	"src/QLatencyMeasurer.cpp"
-	"src/QFrameDetector.cpp"
-
 	"src/QIPValidator.cpp"
 	"src/QUInt64Validator.cpp"
 	"src/QUInt64RangeValidator.cpp"
+
+	"src/dev/QAbstractDevice.cpp"
+	"src/dev/QStatsCollector.cpp"
+	"src/dev/QTrafficGenerator.cpp"
+	"src/dev/QLatencyMeasurer.cpp"
+	"src/dev/QFrameDetector.cpp"
 
 	"../common/src/Utils.cpp"
 )
@@ -29,14 +30,15 @@ set(ZBNT_GUI_HDR
 	"include/QNetworkWorker.hpp"
 	"include/QDiscoveryClient.hpp"
 
-	"include/QStatsCollector.hpp"
-	"include/QTrafficGenerator.hpp"
-	"include/QLatencyMeasurer.hpp"
-	"include/QFrameDetector.hpp"
-
 	"include/QIPValidator.hpp"
 	"include/QUInt64Validator.hpp"
 	"include/QUInt64RangeValidator.hpp"
+
+	"include/dev/QAbstractDevice.hpp"
+	"include/dev/QStatsCollector.hpp"
+	"include/dev/QTrafficGenerator.hpp"
+	"include/dev/QLatencyMeasurer.hpp"
+	"include/dev/QFrameDetector.hpp"
 )
 
 set(ZBNT_GUI_RES

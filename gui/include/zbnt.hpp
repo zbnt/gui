@@ -23,10 +23,10 @@
 #include <QTimer>
 #include <QUrl>
 
-#include <QTrafficGenerator.hpp>
-#include <QLatencyMeasurer.hpp>
-#include <QStatsCollector.hpp>
-#include <QFrameDetector.hpp>
+#include <dev/QTrafficGenerator.hpp>
+#include <dev/QLatencyMeasurer.hpp>
+#include <dev/QStatsCollector.hpp>
+#include <dev/QFrameDetector.hpp>
 
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
