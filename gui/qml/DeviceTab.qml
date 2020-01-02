@@ -30,7 +30,7 @@ Item {
 
 	Component.onCompleted: {
 		ZBNT.ip = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].ip : "" })
-		ZBNT.port = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].mport : 0 })
+		ZBNT.port = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].port : 0 })
 	}
 
 	MessageDialog {
@@ -62,6 +62,7 @@ Item {
 			label: Label {
 				y: 5
 				text: parent.title
+				font.weight: Font.Bold
 				verticalAlignment: Text.AlignTop
 				horizontalAlignment: Text.AlignHCenter
 				anchors.horizontalCenter: parent.horizontalCenter
@@ -94,7 +95,6 @@ Item {
 
 					delegate: ItemDelegate {
 						text: modelData.hostname + " (v" + modelData.versionstr + " at " + modelData.fullAddr + ")"
-						enabled: modelData.version == ZBNT.networkVersion
 						width: parent.width
 
 						onClicked: {
@@ -150,16 +150,6 @@ Item {
 									errorDialog.text = "No device selected, try rescanning the network.";
 									errorDialog.open();
 								}
-								else if(ZBNT.deviceList[deviceSelector.currentIndex].version > ZBNT.networkVersion)
-								{
-									errorDialog.text = "The selected device is running a newer version of the network code.";
-									errorDialog.open();
-								}
-								else if(ZBNT.deviceList[deviceSelector.currentIndex].version < ZBNT.networkVersion)
-								{
-									errorDialog.text = "The selected device is running an older version of the network code.";
-									errorDialog.open();
-								}
 								else
 								{
 									ZBNT.connectToBoard();
@@ -176,6 +166,32 @@ Item {
 		}
 
 		GroupBox {
+			title: "Settings"
+			topPadding: 26
+			bottomPadding: 15
+
+			label: Label {
+				y: 5
+				text: parent.title
+				font.weight: Font.Bold
+				verticalAlignment: Text.AlignTop
+				horizontalAlignment: Text.AlignHCenter
+				anchors.horizontalCenter: parent.horizontalCenter
+			}
+
+			Layout.fillWidth: true
+
+			DeviceSettings {
+				id: settingsGeneral
+
+				anchors.fill: parent
+				anchors.topMargin: 5
+				anchors.leftMargin: 5
+				anchors.rightMargin: 5
+			}
+		}
+
+		GroupBox {
 			title: "Status"
 			topPadding: 26
 			bottomPadding: 15
@@ -183,6 +199,7 @@ Item {
 			label: Label {
 				y: 5
 				text: parent.title
+				font.weight: Font.Bold
 				verticalAlignment: Text.AlignTop
 				horizontalAlignment: Text.AlignHCenter
 				anchors.horizontalCenter: parent.horizontalCenter
@@ -209,7 +226,7 @@ Item {
 				}
 
 				Label {
-					text: ZBNT.currentTime
+					text: ZBNT.cyclesToTime(ZBNT.currentTime)
 					visible: !ZBNT.streamMode
 					Layout.fillWidth: true
 				}
@@ -217,7 +234,6 @@ Item {
 				ProgressBar {
 					from: 0
 					to: 2048
-					indeterminate: ZBNT.streamMode && ZBNT.running
 					value: !ZBNT.streamMode ? ZBNT.currentProgress : 0
 					Layout.columnSpan: 2
 					Layout.fillWidth: true

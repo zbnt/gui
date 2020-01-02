@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
 
 	// Register QML types
 
+	qRegisterMetaType<BitstreamDevListList>("BitstreamDevListList");
+
 	qmlRegisterSingletonType<ZBNT>("zbnt", 1, 0, "ZBNT",
 		[](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject*
 		{

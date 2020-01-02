@@ -132,17 +132,17 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 		{
 			if(data.size() < 2) break;
 
-			BitstreamNameList bitstreamList;
-			QVector<BitstreamDevList> devLists;
+			QStringList bitNames;
+			BitstreamDevListList devLists;
 
 			int idx = 2;
-			uint16_t numBitstreams = readAsNumber<uint16_t>(data, 0);
+			quint16 numBitstreams = readAsNumber<quint16>(data, 0);
 
 			for(int i = 0; i < numBitstreams; ++i)
 			{
 				if(idx + 1 >= data.size()) return;
 
-				uint16_t nameLength = readAsNumber<uint16_t>(data, idx);
+				quint16 nameLength = readAsNumber<quint16>(data, idx);
 				idx += 2;
 
 				if(!nameLength || idx + nameLength - 1 >= data.size()) return;
@@ -152,7 +152,7 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 
 				if(idx + 1 >= data.size()) return;
 
-				uint16_t numDevices = readAsNumber<uint16_t>(data, idx);
+				quint16 numDevices = readAsNumber<quint16>(data, idx);
 				idx += 2;
 
 				BitstreamDevList devList;
@@ -161,18 +161,18 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 				{
 					if(idx + 4 >= data.size()) return;
 
-					uint8_t devType = readAsNumber<uint8_t>(data, idx);
-					uint32_t devPorts = readAsNumber<uint32_t>(data, idx + 1);
+					quint8 devType = readAsNumber<quint8>(data, idx);
+					quint32 devPorts = readAsNumber<quint32>(data, idx + 1);
 					idx += 5;
 
 					devList.append(qMakePair(DeviceType(devType), devPorts));
 				}
 
-				bitstreamList.append(QString::fromUtf8(name));
+				bitNames.append(QString::fromUtf8(name));
 				devLists.append(devList);
 			}
 
-			emit bitstreamsChanged(bitstreamList, devLists);
+			emit bitstreamsChanged(bitNames, devLists);
 
 			m_helloTimer->stop();
 			m_helloReceived = true;

@@ -34,12 +34,6 @@
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
 
-struct sadas
-{
-	QString name;
-	QVector<QPair<DeviceType, uint32_t>> devices;
-};
-
 class QNetworkWorker : public QObject, public MessageReceiver
 {
 	Q_OBJECT
@@ -69,18 +63,18 @@ private slots:
 	void onReadyRead();
 
 signals:
-	void timeChanged(uint64_t time);
+	void timeChanged(quint64 time);
 	void runningChanged(bool running);
-	void connectedChanged(uint8_t connected);
+	void connectedChanged(quint8 connected);
 	void connectionError(QString error);
-	void bitstreamsChanged(BitstreamNameList names, QVector<BitstreamDevList> devLists);
+	void bitstreamsChanged(QStringList names, BitstreamDevListList devLists);
 
 private:
 	QTcpSocket *m_socket = nullptr;
 	QMutex m_mutex;
 
-	uint64_t m_currentTime = 0;
-	uint64_t m_displayedTime = 0;
+	quint64 m_currentTime = 0;
+	quint64 m_displayedTime = 0;
 
 	QVector<QAbstractDevice*> m_devices;
 

@@ -66,6 +66,8 @@ public:
 	void resetMeasurement();
 
 public slots:
+	QString description() const;
+
 	QString txBytes();
 	QString txGood();
 	QString txBad();

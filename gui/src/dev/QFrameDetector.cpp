@@ -235,6 +235,11 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 void QFrameDetector::resetMeasurement()
 { }
 
+QString QFrameDetector::description() const
+{
+	return QString("Frame detector (eth%1, eth%2)").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF);
+}
+
 void QFrameDetector::loadPattern(quint32 id, QUrl url)
 {
 	if(id >= 8) return;

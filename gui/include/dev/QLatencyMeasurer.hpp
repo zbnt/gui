@@ -63,6 +63,7 @@ public:
 	void resetMeasurement();
 
 public slots:
+	QString description() const;
 	QString numPingPongs();
 	QString numLostPings();
 	QString numLostPongs();

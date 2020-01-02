@@ -57,6 +57,7 @@ public:
 	void resetMeasurement();
 
 public slots:
+	QString description() const;
 	void loadTemplate(QUrl url);
 
 signals:

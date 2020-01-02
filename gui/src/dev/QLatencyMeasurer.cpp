@@ -110,6 +110,11 @@ void QLatencyMeasurer::resetMeasurement()
 	m_currentValues.numLostPongs = 0;
 }
 
+QString QLatencyMeasurer::description() const
+{
+	return QString("Latency measurer (eth%1, eth%2)").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF);
+}
+
 QString QLatencyMeasurer::numPingPongs()
 {
 	return QString::number(m_currentValues.numPingPongs);

@@ -1,18 +1,23 @@
 <RCC>
 	<qresource prefix="/">
 		<file>qml/Main.qml</file>
+
 		<file>qml/DeviceTab.qml</file>
+		<file>qml/DeviceSettings.qml</file>
+
 		<file>qml/SettingsTab.qml</file>
-		<file>qml/SettingsTabGeneral.qml</file>
 		<file>qml/SettingsTabSC.qml</file>
 		<file>qml/SettingsTabSCBox.qml</file>
 		<file>qml/SettingsTabTG.qml</file>
 		<file>qml/SettingsTabLM.qml</file>
 		<file>qml/SettingsTabFD.qml</file>
+
+		<file>qml/StatusTab.qml</file>
 		<file>qml/TrafficTab.qml</file>
 		<file>qml/TrafficTabBox.qml</file>
 		<file>qml/LatencyTab.qml</file>
 		<file>qml/DetectorTab.qml</file>
+
 		<file>qml/DefaultLabel.qml</file>
 		<file>qml/DisabledLabel.qml</file>
 		<file>qml/ErrorLabel.qml</file>

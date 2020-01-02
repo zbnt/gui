@@ -55,6 +55,7 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(m_netWorker, &QNetworkWorker::runningChanged, this, &ZBNT::onRunningChanged);
 	connect(m_netWorker, &QNetworkWorker::connectedChanged, this, &ZBNT::onConnectedChanged);
 	connect(m_netWorker, &QNetworkWorker::connectionError, this, &ZBNT::onConnectionError);
+	connect(m_netWorker, &QNetworkWorker::bitstreamsChanged, this, &ZBNT::onBitstreamsChanged);
 }
 
 ZBNT::~ZBNT()
@@ -64,83 +65,10 @@ void ZBNT::sendSettings()
 {
 	QByteArray txData;
 
-	// Send a stop message, this will reset the board peripherals
-
-	/*txData.append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(&txData, MSG_ID_STOP);
-	appendAsBytes<quint16>(&txData, 0);*/
-
-	// Reprogram the board if needed
-
-	/*txData.append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(&txData, MSG_ID_SET_BITSTREAM);
-	appendAsBytes<quint16>(&txData, 1);
-	appendAsBytes<quint8>(&txData, m_bitstreamID);*/
-
-	// Stats collectors
-
-	m_sc0->appendSettings(txData);
-	m_sc1->appendSettings(txData);
-	m_sc2->appendSettings(txData);
-	m_sc3->appendSettings(txData);
-
-	// Traffic generators
-
-	m_tg0->appendFrame(txData);
-	m_tg1->appendFrame(txData);
-
-	if(!m_streamMode)
-	{
-		m_tg0->appendSettings(txData);
-		m_tg1->appendSettings(txData);
-	}
-
-	/*if(m_bitstreamID == QuadTGen)
-	{
-		if(!m_streamMode)
-		{
-			m_tg2->appendSettings(&txData);
-			m_tg3->appendSettings(&txData);
-		}
-
-		m_tg2->appendFrame(&txData);
-		m_tg3->appendFrame(&txData);
-	}*/
-
-	// Latency measurer
-
-	/*if(m_bitstreamID == DualTGenLM && !m_streamMode)
-	{
-		m_lm0->appendSettings(&txData);
-	}*/
-
-	// Frame detector
-
-	/*if(m_bitstreamID == DualTGenFD && !m_streamMode)
-	{*/
-	//m_fd0->appendPatterns(txData);
-	m_fd0->appendSettings(txData);
-	//}
-
 	// Send start message
 
 	setDeviceProperty(txData, 0xFF, PROP_TIMER_LIMIT, m_runTime);
 	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 1);
-
-	if(!m_streamMode)
-	{
-		/*txData.append(MSG_MAGIC_IDENTIFIER, 4);
-		appendAsBytes<quint8>(&txData, MSG_ID_START);
-		appendAsBytes<quint16>(&txData, 8);
-		appendAsBytes<quint64>(&txData, m_runTime);*/
-	}
-	/*else
-	{
-		txData.append(MSG_MAGIC_IDENTIFIER, 4);
-		appendAsBytes<quint8>(&txData, MSG_ID_START_STREAM);
-		appendAsBytes<quint16>(&txData, 2);
-		appendAsBytes<quint16>(&txData, m_streamPeriod);
-	}*/
 
 	// Send request to network thread
 
@@ -188,9 +116,6 @@ void ZBNT::startRun()
 void ZBNT::stopRun()
 {
 	QByteArray txData;
-	/*txData.append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(&txData, MSG_ID_STOP);
-	appendAsBytes<quint16>(&txData, 0);*/
 	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 0);
 	emit reqSendData(txData);
 
@@ -202,12 +127,8 @@ void ZBNT::updateMeasurements()
 {
 	if(m_running)
 	{
-		m_lm0->updateDisplayedValues();
-		m_sc0->updateDisplayedValues();
-		m_sc1->updateDisplayedValues();
-		m_sc2->updateDisplayedValues();
-		m_sc3->updateDisplayedValues();
-		m_fd0->updateDisplayedValues();
+		// TODO
+
 		m_netWorker->updateDisplayedValues();
 	}
 }
@@ -220,9 +141,14 @@ void ZBNT::scanDevices()
 	m_discovery->findDevices();
 }
 
-quint32 ZBNT::networkVersion()
+quint32 ZBNT::version()
 {
 	return ZBNT_VERSION_INT;
+}
+
+QString ZBNT::versionStr()
+{
+	return ZBNT_VERSION;
 }
 
 QString ZBNT::runTime()
@@ -233,16 +159,6 @@ QString ZBNT::runTime()
 void ZBNT::setRunTime(QString time)
 {
 	m_runTime = time.toULongLong();
-}
-
-QString ZBNT::streamPeriod()
-{
-	return QString::number(m_streamPeriod);
-}
-
-void ZBNT::setStreamPeriod(QString period)
-{
-	m_streamPeriod = period.toUShort();
 }
 
 QString ZBNT::currentTime()
@@ -291,19 +207,26 @@ void ZBNT::onConnectionError(QString error)
 	emit connectionError(error);
 }
 
+void ZBNT::onBitstreamsChanged(QStringList names, BitstreamDevListList devLists)
+{
+	m_bitstreamNames = names;
+	m_devLists = devLists;
+	emit bitstreamsChanged();
+}
+
 void ZBNT::onDeviceDiscovered(const QByteArray &data)
 {
 	quint32 version = readAsNumber<quint32>(data, 0);
 	quint64 time = readAsNumber<quint64>(data, 4);
 
 	if(time != m_discovery->scanTime()) return;
+	if((version & 0xFF000000) != (ZBNT_VERSION_INT & 0xFF000000)) return;
 
 	QVariantMap device;
 	device["version"] = version;
 	device["versionstr"] = QString("%1.%2.%3").arg(version >> 24).arg((version >> 16) & 0xFF).arg(version & 0xFFFF);
 	device["hostname"] = QByteArray(data.constData() + 36, data.size() - 36);
-	device["mport"] = readAsNumber<quint16>(data, 32);
-	device["sport"] = readAsNumber<quint16>(data, 34);
+	device["port"] = readAsNumber<quint16>(data, 32);
 
 	Q_IPV6ADDR ip6;
 	memcpy(ip6.c, data.constData() + 16, 16);
@@ -311,7 +234,7 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 	if(memcmp(ip6.c, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16))
 	{
 		device["ip"] = QHostAddress(ip6).toString();
-		device["fullAddr"] = "[" + device["ip"].toString() + "]:" + device["mport"].toString();
+		device["fullAddr"] = "[" + device["ip"].toString() + "]:" + device["port"].toString();
 		m_deviceList.append(device);
 	}
 
@@ -320,7 +243,7 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 	if(ip4)
 	{
 		device["ip"] = QHostAddress(ip4).toString();
-		device["fullAddr"] = device["ip"].toString() + ":" + device["mport"].toString();
+		device["fullAddr"] = device["ip"].toString() + ":" + device["port"].toString();
 		m_deviceList.append(device);
 	}
 

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QTcpSocket>
+#include <QVector>
 #include <QThread>
 #include <QTimer>
 #include <QUrl>
@@ -43,27 +44,17 @@ class ZBNT : public QObject
 	Q_PROPERTY(QString ip MEMBER m_ip NOTIFY settingsChanged)
 	Q_PROPERTY(quint16 port MEMBER m_port NOTIFY settingsChanged)
 	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
-	Q_PROPERTY(quint32 networkVersion READ networkVersion CONSTANT)
+	Q_PROPERTY(QStringList bitstreamNames MEMBER m_bitstreamNames NOTIFY bitstreamsChanged)
 
-	Q_PROPERTY(bool streamMode MEMBER m_streamMode NOTIFY settingsChanged)
+	Q_PROPERTY(quint32 version READ version CONSTANT)
+	Q_PROPERTY(QString versionStr READ versionStr CONSTANT)
+
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
-	Q_PROPERTY(QString streamPeriod READ streamPeriod WRITE setStreamPeriod NOTIFY settingsChanged)
 	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
-	Q_PROPERTY(quint8 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
+	Q_PROPERTY(quint16 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
 
 	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY timeChanged)
 	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY timeChanged)
-
-	Q_PROPERTY(QTrafficGenerator *tg0 MEMBER m_tg0 CONSTANT)
-	Q_PROPERTY(QTrafficGenerator *tg1 MEMBER m_tg1 CONSTANT)
-	Q_PROPERTY(QTrafficGenerator *tg2 MEMBER m_tg2 CONSTANT)
-	Q_PROPERTY(QTrafficGenerator *tg3 MEMBER m_tg3 CONSTANT)
-	Q_PROPERTY(QLatencyMeasurer *lm0 MEMBER m_lm0 CONSTANT)
-	Q_PROPERTY(QStatsCollector *sc0 MEMBER m_sc0 CONSTANT)
-	Q_PROPERTY(QStatsCollector *sc1 MEMBER m_sc1 CONSTANT)
-	Q_PROPERTY(QStatsCollector *sc2 MEMBER m_sc2 CONSTANT)
-	Q_PROPERTY(QStatsCollector *sc3 MEMBER m_sc3 CONSTANT)
-	Q_PROPERTY(QFrameDetector *fd0 MEMBER m_fd0 CONSTANT)
 
 public:
 	ZBNT();
@@ -78,15 +69,7 @@ public:
 		Connected
 	};
 
-	enum BitstreamID
-	{
-		DualTGenLM = 1,
-		DualTGenFD,
-		QuadTGen
-	};
-
 	Q_ENUMS(ConnectionStatus)
-	Q_ENUMS(BitstreamID)
 
 public slots:
 	QString cyclesToTime(QString cycles);
@@ -101,13 +84,11 @@ public slots:
 	void stopRun();
 	void updateMeasurements();
 
-	quint32 networkVersion();
+	quint32 version();
+	QString versionStr();
 
 	QString runTime();
 	void setRunTime(QString time);
-
-	QString streamPeriod();
-	void setStreamPeriod(QString period);
 
 	QString currentTime();
 	void setCurrentTime(QString time);
@@ -116,11 +97,13 @@ public slots:
 	void onRunningChanged(bool running);
 	void onConnectedChanged(quint8 connected);
 	void onConnectionError(QString error);
+	void onBitstreamsChanged(QStringList names, BitstreamDevListList devLists);
 
 signals:
 	void timeChanged();
 	void devicesChanged();
 	void settingsChanged();
+	void bitstreamsChanged();
 
 	void runningChanged();
 	void connectedChanged();
@@ -147,24 +130,14 @@ private:
 	QString m_ip;
 	quint16 m_port;
 	QVariantList m_deviceList;
+	QStringList m_bitstreamNames;
+	BitstreamDevListList m_devLists;
 
 	quint64 m_runTime = 125000000ul;
-	quint16 m_streamPeriod = 1;
-	bool m_streamMode = false;
 	bool m_exportResults = true;
-	quint8 m_bitstreamID = DualTGenLM;
+	quint16 m_bitstreamID = 0;
+	QVector<QAbstractDevice*> m_devices;
 
 	quint64 m_currentTime = 0;
 	quint32 m_currentProgress = 0;
-
-	QTrafficGenerator *m_tg0 = nullptr;
-	QTrafficGenerator *m_tg1 = nullptr;
-	QTrafficGenerator *m_tg2 = nullptr;
-	QTrafficGenerator *m_tg3 = nullptr;
-	QLatencyMeasurer *m_lm0 = nullptr;
-	QStatsCollector *m_sc0 = nullptr;
-	QStatsCollector *m_sc1 = nullptr;
-	QStatsCollector *m_sc2 = nullptr;
-	QStatsCollector *m_sc3 = nullptr;
-	QFrameDetector *m_fd0 = nullptr;
 };

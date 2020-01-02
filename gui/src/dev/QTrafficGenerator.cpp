@@ -61,6 +61,19 @@ void QTrafficGenerator::appendFrame(QByteArray &buffer)
 	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_PATTERN, QByteArray((const char*) m_templateMask, 256));
 }
 
+void QTrafficGenerator::receiveMeasurement(const QByteArray &measurement)
+{
+	Q_UNUSED(measurement);
+}
+
+void QTrafficGenerator::resetMeasurement()
+{ }
+
+QString QTrafficGenerator::description() const
+{
+	return QString("Traffic generator (eth%1)").arg(m_ports & 0xFF);
+}
+
 void QTrafficGenerator::loadTemplate(QUrl url)
 {
 	QString selectedPath = url.toLocalFile();
@@ -150,10 +163,4 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 	emit templateChanged();
 }
 
-void QTrafficGenerator::receiveMeasurement(const QByteArray &measurement)
-{
-	Q_UNUSED(measurement);
-}
 
-void QTrafficGenerator::resetMeasurement()
-{ }

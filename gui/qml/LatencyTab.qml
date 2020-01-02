@@ -37,6 +37,7 @@ Item {
 			label: Label {
 				y: 5
 				text: parent.title
+				font.weight: Font.Bold
 				verticalAlignment: Text.AlignTop
 				horizontalAlignment: Text.AlignHCenter
 				anchors.horizontalCenter: parent.horizontalCenter
@@ -100,6 +101,7 @@ Item {
 			label: Label {
 				y: 5
 				text: parent.title
+				font.weight: Font.Bold
 				verticalAlignment: Text.AlignTop
 				horizontalAlignment: Text.AlignHCenter
 				anchors.horizontalCenter: parent.horizontalCenter

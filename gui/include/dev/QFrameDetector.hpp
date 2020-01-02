@@ -55,6 +55,7 @@ public:
 	void resetMeasurement();
 
 public slots:
+	QString description() const;
 	void loadPattern(quint32 id, QUrl url);
 	void removePattern(quint32 id);
 

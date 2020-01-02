@@ -28,7 +28,7 @@ ApplicationWindow {
 	width: 650
 	height: 700
 	visible: true
-	title: "ZBNT GUI"
+	title: "ZBNT GUI v" + ZBNT.versionStr
 
 	minimumWidth: 650
 	minimumHeight: 700
@@ -56,15 +56,7 @@ ApplicationWindow {
 			}
 
 			TabButton {
-				text: "Traffic"
-			}
-
-			TabButton {
-				text: "Latency"
-			}
-
-			TabButton {
-				text: "Detector"
+				text: "Status"
 			}
 
 			background: Item { }
@@ -80,25 +72,14 @@ ApplicationWindow {
 
 				DeviceTab {
 					id: deviceTab
-					settingsValid: settingsTab.ready
 				}
 
 				SettingsTab {
 					id: settingsTab
 				}
 
-				TrafficTab {
-					id: trafficTab
-				}
-
-				LatencyTab {
-					id: latencyTab
-					object: ZBNT.lm0
-				}
-
-				DetectorTab {
-					id: detectorTab
-					object: ZBNT.fd0
+				StatusTab {
+					id: statusTab
 				}
 			}
 		}

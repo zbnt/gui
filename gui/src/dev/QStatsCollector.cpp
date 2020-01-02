@@ -120,6 +120,11 @@ void QStatsCollector::resetMeasurement()
 	m_currentValues.rxBad = 0;
 }
 
+QString QStatsCollector::description() const
+{
+	return QString("Statistics collector (eth%1)").arg(m_ports & 0xFF);
+}
+
 QString QStatsCollector::txBytes()
 {
 	return QString::number(m_displayedValues.txBytes);
