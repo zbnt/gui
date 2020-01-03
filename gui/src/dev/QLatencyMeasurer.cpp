@@ -66,6 +66,8 @@ void QLatencyMeasurer::appendSettings(QByteArray &buffer)
 
 void QLatencyMeasurer::receiveMeasurement(const QByteArray &measurement)
 {
+	if(measurement.size() < 40) return;
+
 	m_mutex.lock();
 
 	m_currentValues.time = readAsNumber<quint64>(measurement, 0);

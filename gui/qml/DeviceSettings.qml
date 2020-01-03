@@ -28,12 +28,46 @@ GridLayout {
 	rowSpacing: 5
 	columnSpacing: 10
 
-	property bool ready: runTimeInput.valid
+	property bool valid: runTimeInput.valid
+	property bool updated: bitstreamSelector.currentIndex != ZBNT.bitstreamID || runTimeInput.text != ZBNT.runTime
+	property int changePending: 0
 
 	Component.onCompleted: {
-		ZBNT.runTime = Qt.binding(function() { return runTimeInput.text })
 		ZBNT.exportResults = Qt.binding(function() { return exportFilesInput.checked })
-		ZBNT.bitstreamID = Qt.binding(function() { return bitstreamSelector.currentIndex + 1 })
+	}
+
+	Connections {
+		target: ZBNT
+
+		onConnectedChanged: {
+			if(ZBNT.connected == ZBNT.Connected)
+			{
+				ZBNT.getDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT)
+			}
+		}
+
+		onActiveBitstreamChanged: {
+			bitstreamSelector.currentIndex = ZBNT.bitstreamNames.indexOf(value)
+			ZBNT.bitstreamID = bitstreamSelector.currentIndex
+			root.changePending &= ~1
+		}
+
+		onPropertyChanged: {
+			if(devID == 0xFF && propID == Messages.PROP_TIMER_LIMIT)
+			{
+				root.changePending &= ~2
+
+				if(success)
+				{
+					runTimeInput.text = ZBNT.arrayToNum(value, 0, 8)
+					ZBNT.runTime = runTimeInput.text
+				}
+				else
+				{
+					runTimeInput.text = ZBNT.runTime
+				}
+			}
+		}
 	}
 
 	Label {
@@ -84,6 +118,17 @@ GridLayout {
 
 		Layout.fillWidth: true
 		Layout.columnSpan: 2
+
+		onCurrentIndexChanged: {
+			if(currentIndex == -1)
+			{
+				displayText = ""
+			}
+			else
+			{
+				displayText = ZBNT.bitstreamNames[currentIndex]
+			}
+		}
 	}
 
 	Item {
@@ -105,15 +150,31 @@ GridLayout {
 		Layout.columnSpan: 2
 	}
 
-	Button {
-		text: "Apply"
-		enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected
-		focusPolicy: Qt.NoFocus
-
+	RowLayout {
 		Layout.columnSpan: 3
 		Layout.alignment: Qt.AlignRight
 
-		onClicked: {
+		Button {
+			text: "Apply"
+			enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected && root.updated && !root.changePending
+			focusPolicy: Qt.NoFocus
+
+			onClicked: {
+				ZBNT.setActiveBitstream(ZBNT.bitstreamNames[bitstreamSelector.currentIndex])
+				ZBNT.setDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT, ZBNT.arrayFromNum(runTimeInput.text, 8))
+				root.changePending = 3
+			}
+		}
+
+		Button {
+			text: "Revert"
+			enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected && root.updated && !root.changePending
+			focusPolicy: Qt.NoFocus
+
+			onClicked: {
+				bitstreamSelector.currentIndex = ZBNT.bitstreamID
+				runTimeInput.text = ZBNT.runTime
+			}
 		}
 	}
 }

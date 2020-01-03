@@ -69,9 +69,14 @@ public:
 		Connected
 	};
 
-	Q_ENUMS(ConnectionStatus)
+	Q_ENUM(ConnectionStatus)
 
 public slots:
+	QByteArray arrayFromStr(const QString &data);
+	QByteArray arrayFromNum(const QString &data, qint32 size);
+	QString arrayToStr(const QByteArray &data, qint32 start, qint32 size);
+	QVariant arrayToNum(const QByteArray &data, qint32 start, qint32 size);
+
 	QString cyclesToTime(QString cycles);
 	QString bytesToHumanReadable(QString bytes);
 	QString estimateDataRate(quint64 size, quint64 delay);
@@ -79,9 +84,6 @@ public slots:
 	void scanDevices();
 	void connectToBoard();
 	void disconnectFromBoard();
-
-	void startRun();
-	void stopRun();
 	void updateMeasurements();
 
 	quint32 version();
@@ -105,6 +107,9 @@ signals:
 	void settingsChanged();
 	void bitstreamsChanged();
 
+	void propertyChanged(quint8 success, quint8 devID, quint16 propID, const QByteArray &value);
+	void activeBitstreamChanged(quint8 success, const QString &value);
+
 	void runningChanged();
 	void connectedChanged();
 	void connectionError(QString error);
@@ -114,6 +119,10 @@ signals:
 	void reqSendData(const QByteArray &data);
 	void reqStartRun(bool exportResults);
 	void reqStopRun();
+
+	void setActiveBitstream(const QString &value);
+	void getDeviceProperty(quint8 devID, quint32 propID);
+	void setDeviceProperty(quint8 devID, quint16 propID, const QByteArray &values);
 
 private slots:
 	void onDeviceDiscovered(const QByteArray &data);

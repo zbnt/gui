@@ -51,11 +51,17 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(this, &ZBNT::reqStartRun, m_netWorker, &QNetworkWorker::startRun);
 	connect(this, &ZBNT::reqStopRun, m_netWorker, &QNetworkWorker::stopRun);
 
+	connect(this, &ZBNT::setActiveBitstream, m_netWorker, &QNetworkWorker::setActiveBitstream);
+	connect(this, &ZBNT::setDeviceProperty, m_netWorker, &QNetworkWorker::setDeviceProperty);
+	connect(this, &ZBNT::getDeviceProperty, m_netWorker, &QNetworkWorker::getDeviceProperty);
+
 	connect(m_netWorker, &QNetworkWorker::timeChanged, this, &ZBNT::onTimeChanged);
 	connect(m_netWorker, &QNetworkWorker::runningChanged, this, &ZBNT::onRunningChanged);
 	connect(m_netWorker, &QNetworkWorker::connectedChanged, this, &ZBNT::onConnectedChanged);
 	connect(m_netWorker, &QNetworkWorker::connectionError, this, &ZBNT::onConnectionError);
 	connect(m_netWorker, &QNetworkWorker::bitstreamsChanged, this, &ZBNT::onBitstreamsChanged);
+	connect(m_netWorker, &QNetworkWorker::activeBitstreamChanged, this, &ZBNT::activeBitstreamChanged);
+	connect(m_netWorker, &QNetworkWorker::propertyChanged, this, &ZBNT::propertyChanged);
 }
 
 ZBNT::~ZBNT()
@@ -67,12 +73,92 @@ void ZBNT::sendSettings()
 
 	// Send start message
 
-	setDeviceProperty(txData, 0xFF, PROP_TIMER_LIMIT, m_runTime);
-	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 1);
+	/*setDeviceProperty(txData, 0xFF, PROP_TIMER_LIMIT, m_runTime);
+	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 1);*/
 
 	// Send request to network thread
 
 	emit reqSendData(txData);
+}
+
+QByteArray ZBNT::arrayFromStr(const QString &data)
+{
+	return data.toUtf8();
+}
+
+QByteArray ZBNT::arrayFromNum(const QString &data, qint32 size)
+{
+	QByteArray res;
+	bool ok = false;
+	quint64 value = data.toULongLong(&ok);
+
+	if(ok)
+	{
+		switch(size)
+		{
+			case 1:
+			{
+				appendAsBytes<quint8>(res, value);
+				break;
+			}
+
+			case 2:
+			{
+				appendAsBytes<quint16>(res, value);
+				break;
+			}
+
+			case 4:
+			{
+				appendAsBytes<quint32>(res, value);
+				break;
+			}
+
+			case 8:
+			{
+				appendAsBytes<quint64>(res, value);
+				break;
+			}
+		}
+	}
+
+	return res;
+}
+
+QString ZBNT::arrayToStr(const QByteArray &data, qint32 start, qint32 size)
+{
+	return QString::fromUtf8(data).mid(start, size);
+}
+
+QVariant ZBNT::arrayToNum(const QByteArray &data, qint32 start, qint32 size)
+{
+	if(start >= 0 && start + size <= data.size())
+	{
+		switch(size)
+		{
+			case 1:
+			{
+				return QVariant(readAsNumber<quint8>(data, start));
+			}
+
+			case 2:
+			{
+				return QVariant(readAsNumber<quint16>(data, start));
+			}
+
+			case 4:
+			{
+				return QVariant(readAsNumber<quint32>(data, start));
+			}
+
+			case 8:
+			{
+				return QVariant(QString::number(readAsNumber<quint64>(data, start)));
+			}
+		}
+	}
+
+	return QVariant(0);
 }
 
 QString ZBNT::cyclesToTime(QString cycles)
@@ -105,22 +191,6 @@ void ZBNT::connectToBoard()
 void ZBNT::disconnectFromBoard()
 {
 	emit reqDisconnectFromBoard();
-}
-
-void ZBNT::startRun()
-{
-	emit reqStartRun(m_exportResults);
-	sendSettings();
-}
-
-void ZBNT::stopRun()
-{
-	QByteArray txData;
-	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 0);
-	emit reqSendData(txData);
-
-	m_running = false;
-	emit reqStopRun();
 }
 
 void ZBNT::updateMeasurements()
@@ -159,6 +229,7 @@ QString ZBNT::runTime()
 void ZBNT::setRunTime(QString time)
 {
 	m_runTime = time.toULongLong();
+	emit settingsChanged();
 }
 
 QString ZBNT::currentTime()
@@ -199,6 +270,13 @@ void ZBNT::onRunningChanged(bool running)
 void ZBNT::onConnectedChanged(quint8 connected)
 {
 	m_connected = connected;
+
+	if(connected == ZBNT::Disconnected)
+	{
+		m_bitstreamNames.clear();
+		emit bitstreamsChanged();
+	}
+
 	emit connectedChanged();
 }
 

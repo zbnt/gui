@@ -39,6 +39,8 @@ set(ZBNT_GUI_HDR
 	"include/dev/QTrafficGenerator.hpp"
 	"include/dev/QLatencyMeasurer.hpp"
 	"include/dev/QFrameDetector.hpp"
+
+	"../common/include/Messages.hpp"
 )
 
 set(ZBNT_GUI_RES

@@ -51,6 +51,10 @@ public slots:
 	void connectToBoard(const QString &ip, quint16 port);
 	void disconnectFromBoard();
 
+	void setActiveBitstream(const QString &value);
+	void getDeviceProperty(quint8 devID, quint32 propID);
+	void setDeviceProperty(quint8 devID, quint32 propID, const QByteArray &values);
+
 	void sendData(const QByteArray &data);
 	void startRun(bool exportResults);
 	void stopRun();
@@ -67,7 +71,10 @@ signals:
 	void runningChanged(bool running);
 	void connectedChanged(quint8 connected);
 	void connectionError(QString error);
+
 	void bitstreamsChanged(QStringList names, BitstreamDevListList devLists);
+	void propertyChanged(quint8 success, quint8 devID, quint16 propID, const QByteArray &value);
+	void activeBitstreamChanged(quint8 success, const QString &value);
 
 private:
 	QTcpSocket *m_socket = nullptr;

@@ -77,6 +77,28 @@ void QNetworkWorker::disconnectFromBoard()
 	m_socket->disconnectFromHost();
 }
 
+void QNetworkWorker::setActiveBitstream(const QString &value)
+{
+	writeMessage(m_socket, MSG_ID_PROGRAM_PL, value.toUtf8());
+}
+
+void QNetworkWorker::getDeviceProperty(quint8 devID, quint32 propID)
+{
+	QByteArray args;
+	appendAsBytes<quint8>(args, devID);
+	appendAsBytes<quint16>(args, propID);
+	writeMessage(m_socket, MSG_ID_GET_PROPERTY, args);
+}
+
+void QNetworkWorker::setDeviceProperty(quint8 devID, quint32 propID, const QByteArray &values)
+{
+	QByteArray args;
+	appendAsBytes<quint8>(args, devID);
+	appendAsBytes<quint16>(args, propID);
+	args.append(values);
+	writeMessage(m_socket, MSG_ID_SET_PROPERTY, args);
+}
+
 void QNetworkWorker::sendData(const QByteArray &data)
 {
 	m_socket->write(data);
@@ -180,9 +202,34 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 			break;
 		}
 
+		case MSG_ID_PROGRAM_PL:
+		{
+			if(data.size() < 1) break;
+
+			quint8 success = readAsNumber<quint8>(data, 0);
+			QString value = QString::fromUtf8(data.mid(1));
+
+			emit activeBitstreamChanged(success, value);
+			break;
+		}
+
 		case MSG_ID_TIME_OVER:
 		{
 			stopRun();
+			break;
+		}
+
+		case MSG_ID_SET_PROPERTY:
+		case MSG_ID_GET_PROPERTY:
+		{
+			if(data.size() < 4) break;
+
+			quint8 devID = readAsNumber<quint8>(data, 0);
+			quint16 propID = readAsNumber<quint16>(data, 1);
+			quint8 success = readAsNumber<quint8>(data, 3);
+			QByteArray value = data.mid(4);
+
+			emit propertyChanged(success, devID, propID, value);
 			break;
 		}
 
@@ -196,7 +243,7 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 				{
 					m_currentTime = readAsNumber<quint64>(data, 0);
 					m_devices[devID]->receiveMeasurement(data);
-				} // 56
+				}
 			}
 		}
 	}

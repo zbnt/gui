@@ -72,6 +72,8 @@ void QStatsCollector::appendSettings(QByteArray &buffer)
 
 void QStatsCollector::receiveMeasurement(const QByteArray &measurement)
 {
+	if(measurement.size() < 56) return;
+
 	m_mutex.lock();
 
 	m_currentValues.time = readAsNumber<quint64>(measurement, 0);

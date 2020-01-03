@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
 		}
 	);
 
+	qmlRegisterUncreatableMetaObject(Messages::staticMetaObject, "zbnt", 1, 0, "Messages", "enums only");
+
 	qmlRegisterType<QStatsCollector>("zbnt", 1, 0, "QStatsCollector");
 	qmlRegisterType<QTrafficGenerator>("zbnt", 1, 0, "QTrafficGenerator");
 	qmlRegisterType<QLatencyMeasurer>("zbnt", 1, 0, "QLatencyMeasurer");
