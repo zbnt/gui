@@ -28,11 +28,6 @@ Item {
 
 	property bool changePending: false
 
-	Component.onCompleted: {
-		ZBNT.ip = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].ip : "" })
-		ZBNT.port = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].port : 0 })
-	}
-
 	Connections {
 		target: ZBNT
 
@@ -65,7 +60,7 @@ Item {
 		target: ZBNT
 
 		onConnectionError: {
-			errorDialog.text = "Error in connection to " + ZBNT.ip + " : " + error;
+			errorDialog.text = "Failed to connect to device : " + error;
 			errorDialog.open();
 		}
 	}
@@ -165,14 +160,14 @@ Item {
 						onClicked: {
 							if(ZBNT.connected == ZBNT.Disconnected)
 							{
-								if(ZBNT.deviceList.length == 0)
+								if(ZBNT.deviceList.length == 0 || deviceSelector.currentIndex == -1)
 								{
 									errorDialog.text = "No device selected, try rescanning the network.";
 									errorDialog.open();
 								}
 								else
 								{
-									ZBNT.connectToBoard();
+									ZBNT.connectToBoard(ZBNT.deviceList[deviceSelector.currentIndex].ip, ZBNT.deviceList[deviceSelector.currentIndex].port);
 								}
 							}
 							else
@@ -239,7 +234,6 @@ Item {
 
 				Label {
 					text: "Time:"
-					visible: !ZBNT.streamMode
 					font.weight: Font.Bold
 					horizontalAlignment: Text.AlignRight
 					Layout.minimumWidth: parent.width / 2
@@ -247,14 +241,13 @@ Item {
 
 				Label {
 					text: ZBNT.cyclesToTime(ZBNT.currentTime)
-					visible: !ZBNT.streamMode
 					Layout.fillWidth: true
 				}
 
 				ProgressBar {
 					from: 0
 					to: 2048
-					value: !ZBNT.streamMode ? ZBNT.currentProgress : 0
+					value: ZBNT.currentProgress
 					Layout.columnSpan: 2
 					Layout.fillWidth: true
 				}

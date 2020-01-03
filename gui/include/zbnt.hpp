@@ -40,28 +40,21 @@ class ZBNT : public QObject
 
 	Q_PROPERTY(bool running MEMBER m_running NOTIFY runningChanged)
 	Q_PROPERTY(quint8 connected MEMBER m_connected NOTIFY connectedChanged)
-
-	Q_PROPERTY(QString ip MEMBER m_ip NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 port MEMBER m_port NOTIFY settingsChanged)
-	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
-
 	Q_PROPERTY(quint16 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
+	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
+	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
+
+	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
 	Q_PROPERTY(QStringList bitstreamNames MEMBER m_bitstreamNames NOTIFY bitstreamsChanged)
 
 	Q_PROPERTY(quint32 version READ version CONSTANT)
 	Q_PROPERTY(QString versionStr READ versionStr CONSTANT)
-
-	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
-	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
-
 	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY timeChanged)
 	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY timeChanged)
 
 public:
 	ZBNT();
 	~ZBNT();
-
-	void sendSettings();
 
 	enum ConnectionStatus
 	{
@@ -83,8 +76,6 @@ public slots:
 	QString estimateDataRate(quint64 size, quint64 delay);
 
 	void scanDevices();
-	void connectToBoard();
-	void disconnectFromBoard();
 	void updateMeasurements();
 
 	quint32 version();
@@ -101,6 +92,7 @@ public slots:
 	void onConnectedChanged(quint8 connected);
 	void onConnectionError(QString error);
 	void onBitstreamsChanged(QStringList names, BitstreamDevListList devLists);
+	void onActiveBitstreamChanged(quint8 success, const QString &value);
 
 signals:
 	void timeChanged();
@@ -115,11 +107,8 @@ signals:
 	void connectedChanged();
 	void connectionError(QString error);
 
-	void reqConnectToBoard(const QString &ip, quint16 port);
-	void reqDisconnectFromBoard();
-	void reqSendData(const QByteArray &data);
-	void reqStartRun(bool exportResults);
-	void reqStopRun();
+	void connectToBoard(const QString &ip, quint16 port);
+	void disconnectFromBoard();
 
 	void setActiveBitstream(const QString &value);
 	void getDeviceProperty(quint8 devID, quint32 propID);
@@ -137,8 +126,6 @@ private:
 	bool m_running = false;
 	quint8 m_connected = 0;
 
-	QString m_ip;
-	quint16 m_port;
 	QVariantList m_deviceList;
 	QStringList m_bitstreamNames;
 	BitstreamDevListList m_devLists;

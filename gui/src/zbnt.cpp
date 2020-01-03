@@ -45,12 +45,8 @@ ZBNT::ZBNT() : QObject(nullptr)
 
 	connect(m_discovery, &QDiscoveryClient::deviceDiscovered, this, &ZBNT::onDeviceDiscovered);
 
-	connect(this, &ZBNT::reqConnectToBoard, m_netWorker, &QNetworkWorker::connectToBoard);
-	connect(this, &ZBNT::reqDisconnectFromBoard, m_netWorker, &QNetworkWorker::disconnectFromBoard);
-	connect(this, &ZBNT::reqSendData, m_netWorker, &QNetworkWorker::sendData);
-	connect(this, &ZBNT::reqStartRun, m_netWorker, &QNetworkWorker::startRun);
-	connect(this, &ZBNT::reqStopRun, m_netWorker, &QNetworkWorker::stopRun);
-
+	connect(this, &ZBNT::connectToBoard, m_netWorker, &QNetworkWorker::connectToBoard);
+	connect(this, &ZBNT::disconnectFromBoard, m_netWorker, &QNetworkWorker::disconnectFromBoard);
 	connect(this, &ZBNT::setActiveBitstream, m_netWorker, &QNetworkWorker::setActiveBitstream);
 	connect(this, &ZBNT::setDeviceProperty, m_netWorker, &QNetworkWorker::setDeviceProperty);
 	connect(this, &ZBNT::getDeviceProperty, m_netWorker, &QNetworkWorker::getDeviceProperty);
@@ -61,25 +57,12 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(m_netWorker, &QNetworkWorker::connectionError, this, &ZBNT::onConnectionError);
 	connect(m_netWorker, &QNetworkWorker::bitstreamsChanged, this, &ZBNT::onBitstreamsChanged);
 	connect(m_netWorker, &QNetworkWorker::activeBitstreamChanged, this, &ZBNT::activeBitstreamChanged);
+	connect(m_netWorker, &QNetworkWorker::activeBitstreamChanged, this, &ZBNT::onActiveBitstreamChanged);
 	connect(m_netWorker, &QNetworkWorker::propertyChanged, this, &ZBNT::propertyChanged);
 }
 
 ZBNT::~ZBNT()
 { }
-
-void ZBNT::sendSettings()
-{
-	QByteArray txData;
-
-	// Send start message
-
-	/*setDeviceProperty(txData, 0xFF, PROP_TIMER_LIMIT, m_runTime);
-	setDeviceProperty(txData, 0xFF, PROP_ENABLE, 1);*/
-
-	// Send request to network thread
-
-	emit reqSendData(txData);
-}
 
 QByteArray ZBNT::arrayFromStr(const QString &data)
 {
@@ -183,32 +166,25 @@ QString ZBNT::estimateDataRate(quint64 size, quint64 delay)
 	return res;
 }
 
-void ZBNT::connectToBoard()
-{
-	emit reqConnectToBoard(m_ip, m_port);
-}
-
-void ZBNT::disconnectFromBoard()
-{
-	emit reqDisconnectFromBoard();
-}
-
-void ZBNT::updateMeasurements()
-{
-	if(m_running)
-	{
-		// TODO
-
-		m_netWorker->updateDisplayedValues();
-	}
-}
-
 void ZBNT::scanDevices()
 {
 	m_deviceList.clear();
 	emit devicesChanged();
 
 	m_discovery->findDevices();
+}
+
+void ZBNT::updateMeasurements()
+{
+	if(m_running)
+	{
+		for(QAbstractDevice *dev : m_devices)
+		{
+			dev->updateDisplayedValues();
+		}
+
+		m_netWorker->updateDisplayedValues();
+	}
 }
 
 quint32 ZBNT::version()
@@ -291,6 +267,20 @@ void ZBNT::onBitstreamsChanged(QStringList names, BitstreamDevListList devLists)
 	m_bitstreamNames = names;
 	m_devLists = devLists;
 	emit bitstreamsChanged();
+}
+
+void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &value)
+{
+	Q_UNUSED(success)
+
+	auto it = std::find(m_bitstreamNames.cbegin(), m_bitstreamNames.cend(), value);
+
+	if(it != m_bitstreamNames.cend())
+	{
+		int idx = it - m_bitstreamNames.cbegin();
+
+		// TODO: Destroy previous device instances and create new ones
+	}
 }
 
 void ZBNT::onDeviceDiscovered(const QByteArray &data)
