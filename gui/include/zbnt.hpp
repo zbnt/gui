@@ -44,6 +44,8 @@ class ZBNT : public QObject
 	Q_PROPERTY(QString ip MEMBER m_ip NOTIFY settingsChanged)
 	Q_PROPERTY(quint16 port MEMBER m_port NOTIFY settingsChanged)
 	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
+
+	Q_PROPERTY(quint16 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
 	Q_PROPERTY(QStringList bitstreamNames MEMBER m_bitstreamNames NOTIFY bitstreamsChanged)
 
 	Q_PROPERTY(quint32 version READ version CONSTANT)
@@ -51,7 +53,6 @@ class ZBNT : public QObject
 
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
 	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
 
 	Q_PROPERTY(QString currentTime READ currentTime WRITE setCurrentTime NOTIFY timeChanged)
 	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY timeChanged)

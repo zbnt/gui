@@ -240,6 +240,7 @@ QString ZBNT::currentTime()
 void ZBNT::setCurrentTime(QString time)
 {
 	m_currentTime = time.toULongLong();
+	emit timeChanged();
 }
 
 void ZBNT::onTimeChanged(quint64 time)

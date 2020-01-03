@@ -26,11 +26,31 @@ import zbnt 1.0
 Item {
 	id: root
 
-	property bool settingsValid: false
+	property bool changePending: false
 
 	Component.onCompleted: {
 		ZBNT.ip = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].ip : "" })
 		ZBNT.port = Qt.binding(function() { return deviceSelector.currentIndex != -1 ? ZBNT.deviceList[deviceSelector.currentIndex].port : 0 })
+	}
+
+	Connections {
+		target: ZBNT
+
+		onConnectedChanged: {
+			if(ZBNT.connected == ZBNT.Connected)
+			{
+				ZBNT.setDeviceProperty(0xFF, Messages.PROP_ENABLE, ZBNT.arrayFromNum(0, 1))
+				root.changePending = true
+			}
+		}
+
+		onPropertyChanged: {
+			if(devID == 0xFF && propID == Messages.PROP_ENABLE)
+			{
+				root.changePending = false
+				ZBNT.running = ZBNT.arrayToNum(value, 0, 1)
+			}
+		}
 	}
 
 	MessageDialog {
@@ -241,29 +261,15 @@ Item {
 
 				Button {
 					text: ZBNT.running ? "Stop" : "Start"
-					enabled: ZBNT.connected == ZBNT.Connected
+					enabled: ZBNT.connected == ZBNT.Connected && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					Layout.columnSpan: 2
 					Layout.alignment: Qt.AlignRight
 
 					onClicked: {
-						if(!ZBNT.running)
-						{
-							if(!root.settingsValid)
-							{
-								errorDialog.text = "Invalid configuration, please correct the errors and try again.";
-								errorDialog.open()
-							}
-							else
-							{
-								ZBNT.startRun();
-							}
-						}
-						else
-						{
-							ZBNT.stopRun();
-						}
+						ZBNT.setDeviceProperty(0xFF, Messages.PROP_ENABLE, ZBNT.arrayFromNum(+!ZBNT.running, 1))
+						root.changePending = true
 					}
 				}
 			}

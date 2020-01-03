@@ -30,7 +30,7 @@ GridLayout {
 
 	property bool valid: runTimeInput.valid
 	property bool updated: bitstreamSelector.currentIndex != ZBNT.bitstreamID || runTimeInput.text != ZBNT.runTime
-	property int changePending: 0
+	property int changePending: 3
 
 	Component.onCompleted: {
 		ZBNT.exportResults = Qt.binding(function() { return exportFilesInput.checked })
@@ -43,6 +43,10 @@ GridLayout {
 			if(ZBNT.connected == ZBNT.Connected)
 			{
 				ZBNT.getDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT)
+			}
+			else
+			{
+				root.changePending = 3
 			}
 		}
 
