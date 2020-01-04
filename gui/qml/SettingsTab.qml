@@ -43,8 +43,14 @@ Item {
 
 			for(var dev of devices)
 			{
-				deviceDescriptions.push(dev.description())
-				root.stackLayoutObjects.push(Qt.createComponent(dev.settingsQml()).createObject(stackLayout, {object: dev, idx: idx}))
+				var qmlPath = dev.settingsQml()
+
+				if(qmlPath.length)
+				{
+					deviceDescriptions.push(dev.description())
+					root.stackLayoutObjects.push(Qt.createComponent(qmlPath).createObject(stackLayout, {object: dev, idx: idx}))
+				}
+
 				idx += 1
 			}
 

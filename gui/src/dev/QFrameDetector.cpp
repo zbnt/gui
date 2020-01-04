@@ -247,7 +247,7 @@ QString QFrameDetector::settingsQml() const
 
 QString QFrameDetector::statusQml() const
 {
-	return QString("");
+	return QString("qrc:/qml/StatusTabFD.qml");
 }
 
 void QFrameDetector::loadPattern(quint32 id, QUrl url)

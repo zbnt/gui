@@ -134,7 +134,7 @@ QString QStatsCollector::settingsQml() const
 
 QString QStatsCollector::statusQml() const
 {
-	return QString("");
+	return QString("qrc:/qml/StatusTabSC.qml");
 }
 
 QString QStatsCollector::txBytes()

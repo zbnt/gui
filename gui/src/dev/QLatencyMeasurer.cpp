@@ -124,7 +124,7 @@ QString QLatencyMeasurer::settingsQml() const
 
 QString QLatencyMeasurer::statusQml() const
 {
-	return QString("");
+	return QString("qrc:/qml/StatusTabLM.qml");
 }
 
 QString QLatencyMeasurer::numPingPongs()
