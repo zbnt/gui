@@ -25,6 +25,33 @@ import zbnt 1.0
 Item {
 	id: root
 
+	property var stackLayoutObjects: []
+
+	Connections {
+		target: ZBNT
+
+		onBitstreamDevicesChanged: {
+			var deviceDescriptions = []
+			var idx = 0
+
+			for(var obj of root.stackLayoutObjects)
+			{
+				obj.destroy()
+			}
+
+			root.stackLayoutObjects = []
+
+			for(var dev of devices)
+			{
+				deviceDescriptions.push(dev.description())
+				root.stackLayoutObjects.push(Qt.createComponent(dev.settingsQml()).createObject(stackLayout, {object: dev, idx: idx}))
+				idx += 1
+			}
+
+			categorySelector.model = deviceDescriptions
+		}
+	}
+
 	ColumnLayout {
 		anchors.fill: parent
 		spacing: 10
@@ -32,8 +59,6 @@ Item {
 		ComboBox {
 			id: categorySelector
 			Layout.fillWidth: true
-
-			model: []
 		}
 
 		Frame {
@@ -47,10 +72,9 @@ Item {
 			Layout.fillHeight: true
 
 			StackLayout {
+				id: stackLayout
 				anchors.fill: parent
 				currentIndex: categorySelector.currentIndex
-
-				// TODO
 			}
 		}
 	}

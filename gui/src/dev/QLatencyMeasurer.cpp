@@ -117,6 +117,16 @@ QString QLatencyMeasurer::description() const
 	return QString("Latency measurer (eth%1, eth%2)").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF);
 }
 
+QString QLatencyMeasurer::settingsQml() const
+{
+	return QString("qrc:/qml/SettingsTabLM.qml");
+}
+
+QString QLatencyMeasurer::statusQml() const
+{
+	return QString("");
+}
+
 QString QLatencyMeasurer::numPingPongs()
 {
 	return QString::number(m_currentValues.numPingPongs);

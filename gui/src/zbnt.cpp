@@ -45,6 +45,7 @@ ZBNT::ZBNT() : QObject(nullptr)
 
 	connect(m_discovery, &QDiscoveryClient::deviceDiscovered, this, &ZBNT::onDeviceDiscovered);
 
+	connect(this, &ZBNT::bitstreamDevicesChanged, m_netWorker, &QNetworkWorker::setDevices);
 	connect(this, &ZBNT::connectToBoard, m_netWorker, &QNetworkWorker::connectToBoard);
 	connect(this, &ZBNT::disconnectFromBoard, m_netWorker, &QNetworkWorker::disconnectFromBoard);
 	connect(this, &ZBNT::setActiveBitstream, m_netWorker, &QNetworkWorker::setActiveBitstream);
@@ -56,7 +57,6 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(m_netWorker, &QNetworkWorker::connectedChanged, this, &ZBNT::onConnectedChanged);
 	connect(m_netWorker, &QNetworkWorker::connectionError, this, &ZBNT::onConnectionError);
 	connect(m_netWorker, &QNetworkWorker::bitstreamsChanged, this, &ZBNT::onBitstreamsChanged);
-	connect(m_netWorker, &QNetworkWorker::activeBitstreamChanged, this, &ZBNT::activeBitstreamChanged);
 	connect(m_netWorker, &QNetworkWorker::activeBitstreamChanged, this, &ZBNT::onActiveBitstreamChanged);
 	connect(m_netWorker, &QNetworkWorker::propertyChanged, this, &ZBNT::propertyChanged);
 }
@@ -178,7 +178,7 @@ void ZBNT::updateMeasurements()
 {
 	if(m_running)
 	{
-		for(QAbstractDevice *dev : m_devices)
+		for(QAbstractDevice *dev : m_bitstreamDevices)
 		{
 			dev->updateDisplayedValues();
 		}
@@ -265,7 +265,7 @@ void ZBNT::onConnectionError(QString error)
 void ZBNT::onBitstreamsChanged(QStringList names, BitstreamDevListList devLists)
 {
 	m_bitstreamNames = names;
-	m_devLists = devLists;
+	m_bitstreamDevLists = devLists;
 	emit bitstreamsChanged();
 }
 
@@ -274,12 +274,61 @@ void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &value)
 	Q_UNUSED(success)
 
 	auto it = std::find(m_bitstreamNames.cbegin(), m_bitstreamNames.cend(), value);
+	int idx = it - m_bitstreamNames.cbegin();
 
-	if(it != m_bitstreamNames.cend())
+	if(it != m_bitstreamNames.cend() && idx < m_bitstreamDevLists.size())
 	{
-		int idx = it - m_bitstreamNames.cbegin();
+		BitstreamDevList devInfoList = m_bitstreamDevLists[idx];
 
-		// TODO: Destroy previous device instances and create new ones
+		for(QAbstractDevice *dev : m_bitstreamDevices)
+		{
+			dev->deleteLater();
+		}
+
+		m_bitstreamDevices.clear();
+
+		for(const BitstreamDevInfo &devInfo : devInfoList)
+		{
+			QAbstractDevice *dev = nullptr;
+
+			switch(devInfo.first)
+			{
+				case DEV_FRAME_DETECTOR:
+				{
+					dev = new QFrameDetector(this);
+					break;
+				}
+
+				case DEV_STATS_COLLECTOR:
+				{
+					dev = new QStatsCollector(this);
+					break;
+				}
+
+				case DEV_LATENCY_MEASURER:
+				{
+					dev = new QLatencyMeasurer(this);
+					break;
+				}
+
+				case DEV_TRAFFIC_GENERATOR:
+				{
+					dev = new QTrafficGenerator(this);
+					break;
+				}
+
+				default: { }
+			}
+
+			if(dev)
+			{
+				dev->setPorts(devInfo.second);
+				m_bitstreamDevices.append(dev);
+			}
+		}
+
+		emit bitstreamDevicesChanged(m_bitstreamDevices);
+		emit activeBitstreamChanged(value);
 	}
 }
 

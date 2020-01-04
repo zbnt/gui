@@ -64,6 +64,9 @@ public:
 
 public slots:
 	QString description() const;
+	QString settingsQml() const;
+	QString statusQml() const;
+
 	QString numPingPongs();
 	QString numLostPings();
 	QString numLostPongs();

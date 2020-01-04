@@ -99,9 +99,10 @@ signals:
 	void devicesChanged();
 	void settingsChanged();
 	void bitstreamsChanged();
+	void bitstreamDevicesChanged(const QVector<QAbstractDevice*> &devices);
 
 	void propertyChanged(quint8 success, quint8 devID, quint16 propID, const QByteArray &value);
-	void activeBitstreamChanged(quint8 success, const QString &value);
+	void activeBitstreamChanged(const QString &value);
 
 	void runningChanged();
 	void connectedChanged();
@@ -128,12 +129,12 @@ private:
 
 	QVariantList m_deviceList;
 	QStringList m_bitstreamNames;
-	BitstreamDevListList m_devLists;
+	BitstreamDevListList m_bitstreamDevLists;
+	QVector<QAbstractDevice*> m_bitstreamDevices;
 
 	quint64 m_runTime = 125000000ul;
 	bool m_exportResults = true;
 	quint16 m_bitstreamID = 0;
-	QVector<QAbstractDevice*> m_devices;
 
 	quint64 m_currentTime = 0;
 	quint32 m_currentProgress = 0;

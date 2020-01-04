@@ -240,6 +240,16 @@ QString QFrameDetector::description() const
 	return QString("Frame detector (eth%1, eth%2)").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF);
 }
 
+QString QFrameDetector::settingsQml() const
+{
+	return QString("qrc:/qml/SettingsTabFD.qml");
+}
+
+QString QFrameDetector::statusQml() const
+{
+	return QString("");
+}
+
 void QFrameDetector::loadPattern(quint32 id, QUrl url)
 {
 	if(id >= 8) return;

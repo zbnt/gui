@@ -49,6 +49,8 @@ public:
 
 public slots:
 	virtual QString description() const = 0;
+	virtual QString settingsQml() const = 0;
+	virtual QString statusQml() const = 0;
 
 protected:
 	quint32 m_ports;

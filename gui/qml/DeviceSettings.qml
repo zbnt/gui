@@ -82,7 +82,7 @@ GridLayout {
 
 	UInt64Field {
 		id: runTimeInput
-		enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected
+		enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected && !root.changePending
 
 		min: "125000000"
 		max: "1152921504606846975"
@@ -118,7 +118,7 @@ GridLayout {
 	ComboBox {
 		id: bitstreamSelector
 		model: ZBNT.bitstreamNames
-		enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected
+		enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected && !root.changePending
 
 		Layout.fillWidth: true
 		Layout.columnSpan: 2

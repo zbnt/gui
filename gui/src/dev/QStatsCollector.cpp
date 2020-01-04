@@ -127,6 +127,16 @@ QString QStatsCollector::description() const
 	return QString("Statistics collector (eth%1)").arg(m_ports & 0xFF);
 }
 
+QString QStatsCollector::settingsQml() const
+{
+	return QString("qrc:/qml/SettingsTabSCBox.qml");
+}
+
+QString QStatsCollector::statusQml() const
+{
+	return QString("");
+}
+
 QString QStatsCollector::txBytes()
 {
 	return QString::number(m_displayedValues.txBytes);

@@ -74,6 +74,16 @@ QString QTrafficGenerator::description() const
 	return QString("Traffic generator (eth%1)").arg(m_ports & 0xFF);
 }
 
+QString QTrafficGenerator::settingsQml() const
+{
+	return QString("qrc:/qml/SettingsTabTG.qml");
+}
+
+QString QTrafficGenerator::statusQml() const
+{
+	return QString("");
+}
+
 void QTrafficGenerator::loadTemplate(QUrl url)
 {
 	QString selectedPath = url.toLocalFile();

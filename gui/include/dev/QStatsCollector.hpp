@@ -67,6 +67,8 @@ public:
 
 public slots:
 	QString description() const;
+	QString settingsQml() const;
+	QString statusQml() const;
 
 	QString txBytes();
 	QString txGood();
