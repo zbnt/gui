@@ -129,7 +129,7 @@ QString QStatsCollector::description() const
 
 QString QStatsCollector::settingsQml() const
 {
-	return QString("qrc:/qml/SettingsTabSCBox.qml");
+	return QString("qrc:/qml/SettingsTabSC.qml");
 }
 
 QString QStatsCollector::statusQml() const

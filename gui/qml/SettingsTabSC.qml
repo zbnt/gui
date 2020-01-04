@@ -23,41 +23,66 @@ import QtQuick.Dialogs 1.3
 
 import zbnt 1.0
 
-Item {
-	id: root
+GridLayout {
+	columns: 3
+	rowSpacing: 5
+	columnSpacing: 5
 
-	ColumnLayout {
-		anchors.fill: parent
-		spacing: 10
+	property var object: undefined
+	property bool ready: !enableInput.checked || samplePeriodInput.valid
 
-		SettingsTabSCBox {
-			id: box0
-			title: "eth0"
-			object: ZBNT.sc0
-			Layout.fillWidth: true
-		}
+	Component.onCompleted: {
+		object.enable = Qt.binding(function() { return enableInput.checked })
+		object.samplePeriod = Qt.binding(function() { return samplePeriodInput.text })
+	}
 
-		SettingsTabSCBox {
-			id: box1
-			title: "eth1"
-			object: ZBNT.sc1
-			Layout.fillWidth: true
-		}
+	Label {
+		text: "Enable: "
+		font.weight: Font.Bold
+		Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+	}
 
-		SettingsTabSCBox {
-			id: box2
-			title: "eth2"
-			object: ZBNT.sc2
-			Layout.fillWidth: true
-		}
+	CheckBox {
+		id: enableInput
+		checked: true
+		Layout.fillWidth: true
+		Layout.columnSpan: 2
+	}
 
-		SettingsTabSCBox {
-			id: box3
-			title: "eth3"
-			object: ZBNT.sc3
-			Layout.fillWidth: true
-		}
+	Label {
+		text: "Sample period: "
+		font.weight: Font.Bold
+		Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+	}
 
-		Item { Layout.fillHeight: true }
+	UInt64Field {
+		id: samplePeriodInput
+		enabled: enableInput.checked
+		horizontalAlignment: Qt.AlignHCenter
+
+		text: "12500000"
+		min: "1"
+		max: "4294967295"
+
+		Layout.fillWidth: true
+	}
+
+	Label {
+		text: " cycles"
+	}
+
+	Label { }
+
+	ErrorLabel {
+		enabled: samplePeriodInput.enabled
+		valid: samplePeriodInput.valid
+		normalText: ZBNT.cyclesToTime(samplePeriodInput.text)
+		errorText: samplePeriodInput.validator.error
+		Layout.columnSpan: 2
+	}
+
+	Item {
+		Layout.fillHeight: true
+		Layout.columnSpan: 3
 	}
 }
