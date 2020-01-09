@@ -181,11 +181,11 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 
 				for(int j = 0; j < numDevices; ++j)
 				{
-					if(idx + 4 >= data.size()) return;
+					if(idx + 8 >= data.size()) return;
 
 					quint8 devType = readAsNumber<quint8>(data, idx);
-					quint32 devPorts = readAsNumber<quint32>(data, idx + 1);
-					idx += 5;
+					quint64 devPorts = readAsNumber<quint64>(data, idx + 1);
+					idx += 9;
 
 					devList.append(qMakePair(DeviceType(devType), devPorts));
 				}

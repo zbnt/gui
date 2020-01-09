@@ -48,13 +48,26 @@ Item {
 				if(qmlPath.length)
 				{
 					deviceDescriptions.push(dev.description())
-					root.stackLayoutObjects.push(Qt.createComponent(qmlPath).createObject(stackLayout, {object: dev, idx: idx}))
+					root.stackLayoutObjects.push(Qt.createComponent(qmlPath).createObject(stackLayout, {object: dev, deviceID: idx}))
 				}
 
 				idx += 1
 			}
 
 			categorySelector.model = deviceDescriptions
+		}
+
+		onConnectedChanged: {
+			if(ZBNT.connected == ZBNT.Disconnected)
+			{
+				for(var obj of root.stackLayoutObjects)
+				{
+					obj.destroy()
+				}
+
+				root.stackLayoutObjects = []
+				categorySelector.model = []
+			}
 		}
 	}
 

@@ -29,6 +29,7 @@ TextField {
 
 	text: min
 	maximumLength: Math.max(1, max.length)
+	horizontalAlignment: Qt.AlignHCenter
 
 	color: !enabled ? DisabledLabel.color : (valid ? DefaultLabel.color : "#e53935")
 	property bool valid: validator.validate(text)

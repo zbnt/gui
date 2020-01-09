@@ -48,7 +48,7 @@ Item {
 				if(qmlPath.length)
 				{
 					deviceDescriptions.push(dev.description())
-					root.stackLayoutObjects.push(Qt.createComponent(qmlPath).createObject(stackLayout, {object: dev, idx: idx}))
+					root.stackLayoutObjects.push(Qt.createComponent(qmlPath).createObject(stackLayout, {object: dev, deviceID: idx}))
 				}
 
 				idx += 1

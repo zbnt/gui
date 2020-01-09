@@ -24,7 +24,7 @@
 
 #include <Messages.hpp>
 
-typedef QPair<DeviceType, quint32> BitstreamDevInfo;
+typedef QPair<DeviceType, quint64> BitstreamDevInfo;
 typedef QList<BitstreamDevInfo>    BitstreamDevList;
 typedef QList<BitstreamDevList>    BitstreamDevListList;
 
@@ -36,14 +36,13 @@ public:
 	QAbstractDevice(QObject *parent = nullptr);
 	~QAbstractDevice();
 
-	void setPorts(quint32 ports);
+	virtual void setExtraInfo(quint64 values);
 
 	virtual void enableLogging(const QString &path) = 0;
 	virtual void disableLogging() = 0;
 
 	virtual void updateDisplayedValues() = 0;
 
-	virtual void appendSettings(QByteArray &buffer) = 0;
 	virtual void receiveMeasurement(const QByteArray &measurement) = 0;
 	virtual void resetMeasurement() = 0;
 
@@ -53,5 +52,5 @@ public slots:
 	virtual QString statusQml() const = 0;
 
 protected:
-	quint32 m_ports;
+	quint64 m_ports;
 };

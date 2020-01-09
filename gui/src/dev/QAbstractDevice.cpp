@@ -25,7 +25,7 @@ QAbstractDevice::QAbstractDevice(QObject *parent)
 QAbstractDevice::~QAbstractDevice()
 { }
 
-void QAbstractDevice::setPorts(quint32 ports)
+void QAbstractDevice::setExtraInfo(quint64 ports)
 {
 	m_ports = ports;
 }

@@ -26,14 +26,7 @@ Item {
 	id: root
 
 	property var object: undefined
-	property bool ready: !enableInput.checked || (frameSizeInput.valid && pingPeriodInput.valid && timeoutInput.valid)
-
-	Component.onCompleted: {
-		object.enable = Qt.binding(function() { return enableInput.checked })
-		object.frameSize = Qt.binding(function() { return frameSizeInput.text })
-		object.period = Qt.binding(function() { return pingPeriodInput.text })
-		object.timeout = Qt.binding(function() { return timeoutInput.text })
-	}
+	property var deviceID: 0
 
 	GridLayout {
 		columns: 3
@@ -49,41 +42,90 @@ Item {
 
 		CheckBox {
 			id: enableInput
-			checked: true
-			Layout.fillWidth: true
+			enabled: !enableButtons.changePending
+
 			Layout.columnSpan: 2
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+
+			PropertyButtons {
+				id: enableButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_ENABLE
+
+				target: root.object
+				targetProperty: "enable"
+
+				input: parent
+				inputProperty: "checked"
+				inputValid: true
+
+				showRevert: false
+				anchors.left: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.leftMargin: 5
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(+value, 1)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 1)
+				}
+			}
 		}
 
 		Label {
-			text: "Frame size:"
+			text: "Frame padding:"
 			font.weight: Font.Bold
 			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 		}
 
 		UInt64Field {
-			id: frameSizeInput
-			enabled: enableInput.checked
+			id: framePaddingInput
+			enabled: !framePaddingButtons.changePending
 
-			min: "60"
-			max: "1500"
+			min: "18"
+			max: "1468"
 
 			Layout.fillWidth: true
+
+			PropertyButtons {
+				id: framePaddingButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_FRAME_PADDING
+
+				target: root.object
+				targetProperty: "framePadding"
+
+				input: parent
+				inputProperty: "text"
+				inputValid: parent.valid
+
+				anchors.right: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.rightMargin: 10
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(value, 2)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 2)
+				}
+			}
 		}
 
 		Label {
 			text: "bytes"
 		}
 
-		Label {
-			visible: !frameSizeInput.valid
-		}
+		Label { }
 
 		ErrorLabel {
-			enabled: frameSizeInput.enabled
-			valid: frameSizeInput.valid
-			visible: !valid
-			normalText: ""
-			errorText: frameSizeInput.validator.error
+			enabled: framePaddingInput.enabled
+			valid: framePaddingInput.valid
+			normalText: "Total frame size: " + (+framePaddingInput.text + 46) + " bytes"
+			errorText: framePaddingInput.validator.error
 			Layout.columnSpan: 2
 		}
 
@@ -99,14 +141,38 @@ Item {
 		}
 
 		UInt64Field {
-			id: pingPeriodInput
-			enabled: enableInput.checked
+			id: pingDelayInput
+			enabled: !pingDelayButtons.changePending
 
-			text: "12500000"
 			min: "1"
 			max: "4294967295"
 
 			Layout.fillWidth: true
+
+			PropertyButtons {
+				id: pingDelayButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_FRAME_GAP
+
+				target: root.object
+				targetProperty: "delay"
+
+				input: parent
+				inputProperty: "text"
+				inputValid: parent.valid
+
+				anchors.right: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.rightMargin: 10
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(value, 4)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 4)
+				}
+			}
 		}
 
 		Label {
@@ -116,10 +182,10 @@ Item {
 		Label { }
 
 		ErrorLabel {
-			enabled: pingPeriodInput.enabled
-			valid: pingPeriodInput.valid
-			normalText: ZBNT.cyclesToTime(pingPeriodInput.text)
-			errorText: pingPeriodInput.validator.error
+			enabled: pingDelayInput.enabled
+			valid: pingDelayInput.valid
+			normalText: ZBNT.cyclesToTime(pingDelayInput.text)
+			errorText: pingDelayInput.validator.error
 			Layout.columnSpan: 2
 		}
 
@@ -136,14 +202,37 @@ Item {
 
 		UInt64Field {
 			id: timeoutInput
-			enabled: enableInput.checked
-
-			text: "125000000"
+			enabled: !timeoutButtons.changePending
 
 			min: "1"
 			max: "4294967295"
 
 			Layout.fillWidth: true
+
+			PropertyButtons {
+				id: timeoutButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_TIMEOUT
+
+				target: root.object
+				targetProperty: "timeout"
+
+				input: parent
+				inputProperty: "text"
+				inputValid: parent.valid
+
+				anchors.right: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.rightMargin: 10
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(value, 4)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 4)
+				}
+			}
 		}
 
 		Label {
@@ -160,8 +249,40 @@ Item {
 			Layout.columnSpan: 2
 		}
 
-		Item { Layout.fillHeight: true }
-		Item { Layout.fillHeight: true }
-		Item { Layout.fillHeight: true }
+		Item {
+			Layout.fillHeight: true
+			Layout.columnSpan: 3
+		}
+
+		RowLayout {
+			enabled: enableButtons.enabled || framePaddingButtons.enabled || pingDelayButtons.enabled || timeoutButtons.enabled
+
+			Layout.columnSpan: 3
+			Layout.alignment: Qt.AlignRight
+
+			Button {
+				text: "Apply all"
+				focusPolicy: Qt.NoFocus
+
+				onClicked: {
+					enableButtons.apply()
+					framePaddingButtons.apply()
+					pingDelayButtons.apply()
+					timeoutButtons.apply()
+				}
+			}
+
+			Button {
+				text: "Revert all"
+				focusPolicy: Qt.NoFocus
+
+				onClicked: {
+					enableButtons.undo()
+					framePaddingButtons.undo()
+					pingDelayButtons.undo()
+					timeoutButtons.undo()
+				}
+			}
+		}
 	}
 }

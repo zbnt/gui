@@ -46,6 +46,11 @@ Item {
 				ZBNT.running = ZBNT.arrayToNum(value, 0, 1)
 			}
 		}
+
+		onConnectionError: {
+			errorDialog.text = "Failed to connect to device : " + error;
+			errorDialog.open();
+		}
 	}
 
 	MessageDialog {
@@ -54,15 +59,6 @@ Item {
 		text: ""
 		icon: StandardIcon.Critical
 		standardButtons: StandardButton.Ok
-	}
-
-	Connections {
-		target: ZBNT
-
-		onConnectionError: {
-			errorDialog.text = "Failed to connect to device : " + error;
-			errorDialog.open();
-		}
 	}
 
 	ColumnLayout {

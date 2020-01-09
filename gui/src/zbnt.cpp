@@ -322,7 +322,7 @@ void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &value)
 
 			if(dev)
 			{
-				dev->setPorts(devInfo.second);
+				dev->setExtraInfo(devInfo.second);
 				m_bitstreamDevices.append(dev);
 			}
 		}

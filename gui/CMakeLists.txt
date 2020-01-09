@@ -44,6 +44,7 @@ set(ZBNT_GUI_HDR
 )
 
 set(ZBNT_GUI_RES
+	"assets.qrc"
 	"qml.qrc"
 )
 

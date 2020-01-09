@@ -27,23 +27,23 @@ Item {
 	id: root
 
 	property var object: undefined
-	property bool ready: !ZBNT.streamMode && (!enableInput.checked || sizeInput.valid && delayInput.valid && (!burstEnableInput.checked || (burstOnTimeInput.valid && burstOffTimeInput.valid)) && seedInput.valid) || ZBNT.streamMode && seedInput.valid
+	property var deviceID: 0
 
-	property bool templateLoaded: object.templateLoaded
-	property string templatePath: object.templatePath
-	property int templateLength: object.templateLength
+	Connections {
+		target: root.object
 
-	Component.onCompleted: {
-		object.enable = Qt.binding(function() { return enableInput.checked })
+		onError: {
+			errorDialog.text = msg;
+			errorDialog.open();
+		}
+	}
 
-		object.frameSize = Qt.binding(function() { return sizeInput.text })
-		object.frameDelay = Qt.binding(function() { return delayInput.text })
-
-		object.burstEnable = Qt.binding(function() { return burstEnableInput.checked })
-		object.burstOnTime = Qt.binding(function() { return burstOnTimeInput.text })
-		object.burstOffTime = Qt.binding(function() { return burstOffTimeInput.text })
-
-		object.lfsrSeed = Qt.binding(function() { return seedInput.text })
+	MessageDialog {
+		id: errorDialog
+		title: "Error"
+		text: ""
+		icon: StandardIcon.Critical
+		standardButtons: StandardButton.Ok
 	}
 
 	FileDialog {
@@ -57,7 +57,11 @@ Item {
 		nameFilters: ["Frame template file (.bin, .hex) (*.bin *.hex)"]
 
 		onAccepted: {
-			root.object.loadTemplate(fileUrl);
+			if(root.object.loadTemplate(fileUrl))
+			{
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_TEMPLATE, root.object.templateBytes)
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.templateMask)
+			}
 		}
 	}
 
@@ -75,9 +79,35 @@ Item {
 
 		CheckBox {
 			id: enableInput
-			checked: false
-			enabled: !ZBNT.streamMode
-			Layout.fillWidth: true
+			enabled: !enableButtons.changePending
+
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+
+			PropertyButtons {
+				id: enableButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_ENABLE
+
+				target: root.object
+				targetProperty: "enable"
+
+				input: parent
+				inputProperty: "checked"
+				inputValid: true
+
+				showRevert: false
+				anchors.left: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.leftMargin: 5
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(+value, 1)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 1)
+				}
+			}
 		}
 
 		Label {
@@ -91,15 +121,12 @@ Item {
 
 			TextField {
 				readOnly: true
-				text: root.templatePath
-				enabled: enableInput.checked || ZBNT.streamMode
-				color: !enabled ? DisabledLabel.color : (root.templateLength <= 1500 ? DefaultLabel.color : "#e53935")
+				text: root.object.templatePath
 				Layout.fillWidth: true
 			}
 
 			Button {
 				text: "Open"
-				enabled: enableInput.checked || ZBNT.streamMode
 				focus: false
 				focusPolicy: Qt.NoFocus
 
@@ -112,10 +139,9 @@ Item {
 		Label { }
 
 		ErrorLabel {
-			valid: root.templateLoaded && root.templateLength <= 2048
-			enabled: enableInput.checked || ZBNT.streamMode
-			normalText: root.templateLength + " bytes"
-			errorText: !root.templateLoaded ? "No file selected" : (normalText + " - Must be at most 2048 bytes")
+			valid: root.object.templateLoaded
+			normalText: root.object.templateLength + " bytes"
+			errorText: "No file selected"
 			font.italic: true
 		}
 
@@ -135,13 +161,37 @@ Item {
 
 			UInt64Field {
 				id: sizeInput
-				enabled: enableInput.checked && !ZBNT.streamMode
-				horizontalAlignment: Qt.AlignHCenter
+				enabled: !sizeButtons.changePending
 
 				min: "60"
 				max: "65531"
 
 				Layout.fillWidth: true
+
+				PropertyButtons {
+					id: sizeButtons
+					deviceID: root.deviceID
+					propertyID: Messages.PROP_FRAME_SIZE
+
+					target: root.object
+					targetProperty: "frameSize"
+
+					input: parent
+					inputProperty: "text"
+					inputValid: parent.valid
+
+					anchors.right: parent.right
+					anchors.verticalCenter: parent.verticalCenter
+					anchors.rightMargin: 10
+
+					function encodeValue(value) {
+						return ZBNT.arrayFromNum(value, 2)
+					}
+
+					function decodeValue(value) {
+						return ZBNT.arrayToNum(value, 0, 2)
+					}
+				}
 			}
 
 			Label {
@@ -170,7 +220,7 @@ Item {
 			enabled: sizeInput.enabled
 			valid: false
 			wrapMode: Label.WordWrap
-			text: "Frame larger than 1514 bytes, make sure the destination device has an appropriate MTU value"
+			text: "Larger than 1514 bytes, make sure the network has an appropriate MTU"
 			Layout.maximumWidth: sizeInput.width
 		}
 
@@ -185,13 +235,37 @@ Item {
 
 			UInt64Field {
 				id: delayInput
-				enabled: enableInput.checked && !ZBNT.streamMode
-				horizontalAlignment: Qt.AlignHCenter
+				enabled: !delayButtons.changePending
 
 				min: "12"
 				max: "4294967295"
 
 				Layout.fillWidth: true
+
+				PropertyButtons {
+					id: delayButtons
+					deviceID: root.deviceID
+					propertyID: Messages.PROP_FRAME_GAP
+
+					target: root.object
+					targetProperty: "frameDelay"
+
+					input: parent
+					inputProperty: "text"
+					inputValid: parent.valid
+
+					anchors.right: parent.right
+					anchors.verticalCenter: parent.verticalCenter
+					anchors.rightMargin: 10
+
+					function encodeValue(value) {
+						return ZBNT.arrayFromNum(value, 4)
+					}
+
+					function decodeValue(value) {
+						return ZBNT.arrayToNum(value, 0, 4)
+					}
+				}
 			}
 
 			Label {
@@ -212,7 +286,7 @@ Item {
 
 		Label {
 			enabled: delayInput.enabled
-			visible: delayInput.valid && sizeInput.valid // ZBNT.bitsToHumanReadable
+			visible: delayInput.valid && sizeInput.valid
 			text: "Estimated data rate: " + ZBNT.estimateDataRate(sizeInput.text, delayInput.text)
 		}
 
@@ -229,9 +303,35 @@ Item {
 
 		CheckBox {
 			id: burstEnableInput
-			checked: false
-			enabled: enableInput.checked && !ZBNT.streamMode
-			Layout.fillWidth: true
+			enabled: !burstEnableButtons.changePending
+
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+
+			PropertyButtons {
+				id: burstEnableButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_ENABLE_BURST
+
+				target: root.object
+				targetProperty: "burstEnable"
+
+				input: parent
+				inputProperty: "checked"
+				inputValid: true
+
+				showRevert: false
+				anchors.left: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.leftMargin: 5
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(+value, 1)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 1)
+				}
+			}
 		}
 
 		Label {
@@ -245,13 +345,37 @@ Item {
 
 			UInt64Field {
 				id: burstOnTimeInput
-				enabled: burstEnableInput.checked && enableInput.checked && !ZBNT.streamMode
-				horizontalAlignment: Qt.AlignHCenter
+				enabled: !burstOnTimeButtons.changePending
 
 				min: "1"
 				max: "65535"
 
 				Layout.fillWidth: true
+
+				PropertyButtons {
+					id: burstOnTimeButtons
+					deviceID: root.deviceID
+					propertyID: Messages.PROP_BURST_TIME_ON
+
+					target: root.object
+					targetProperty: "burstOnTime"
+
+					input: parent
+					inputProperty: "text"
+					inputValid: parent.valid
+
+					anchors.right: parent.right
+					anchors.verticalCenter: parent.verticalCenter
+					anchors.rightMargin: 10
+
+					function encodeValue(value) {
+						return ZBNT.arrayFromNum(value, 2)
+					}
+
+					function decodeValue(value) {
+						return ZBNT.arrayToNum(value, 0, 2)
+					}
+				}
 			}
 
 			Label {
@@ -284,13 +408,37 @@ Item {
 
 			UInt64Field {
 				id: burstOffTimeInput
-				enabled: burstEnableInput.checked && enableInput.checked && !ZBNT.streamMode
-				horizontalAlignment: Qt.AlignHCenter
+				enabled: !burstOffTimeButtons.changePending
 
 				min: "1"
 				max: "65535"
 
 				Layout.fillWidth: true
+
+				PropertyButtons {
+					id: burstOffTimeButtons
+					deviceID: root.deviceID
+					propertyID: Messages.PROP_BURST_TIME_OFF
+
+					target: root.object
+					targetProperty: "burstOffTime"
+
+					input: parent
+					inputProperty: "text"
+					inputValid: parent.valid
+
+					anchors.right: parent.right
+					anchors.verticalCenter: parent.verticalCenter
+					anchors.rightMargin: 10
+
+					function encodeValue(value) {
+						return ZBNT.arrayFromNum(value, 2)
+					}
+
+					function decodeValue(value) {
+						return ZBNT.arrayToNum(value, 0, 2)
+					}
+				}
 			}
 
 			Label {
@@ -323,13 +471,37 @@ Item {
 
 		UInt64Field {
 			id: seedInput
-			enabled: enableInput.checked || ZBNT.streamMode
-			horizontalAlignment: Qt.AlignHCenter
+			enabled: !seedButtons.changePending
 
 			min: "0"
 			max: "255"
 
 			Layout.fillWidth: true
+
+			PropertyButtons {
+				id: seedButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_LFSR_SEED
+
+				target: root.object
+				targetProperty: "lfsrSeed"
+
+				input: parent
+				inputProperty: "text"
+				inputValid: parent.valid
+
+				anchors.right: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.rightMargin: 10
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(value, 1)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 1)
+				}
+			}
 		}
 
 		Label {
@@ -344,7 +516,46 @@ Item {
 			errorText: seedInput.validator.error
 		}
 
-		Item { Layout.fillHeight: true }
-		Item { Layout.fillHeight: true }
+		Item {
+			Layout.fillHeight: true
+			Layout.columnSpan: 2
+		}
+
+		RowLayout {
+			enabled: enableButtons.enabled || sizeButtons.enabled || delayButtons.enabled || burstEnableButtons.enabled || burstOnTimeButtons.enabled || burstOffTimeButtons.enabled || seedButtons.enabled
+
+			Layout.columnSpan: 2
+			Layout.alignment: Qt.AlignRight
+
+			Button {
+				text: "Apply all"
+				focusPolicy: Qt.NoFocus
+
+				onClicked: {
+					enableButtons.apply()
+					sizeButtons.apply()
+					delayButtons.apply()
+					burstEnableButtons.apply()
+					burstOnTimeButtons.apply()
+					burstOffTimeButtons.apply()
+					seedButtons.apply()
+				}
+			}
+
+			Button {
+				text: "Revert all"
+				focusPolicy: Qt.NoFocus
+
+				onClicked: {
+					enableButtons.undo()
+					sizeButtons.undo()
+					delayButtons.undo()
+					burstEnableButtons.undo()
+					burstOnTimeButtons.undo()
+					burstOffTimeButtons.undo()
+					seedButtons.undo()
+				}
+			}
+		}
 	}
 }

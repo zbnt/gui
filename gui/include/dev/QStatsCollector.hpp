@@ -61,7 +61,6 @@ public:
 
 	void updateDisplayedValues();
 
-	void appendSettings(QByteArray &buffer);
 	void receiveMeasurement(const QByteArray &measurement);
 	void resetMeasurement();
 

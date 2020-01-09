@@ -18,10 +18,9 @@
 
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QFontDatabase>
 #include <QQmlContext>
 #include <QScreen>
-
-#include <QDebug>
 
 #include <zbnt.hpp>
 #include <dev/QStatsCollector.hpp>
@@ -40,6 +39,7 @@ int main(int argc, char *argv[])
 	QCoreApplication::setOrganizationName("zbnt");
 	QCoreApplication::setOrganizationDomain("zbnt.oscar-rc.dev");
 	QCoreApplication::setApplicationName("zbnt_gui");
+	QFontDatabase::addApplicationFont(":/assets/MaterialIcons-Regular.ttf");
 
 	// Register QML types
 

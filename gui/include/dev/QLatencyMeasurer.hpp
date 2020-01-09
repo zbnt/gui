@@ -29,8 +29,8 @@ class QLatencyMeasurer : public QAbstractDevice
 	Q_OBJECT
 
 	Q_PROPERTY(quint8 enable MEMBER m_enable NOTIFY settingsChanged)
-	Q_PROPERTY(QString frameSize MEMBER m_frameSize NOTIFY settingsChanged)
-	Q_PROPERTY(QString period MEMBER m_period NOTIFY settingsChanged)
+	Q_PROPERTY(QString framePadding MEMBER m_framePadding NOTIFY settingsChanged)
+	Q_PROPERTY(QString delay MEMBER m_delay NOTIFY settingsChanged)
 	Q_PROPERTY(QString timeout MEMBER m_timeout NOTIFY settingsChanged)
 
 	Q_PROPERTY(QString numPingPongs READ numPingPongs NOTIFY measurementChanged)
@@ -58,7 +58,6 @@ public:
 
 	void updateDisplayedValues();
 
-	void appendSettings(QByteArray &buffer);
 	void receiveMeasurement(const QByteArray &measurement);
 	void resetMeasurement();
 
@@ -79,8 +78,8 @@ signals:
 
 private:
 	quint8 m_enable = 1;
-	QString m_frameSize;
-	QString m_period;
+	QString m_framePadding;
+	QString m_delay;
 	QString m_timeout;
 
 	Measurement m_currentValues, m_displayedValues;

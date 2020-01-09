@@ -19,70 +19,147 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
-import QtQuick.Dialogs 1.3
 
 import zbnt 1.0
 
-GridLayout {
-	columns: 3
-	rowSpacing: 5
-	columnSpacing: 5
+Item {
+	id: root
 
 	property var object: undefined
-	property bool ready: !enableInput.checked || samplePeriodInput.valid
+	property var deviceID: 0
 
-	Component.onCompleted: {
-		object.enable = Qt.binding(function() { return enableInput.checked })
-		object.samplePeriod = Qt.binding(function() { return samplePeriodInput.text })
-	}
+	GridLayout {
+		columns: 3
+		rowSpacing: 5
+		columnSpacing: 5
+		anchors.fill: parent
 
-	Label {
-		text: "Enable: "
-		font.weight: Font.Bold
-		Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-	}
+		Label {
+			text: "Enable: "
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
 
-	CheckBox {
-		id: enableInput
-		checked: true
-		Layout.fillWidth: true
-		Layout.columnSpan: 2
-	}
+		CheckBox {
+			id: enableInput
+			enabled: !enableButtons.changePending
 
-	Label {
-		text: "Sample period: "
-		font.weight: Font.Bold
-		Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-	}
+			Layout.columnSpan: 2
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
 
-	UInt64Field {
-		id: samplePeriodInput
-		enabled: enableInput.checked
-		horizontalAlignment: Qt.AlignHCenter
+			PropertyButtons {
+				id: enableButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_ENABLE
 
-		text: "12500000"
-		min: "1"
-		max: "4294967295"
+				target: root.object
+				targetProperty: "enable"
 
-		Layout.fillWidth: true
-	}
+				input: parent
+				inputProperty: "checked"
+				inputValid: true
 
-	Label {
-		text: " cycles"
-	}
+				showRevert: false
+				anchors.left: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.leftMargin: 5
 
-	Label { }
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(+value, 1)
+				}
 
-	ErrorLabel {
-		enabled: samplePeriodInput.enabled
-		valid: samplePeriodInput.valid
-		normalText: ZBNT.cyclesToTime(samplePeriodInput.text)
-		errorText: samplePeriodInput.validator.error
-		Layout.columnSpan: 2
-	}
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 1)
+				}
+			}
+		}
 
-	Item {
-		Layout.fillHeight: true
-		Layout.columnSpan: 3
+		Label {
+			text: "Sample period: "
+			font.weight: Font.Bold
+			Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+		}
+
+		UInt64Field {
+			id: samplePeriodInput
+			enabled: !samplePeriodButtons.changePending
+
+			text: "12500000"
+			min: "1"
+			max: "4294967295"
+
+			Layout.fillWidth: true
+
+			PropertyButtons {
+				id: samplePeriodButtons
+				deviceID: root.deviceID
+				propertyID: Messages.PROP_SAMPLE_PERIOD
+
+				target: root.object
+				targetProperty: "samplePeriod"
+
+				input: parent
+				inputProperty: "text"
+				inputValid: parent.valid
+
+				anchors.right: parent.right
+				anchors.verticalCenter: parent.verticalCenter
+				anchors.rightMargin: 10
+
+				function encodeValue(value) {
+					return ZBNT.arrayFromNum(value, 4)
+				}
+
+				function decodeValue(value) {
+					return ZBNT.arrayToNum(value, 0, 4)
+				}
+			}
+		}
+
+		Label {
+			text: " cycles"
+		}
+
+		Label { }
+
+		ErrorLabel {
+			enabled: samplePeriodInput.enabled
+			valid: samplePeriodInput.valid
+			normalText: ZBNT.cyclesToTime(samplePeriodInput.text)
+			errorText: samplePeriodInput.validator.error
+			Layout.columnSpan: 2
+		}
+
+		Item {
+			Layout.fillHeight: true
+			Layout.columnSpan: 3
+		}
+
+		RowLayout {
+			enabled: enableButtons.enabled || samplePeriodButtons.enabled
+
+			Layout.columnSpan: 3
+			Layout.alignment: Qt.AlignRight
+
+			Button {
+				text: "Apply all"
+				focusPolicy: Qt.NoFocus
+
+				onClicked: {
+					enableButtons.apply()
+					samplePeriodButtons.apply()
+				}
+			}
+
+			Button {
+				text: "Revert all"
+				focusPolicy: Qt.NoFocus
+
+				onClicked: {
+					enableButtons.undo()
+					samplePeriodButtons.undo()
+				}
+			}
+		}
 	}
 }

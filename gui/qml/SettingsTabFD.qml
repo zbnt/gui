@@ -27,10 +27,51 @@ Item {
 	id: root
 
 	property var object: undefined
+	property var deviceID: 0
 	property int patternID: 0
+	property int changePending: 0
 
 	Component.onCompleted: {
-		object.fixChecksums = Qt.binding(function() { return fixChecksumsInput.checked })
+		root.changePending = 1
+		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE_CSUM_FIX)
+	}
+
+	Connections {
+		target: ZBNT
+
+		onPropertyChanged: {
+			if(devID == root.deviceID && propID == Messages.PROP_ENABLE_CSUM_FIX)
+			{
+				if(success)
+				{
+					fixChecksumsInput.checked = ZBNT.arrayToNum(value, 0, 1)
+					root.object.fixChecksums = fixChecksumsInput.checked
+				}
+				else
+				{
+					fixChecksumsInput.checked = root.object.fixChecksums
+				}
+
+				root.changePending = 0
+			}
+		}
+	}
+
+	Connections {
+		target: root.object
+
+		onError: {
+			errorDialog.text = msg;
+			errorDialog.open();
+		}
+	}
+
+	MessageDialog {
+		id: errorDialog
+		title: "Error"
+		text: ""
+		icon: StandardIcon.Critical
+		standardButtons: StandardButton.Ok
 	}
 
 	FileDialog {
@@ -44,7 +85,11 @@ Item {
 		nameFilters: ["Filter pattern (.hex) (*.hex)"]
 
 		onAccepted: {
-			root.object.loadPattern(root.patternID, fileUrl);
+			if(root.object.loadPattern(root.patternID, fileUrl))
+			{
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[root.patternID])
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[root.patternID])
+			}
 		}
 	}
 
@@ -108,6 +153,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(0)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[0])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[0])
 					}
 				}
 
@@ -141,6 +188,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(1)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[1])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[1])
 					}
 				}
 
@@ -174,6 +223,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(2)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[2])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[2])
 					}
 				}
 
@@ -207,6 +258,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(3)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[3])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[3])
 					}
 				}
 			}
@@ -268,6 +321,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(4)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[4])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[4])
 					}
 				}
 
@@ -301,6 +356,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(5)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[5])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[5])
 					}
 				}
 
@@ -334,6 +391,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(6)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[6])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[6])
 					}
 				}
 
@@ -367,6 +426,8 @@ Item {
 
 					onPressed: {
 						root.object.removePattern(7)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[7])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[7])
 					}
 				}
 			}
@@ -404,8 +465,17 @@ Item {
 
 				CheckBox {
 					id: fixChecksumsInput
+					enabled: !root.changePending
 					checked: true
 					text: "Fix TCP/UDP/ICMP/ICMPv6 checksums if needed"
+
+					onCheckedChanged: {
+						if(enabled)
+						{
+							root.changePending = 1
+							ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_CSUM_FIX, ZBNT.arrayFromNum(+checked, 1))
+						}
+					}
 				}
 
 				Item {
@@ -414,7 +484,9 @@ Item {
 			}
 		}
 
-		Item { Layout.fillHeight: true }
-		Item { Layout.fillHeight: true }
+		Item {
+			Layout.fillHeight: true
+			Layout.columnSpan: 2
+		}
 	}
 }

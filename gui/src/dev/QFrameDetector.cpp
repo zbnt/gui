@@ -33,21 +33,26 @@ QFrameDetector::QFrameDetector(QObject *parent)
 		m_detectionCountersStr.append("0");
 	}
 
-	for(int i = 0; i < PATTERN_MEM_SIZE; ++i)
-	{
-		m_patternDataA[i] = 0;
-		m_patternDataB[i] = 0;
-
-		m_patternFlagsA[i] = 1;
-		m_patternFlagsB[i] = 1;
-	}
-
 	m_detectionListA = new QTableModel(3, this);
 	m_detectionListB = new QTableModel(3, this);
 }
 
 QFrameDetector::~QFrameDetector()
 { }
+
+void QFrameDetector::setExtraInfo(quint64 values)
+{
+	m_ports = values & 0xFFFF;
+	m_numPatterns = (values >> 16) & 0xFFFF;
+	m_maxPatternLength = (values >> 32) & 0xFFFF;
+
+	for(int i = 0; i < m_numPatterns*2; ++i)
+	{
+		m_patternPath.append("");
+		m_patternBytes.append(QByteArray());
+		m_patternFlags.append(QByteArray());
+	}
+}
 
 void QFrameDetector::enableLogging(const QString &path)
 {
@@ -90,84 +95,6 @@ void QFrameDetector::updateDisplayedValues()
 
 	emit measurementChanged();
 }
-
-void QFrameDetector::appendSettings(QByteArray &buffer)
-{
-	quint32 enable = 0;
-
-	for(int i = 0; i < 8; ++i)
-	{
-		if(m_patternPath[i].toString().length())
-		{
-			if(i < 4)
-			{
-				enable |= 1 << i;
-			}
-			else
-			{
-				enable |= 1 << (i + 12);
-			}
-		}
-	}
-
-	setDeviceProperty<quint8>(buffer, 6, PROP_ENABLE_CSUM_FIX, m_fixChecksums);
-	setDeviceProperty<quint32>(buffer, 6, PROP_ENABLE_PATTERN, enable);
-	setDeviceProperty<quint8>(buffer, 6, PROP_ENABLE, !!enable);
-
-	m_mutex.lock();
-
-	m_pendingDetections[0].clear();
-	m_pendingDetections[1].clear();
-	m_detectionListA->clearRows();
-	m_detectionListB->clearRows();
-
-	for(int i = 0; i < 8; ++i)
-	{
-		m_detectionCounters[i] = 0;
-		m_detectionCountersStr[i] = "0";
-	}
-
-	m_mutex.unlock();
-
-	emit measurementChanged();
-}
-
-/*void QFrameDetector::appendPatterns(QByteArray &buffer)
-{
-	for(const quint8 *ptr : {m_patternDataA, m_patternDataB})
-	{
-		for(int idx = 0; idx < 4; ++idx)
-		{
-			QByteArray msg;
-			appendAsBytes<quint8>(msg, ptr == m_patternDataB);
-			appendAsBytes<quint8>(msg, idx);
-
-			for(int j = idx; j < PATTERN_MEM_SIZE; j += 4)
-			{
-				msg.append(ptr[j]);
-			}
-
-			setDeviceProperty(buffer, 6, PROP_FRAME_PATTERN, msg);
-		}
-	}
-
-	for(const quint8 *ptr : {m_patternFlagsA, m_patternFlagsB})
-	{
-		for(int idx = 0; idx < 4; ++idx)
-		{
-			QByteArray msg;
-			appendAsBytes<quint8>(msg, ptr == m_patternFlagsB);
-			appendAsBytes<quint8>(msg, idx);
-
-			for(int j = idx; j < PATTERN_MEM_SIZE; j += 4)
-			{
-				msg.append(ptr[j]);
-			}
-
-			setDeviceProperty(buffer, 6, PROP_FRAME_PATTERN_FLAGS, msg);
-		}
-	}
-}*/ // TODO
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 {
@@ -250,38 +177,51 @@ QString QFrameDetector::statusQml() const
 	return QString("qrc:/qml/StatusTabFD.qml");
 }
 
-void QFrameDetector::loadPattern(quint32 id, QUrl url)
+bool QFrameDetector::loadPattern(quint32 id, QUrl url)
 {
-	if(id >= 8) return;
+	if(id >= m_numPatterns*2)
+	{
+		emit error("Invalid pattern ID");
+		return false;
+	}
 
 	QString selectedPath = url.toLocalFile();
 
 	if(!selectedPath.length())
-		return;
+	{
+		emit error("No file selected");
+		return false;
+	}
 
 	QFile patternFile;
 	patternFile.setFileName(selectedPath);
 	patternFile.open(QIODevice::ReadOnly);
 
 	if(!patternFile.isOpen())
-		return;
+	{
+		emit error("Can't read pattern file, make sure you have the required permissions");
+		return false;
+	}
 
-	m_patternPath[id] = selectedPath;
-
-	quint8 *patternData = (id < 4 ? m_patternDataA : m_patternDataB);
-	quint8 *patternFlags = (id < 4 ? m_patternFlagsA : m_patternFlagsB);
-	if(id >= 4) id -= 4;
-
+	QByteArray patternBytes(m_maxPatternLength + 2, '\0');
+	QByteArray patternFlags(m_maxPatternLength + 2, '\0');
 	QByteArray fileContents = patternFile.readAll();
-	quint32 num = 0x10, i = id;
+	quint32 num = 0x10;
 	bool inX = false;
+	int i = 2;
+
+	patternBytes[0] = (id >= m_numPatterns);
+	patternBytes[1] = (id % m_numPatterns);
+	patternFlags[0] = patternBytes[0];
+	patternFlags[1] = patternBytes[1];
 
 	for(char c : fileContents)
 	{
-		if(i >= PATTERN_MEM_SIZE) break;
-
-		patternData[i] = 0;
-		patternFlags[i] = 0;
+		if(i >= m_maxPatternLength + 2)
+		{
+			emit error(QString("Pattern can not be larger than %1 bytes").arg(m_maxPatternLength));
+			return false;
+		}
 
 		if(inX)
 		{
@@ -291,70 +231,72 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 
 		if(c == '$')
 		{
-			if(i < 4)
+			if(i < 1)
 			{
-				patternFlags[i] |= 0x2;
-				i += 4;
+				patternFlags[i] = patternFlags[i] | 0x2;
+				i++;
 			}
 			else
 			{
-				patternFlags[i-4] |= 0x2;
+				patternFlags[i-1] = patternFlags[i-1] | 0x2;
 			}
 
 			break;
 		}
 		else if(c == '!')
 		{
-			if(i >= 4)
+			if(i >= 1)
 			{
-				patternFlags[i-4] |= 0x5;
+				patternFlags[i-1] = patternFlags[i-1] | 0x5;
 			}
 		}
 		else if(c == '+')
 		{
-			if(i >= 4)
+			if(i >= 1)
 			{
-				if((patternFlags[i-4] & 0x60) == 0x20)
+				if((patternFlags[i-1] & 0x60) == 0x20)
 				{
-					patternFlags[i-4] |= 0x41;
-					patternFlags[i-4] &= ~0x20;
+					patternFlags[i-1] = patternFlags[i-1] | 0x41;
+					patternFlags[i-1] = patternFlags[i-1] & ~0x20;
 				}
-				else if(!(patternFlags[i-4] & 0x60))
+				else if(!(patternFlags[i-1] & 0x60))
 				{
-					patternFlags[i-4] |= 0x21;
+					patternFlags[i-1] = patternFlags[i-1] | 0x21;
 				}
 			}
 		}
 		else if(c == '?')
 		{
 			inX = true;
-			patternFlags[i] |= 0x11;
-			i += 4;
+			patternFlags[i] = patternFlags[i] | 0x11;
+			i++;
 		}
 		else if(c == 'r' || c == 'R')
 		{
 			inX = true;
-			patternFlags[i] |= 0x9;
-			i += 4;
+			patternFlags[i] = patternFlags[i] | 0x9;
+			i++;
 		}
 		else if(c == 'x' || c == 'X')
 		{
 			inX = true;
-			patternFlags[i] |= 0x1;
-			i += 4;
+			patternFlags[i] = patternFlags[i] | 0x1;
+			i++;
 		}
 		else if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
 		{
 			c = tolower(c) - '0';
 
 			if(c >= 10)
+			{
 				c -= 'a' - '9' - 1;
+			}
 
 			if(num <= 0xF)
 			{
-				patternData[i] = (num << 4) | c;
+				patternBytes[i] = (num << 4) | c;
 				num = 0x10;
-				i += 4;
+				i++;
 			}
 			else
 			{
@@ -363,39 +305,29 @@ void QFrameDetector::loadPattern(quint32 id, QUrl url)
 		}
 	}
 
-	for(; i < PATTERN_MEM_SIZE; i += 4)
+	for(; i < m_maxPatternLength + 2; i++)
 	{
-		patternData[i] = 0;
 		patternFlags[i] = 1;
 	}
 
+	m_patternPath[id] = selectedPath;
+	m_patternBytes[id] = patternBytes;
+	m_patternFlags[id] = patternFlags;
 	emit patternsChanged();
+
+	return true;
 }
 
 void QFrameDetector::removePattern(quint32 id)
 {
-	if(id >= 8) return;
+	if(id >= m_numPatterns*2) return;
+
+	QByteArray patternData;
+	patternData.append(id >= m_numPatterns);
+	patternData.append(id % m_numPatterns);
 
 	m_patternPath[id] = "";
-
-	if(id < 4)
-	{
-		for(int i = id; i < PATTERN_MEM_SIZE; i += 4)
-		{
-			m_patternDataA[i] = 0;
-			m_patternFlagsA[i] = 1;
-		}
-	}
-	else
-	{
-		id -= 4;
-
-		for(int i = id; i < PATTERN_MEM_SIZE; i += 4)
-		{
-			m_patternDataB[i] = 0;
-			m_patternFlagsB[i] = 1;
-		}
-	}
-
+	m_patternBytes[id] = patternData;
+	m_patternFlags[id] = patternData;
 	emit patternsChanged();
 }

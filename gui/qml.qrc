@@ -20,5 +20,6 @@
 		<file>qml/DisabledLabel.qml</file>
 		<file>qml/ErrorLabel.qml</file>
 		<file>qml/UInt64Field.qml</file>
+		<file>qml/PropertyButtons.qml</file>
 	</qresource>
 </RCC>

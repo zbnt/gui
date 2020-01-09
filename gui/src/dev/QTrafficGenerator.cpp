@@ -30,6 +30,12 @@ QTrafficGenerator::QTrafficGenerator(QObject *parent)
 QTrafficGenerator::~QTrafficGenerator()
 { }
 
+void QTrafficGenerator::setExtraInfo(quint64 values)
+{
+	m_ports = values & 0xFF;
+	m_maxTemplateLength = (values >> 16) & 0xFFFF;
+}
+
 void QTrafficGenerator::enableLogging(const QString &path)
 {
 	Q_UNUSED(path);
@@ -40,26 +46,6 @@ void QTrafficGenerator::disableLogging()
 
 void QTrafficGenerator::updateDisplayedValues()
 { }
-
-void QTrafficGenerator::appendSettings(QByteArray &buffer)
-{
-	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_SIZE, m_frameSize.toUShort());
-	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_GAP, m_frameSize.toUInt());
-
-	setDeviceProperty(buffer, 4 + m_idx, PROP_BURST_TIME_ON, m_burstOnTime.toULong());
-	setDeviceProperty(buffer, 4 + m_idx, PROP_BURST_TIME_OFF, m_burstOffTime.toULong());
-	setDeviceProperty(buffer, 4 + m_idx, PROP_ENABLE_BURST, m_burstEnable);
-
-	setDeviceProperty(buffer, 4 + m_idx, PROP_LFSR_SEED, m_lfsrSeed.toUInt());
-
-	setDeviceProperty(buffer, 4 + m_idx, PROP_ENABLE, m_enable);
-}
-
-void QTrafficGenerator::appendFrame(QByteArray &buffer)
-{
-	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_TEMPLATE, m_templateBytes);
-	setDeviceProperty(buffer, 4 + m_idx, PROP_FRAME_PATTERN, QByteArray((const char*) m_templateMask, 256));
-}
 
 void QTrafficGenerator::receiveMeasurement(const QByteArray &measurement)
 {
@@ -84,21 +70,27 @@ QString QTrafficGenerator::statusQml() const
 	return QString("");
 }
 
-void QTrafficGenerator::loadTemplate(QUrl url)
+bool QTrafficGenerator::loadTemplate(QUrl url)
 {
 	QString selectedPath = url.toLocalFile();
 
 	if(!selectedPath.length())
-		return;
+	{
+		emit error("No file selected");
+		return false;
+	}
 
 	QFile headersFile;
 	headersFile.setFileName(selectedPath);
 	headersFile.open(QIODevice::ReadOnly);
 
 	if(!headersFile.isOpen())
-		return;
+	{
+		emit error("Can't read template file, make sure you have the required permissions");
+		return false;
+	}
 
-	memset(m_templateMask, 0xFF, sizeof(m_templateMask));
+	QByteArray templateBytes, templateMask;
 
 	if(selectedPath.endsWith(".hex"))
 	{
@@ -107,7 +99,7 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 		quint16 maskOffset = 0;
 		bool inX = false;
 
-		m_templateBytes.clear();
+		templateMask.append(0xFF);
 
 		for(char c : fileContents)
 		{
@@ -120,7 +112,7 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 			if(c == 'x' || c == 'X')
 			{
 				inX = true;
-				m_templateBytes.append('\0');
+				templateBytes.append('\0');
 
 				++maskCount;
 
@@ -128,6 +120,7 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 				{
 					maskCount = 0;
 					++maskOffset;
+					templateMask.append(0xFF);
 				}
 			}
 			else if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
@@ -139,18 +132,19 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 
 				if(num <= 0xF)
 				{
-					m_templateBytes.append((num << 4) | c);
+					templateBytes.append((num << 4) | c);
 					num = 0x10;
 
-					if(maskOffset <= 255)
+					if(maskOffset < templateMask.size())
 					{
-						m_templateMask[maskOffset] &= ~(1u << maskCount);
+						templateMask[maskOffset] = templateMask[maskOffset] & ~(1u << maskCount);
 						++maskCount;
 
 						if(maskCount >= 8)
 						{
 							maskCount = 0;
 							++maskOffset;
+							templateMask.append(0xFF);
 						}
 					}
 				}
@@ -163,14 +157,31 @@ void QTrafficGenerator::loadTemplate(QUrl url)
 	}
 	else
 	{
-		m_templateBytes = headersFile.readAll();
+		templateBytes = headersFile.readAll();
 	}
 
-	m_templateLength = m_templateBytes.length();
+	if(templateBytes.size() > m_maxTemplateLength)
+	{
+		emit error(QString("Template can not be larger than %1 bytes").arg(m_maxTemplateLength));
+		return false;
+	}
+
+	m_templateLength = templateBytes.length();
 	m_templatePath = selectedPath;
 	m_templateLoaded = true;
+	emit templateChanged();
+
+	return true;
+}
+
+void QTrafficGenerator::clearTemplate()
+{
+	m_templateBytes.clear();
+	m_templateMask.clear();
+
+	m_templateLength = 0;
+	m_templatePath = "";
+	m_templateLoaded = false;
 
 	emit templateChanged();
 }
-
-

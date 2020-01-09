@@ -52,18 +52,6 @@ void QLatencyMeasurer::updateDisplayedValues()
 	emit measurementChanged();
 }
 
-void QLatencyMeasurer::appendSettings(QByteArray &buffer)
-{
-	/*buffer->append(MSG_MAGIC_IDENTIFIER, 4);
-	appendAsBytes<quint8>(buffer, MSG_ID_LM_CFG);
-	appendAsBytes<quint16>(buffer, 13);
-
-	appendAsBytes<quint8>(buffer, m_enable);
-	appendAsBytes<quint32>(buffer, m_frameSize.toULong() - 26);
-	appendAsBytes<quint32>(buffer, m_period.toULong());
-	appendAsBytes<quint32>(buffer, m_timeout.toULong());*/
-}
-
 void QLatencyMeasurer::receiveMeasurement(const QByteArray &measurement)
 {
 	if(measurement.size() < 40) return;
