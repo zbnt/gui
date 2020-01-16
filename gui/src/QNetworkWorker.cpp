@@ -128,20 +128,13 @@ void QNetworkWorker::startRun(bool exportResults)
 	m_displayedTime = 0;
 
 	emit timeChanged(0);
-	emit runningChanged(true);
+	writeMessage(m_socket, MSG_ID_RUN_START, QByteArray());
+	setDeviceProperty(0xFF, PROP_ENABLE, QByteArray(1, '\1'));
 }
 
 void QNetworkWorker::stopRun()
 {
-	for(QAbstractDevice *dev : m_devices)
-	{
-		dev->disableLogging();
-	}
-
-	m_currentTime = 0;
-	m_displayedTime = 0;
-
-	emit runningChanged(false);
+	writeMessage(m_socket, MSG_ID_RUN_STOP, QByteArray());
 }
 
 void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
@@ -213,9 +206,23 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 			break;
 		}
 
-		case MSG_ID_TIME_OVER:
+		case MSG_ID_RUN_START:
 		{
-			stopRun();
+			emit runningChanged(true);
+			break;
+		}
+
+		case MSG_ID_RUN_STOP:
+		{
+			for(QAbstractDevice *dev : m_devices)
+			{
+				dev->disableLogging();
+			}
+
+			m_currentTime = 0;
+			m_displayedTime = 0;
+
+			emit runningChanged(false);
 			break;
 		}
 

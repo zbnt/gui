@@ -111,6 +111,8 @@ signals:
 	void connectToBoard(const QString &ip, quint16 port);
 	void disconnectFromBoard();
 
+	void startRun(bool enableLog);
+	void stopRun();
 	void setActiveBitstream(const QString &value);
 	void getDeviceProperty(quint8 devID, quint32 propID);
 	void setDeviceProperty(quint8 devID, quint16 propID, const QByteArray &values);

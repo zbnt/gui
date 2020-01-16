@@ -98,7 +98,7 @@ Item {
 		spacing: 10
 
 		GroupBox {
-			title: "Patterns (eth2 → eth3)"
+			title: "Patterns (eth" + root.object.portA + " → eth" + root.object.portB + ")"
 			topPadding: 26
 			bottomPadding: 15
 			Layout.columnSpan: 2
@@ -266,7 +266,7 @@ Item {
 		}
 
 		GroupBox {
-			title: "Patterns (eth3 → eth2)"
+			title: "Patterns (eth" + root.object.portB + " → eth" + root.object.portA + ")"
 			topPadding: 26
 			bottomPadding: 15
 			Layout.columnSpan: 2

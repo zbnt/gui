@@ -43,6 +43,9 @@ class QFrameDetector : public QAbstractDevice
 	Q_PROPERTY(QTableModel *detectionListA MEMBER m_detectionListA NOTIFY measurementChanged)
 	Q_PROPERTY(QTableModel *detectionListB MEMBER m_detectionListB NOTIFY measurementChanged)
 
+	Q_PROPERTY(quint32 portA READ portA CONSTANT)
+	Q_PROPERTY(quint32 portB READ portB CONSTANT)
+
 public:
 	QFrameDetector(QObject *parent = nullptr);
 	~QFrameDetector();
@@ -61,6 +64,9 @@ public slots:
 	QString description() const;
 	QString settingsQml() const;
 	QString statusQml() const;
+
+	quint32 portA() const;
+	quint32 portB() const;
 
 	bool loadPattern(quint32 id, QUrl url);
 	void removePattern(quint32 id);

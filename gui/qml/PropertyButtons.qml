@@ -41,6 +41,8 @@ RowLayout {
 
 	property bool changePending: true
 	property bool valueUpdated: input[inputProperty] != target[targetProperty]
+	property bool canApply: !changePending && valueUpdated && inputValid
+	property bool canRevert: !changePending && valueUpdated
 
 	function encodeValue(value) {
 		return ""
@@ -51,7 +53,7 @@ RowLayout {
 	}
 
 	function apply() {
-		if(!changePending && valueUpdated && inputValid)
+		if(canApply)
 		{
 			root.changePending = true
 			ZBNT.setDeviceProperty(deviceID, propertyID, encodeValue(input[inputProperty]))
@@ -59,7 +61,7 @@ RowLayout {
 	}
 
 	function undo() {
-		if(!changePending && valueUpdated)
+		if(canRevert)
 		{
 			input[inputProperty] = target[targetProperty]
 		}
@@ -90,7 +92,7 @@ RowLayout {
 
 	Label {
 		text: "\uE876"
-		enabled: !changePending && valueUpdated && inputValid
+		enabled: root.canApply
 		font.family: "Material Icons"
 		font.pointSize: root.fontSize
 		color: mouseAreaA.pressed ? DefaultLabel.color : (mouseAreaA.containsMouse ? "#81c784" : "#43a047")
@@ -109,7 +111,7 @@ RowLayout {
 
 	Label {
 		text: "\uE166"
-		enabled: !changePending && valueUpdated
+		enabled: root.canRevert
 		visible: root.showRevert
 		font.family: "Material Icons"
 		font.pointSize: root.fontSize

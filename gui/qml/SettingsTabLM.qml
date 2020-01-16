@@ -255,14 +255,14 @@ Item {
 		}
 
 		RowLayout {
-			enabled: enableButtons.enabled || framePaddingButtons.enabled || pingDelayButtons.enabled || timeoutButtons.enabled
-
 			Layout.columnSpan: 3
 			Layout.alignment: Qt.AlignRight
 
 			Button {
 				text: "Apply all"
 				focusPolicy: Qt.NoFocus
+
+				enabled: enableButtons.canApply || framePaddingButtons.canApply || pingDelayButtons.canApply || timeoutButtons.canApply
 
 				onClicked: {
 					enableButtons.apply()
@@ -275,6 +275,8 @@ Item {
 			Button {
 				text: "Revert all"
 				focusPolicy: Qt.NoFocus
+
+				enabled: enableButtons.canRevert || framePaddingButtons.canRevert || pingDelayButtons.canRevert || timeoutButtons.canRevert
 
 				onClicked: {
 					enableButtons.undo()

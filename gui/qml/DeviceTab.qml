@@ -31,20 +31,8 @@ Item {
 	Connections {
 		target: ZBNT
 
-		onConnectedChanged: {
-			if(ZBNT.connected == ZBNT.Connected)
-			{
-				ZBNT.setDeviceProperty(0xFF, Messages.PROP_ENABLE, ZBNT.arrayFromNum(0, 1))
-				root.changePending = true
-			}
-		}
-
-		onPropertyChanged: {
-			if(devID == 0xFF && propID == Messages.PROP_ENABLE)
-			{
-				root.changePending = false
-				ZBNT.running = ZBNT.arrayToNum(value, 0, 1)
-			}
+		onRunningChanged: {
+			root.changePending = false;
 		}
 
 		onConnectionError: {
@@ -218,33 +206,34 @@ Item {
 
 			Layout.fillWidth: true
 
-			GridLayout {
-				columns: 2
-				rowSpacing: 10
-				columnSpacing: 10
+			ColumnLayout {
+				spacing: 10
 
 				anchors.fill: parent
 				anchors.topMargin: 5
 				anchors.leftMargin: 5
 				anchors.rightMargin: 5
 
-				Label {
-					text: "Time:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 2
-				}
+				RowLayout {
+					spacing: 10
 
-				Label {
-					text: ZBNT.cyclesToTime(ZBNT.currentTime)
-					Layout.fillWidth: true
+					Layout.alignment: Qt.AlignHCenter
+
+					Label {
+						text: "Time:"
+						font.weight: Font.Bold
+						horizontalAlignment: Text.AlignRight
+					}
+
+					Label {
+						text: ZBNT.cyclesToTime(ZBNT.currentTime)
+					}
 				}
 
 				ProgressBar {
 					from: 0
 					to: 2048
 					value: ZBNT.currentProgress
-					Layout.columnSpan: 2
 					Layout.fillWidth: true
 				}
 
@@ -253,11 +242,18 @@ Item {
 					enabled: ZBNT.connected == ZBNT.Connected && !root.changePending
 					focusPolicy: Qt.NoFocus
 
-					Layout.columnSpan: 2
 					Layout.alignment: Qt.AlignRight
 
 					onClicked: {
-						ZBNT.setDeviceProperty(0xFF, Messages.PROP_ENABLE, ZBNT.arrayFromNum(+!ZBNT.running, 1))
+						if(!ZBNT.running)
+						{
+							ZBNT.startRun(ZBNT.exportResults)
+						}
+						else
+						{
+							ZBNT.stopRun()
+						}
+
 						root.changePending = true
 					}
 				}

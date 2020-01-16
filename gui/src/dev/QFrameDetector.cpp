@@ -58,7 +58,7 @@ void QFrameDetector::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(path); // TODO
+	m_logFile.setFileName(path + QString("/eth%1_eth%2_detector.csv").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF));
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 
@@ -175,6 +175,16 @@ QString QFrameDetector::settingsQml() const
 QString QFrameDetector::statusQml() const
 {
 	return QString("qrc:/qml/StatusTabFD.qml");
+}
+
+quint32 QFrameDetector::portA() const
+{
+	return m_ports & 0xFF;
+}
+
+quint32 QFrameDetector::portB() const
+{
+	return (m_ports >> 8) & 0xFF;
 }
 
 bool QFrameDetector::loadPattern(quint32 id, QUrl url)

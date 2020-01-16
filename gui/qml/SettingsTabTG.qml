@@ -522,14 +522,14 @@ Item {
 		}
 
 		RowLayout {
-			enabled: enableButtons.enabled || sizeButtons.enabled || delayButtons.enabled || burstEnableButtons.enabled || burstOnTimeButtons.enabled || burstOffTimeButtons.enabled || seedButtons.enabled
-
 			Layout.columnSpan: 2
 			Layout.alignment: Qt.AlignRight
 
 			Button {
 				text: "Apply all"
 				focusPolicy: Qt.NoFocus
+
+				enabled: enableButtons.canApply || sizeButtons.canApply || delayButtons.canApply || burstEnableButtons.canApply || burstOnTimeButtons.canApply || burstOffTimeButtons.canApply || seedButtons.canApply
 
 				onClicked: {
 					enableButtons.apply()
@@ -545,6 +545,8 @@ Item {
 			Button {
 				text: "Revert all"
 				focusPolicy: Qt.NoFocus
+
+				enabled: enableButtons.canRevert || sizeButtons.canRevert || delayButtons.canRevert || burstEnableButtons.canRevert || burstOnTimeButtons.canRevert || burstOffTimeButtons.canRevert || seedButtons.canRevert
 
 				onClicked: {
 					enableButtons.undo()

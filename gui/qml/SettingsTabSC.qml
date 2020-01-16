@@ -136,14 +136,14 @@ Item {
 		}
 
 		RowLayout {
-			enabled: enableButtons.enabled || samplePeriodButtons.enabled
-
 			Layout.columnSpan: 3
 			Layout.alignment: Qt.AlignRight
 
 			Button {
 				text: "Apply all"
 				focusPolicy: Qt.NoFocus
+
+				enabled: enableButtons.canApply || samplePeriodButtons.canApply
 
 				onClicked: {
 					enableButtons.apply()
@@ -154,6 +154,8 @@ Item {
 			Button {
 				text: "Revert all"
 				focusPolicy: Qt.NoFocus
+
+				enabled: enableButtons.canRevert || samplePeriodButtons.canRevert
 
 				onClicked: {
 					enableButtons.undo()

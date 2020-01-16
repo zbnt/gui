@@ -57,7 +57,7 @@ Item {
 				anchors.rightMargin: 5
 
 				Label {
-					text: "eth2 → eth3"
+					text: "eth" + root.object.portA + " → eth" + root.object.portB
 					font.weight: Font.Bold
 					horizontalAlignment: Text.AlignHCenter
 					Layout.minimumWidth: parent.width / 2
@@ -65,7 +65,7 @@ Item {
 				}
 
 				Label {
-					text: "eth3 → eth2"
+					text: "eth" + root.object.portB + " → eth" + root.object.portA
 					font.weight: Font.Bold
 					horizontalAlignment: Text.AlignHCenter
 					Layout.minimumWidth: parent.width / 2
@@ -171,7 +171,7 @@ Item {
 		}
 
 		GroupBox {
-			title: "Last 1000 detections (eth2 → eth3)"
+			title: "Last 1000 detections (eth" + root.object.portA + " → eth" + root.object.portB + ")"
 			topPadding: 26
 			bottomPadding: 15
 
@@ -239,7 +239,7 @@ Item {
 		}
 
 		GroupBox {
-			title: "Last 1000 detections (eth3 → eth2)"
+			title: "Last 1000 detections (eth" + root.object.portB + " → eth" + root.object.portA + ")"
 			topPadding: 26
 			bottomPadding: 15
 

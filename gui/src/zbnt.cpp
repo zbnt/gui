@@ -51,6 +51,8 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(this, &ZBNT::setActiveBitstream, m_netWorker, &QNetworkWorker::setActiveBitstream);
 	connect(this, &ZBNT::setDeviceProperty, m_netWorker, &QNetworkWorker::setDeviceProperty);
 	connect(this, &ZBNT::getDeviceProperty, m_netWorker, &QNetworkWorker::getDeviceProperty);
+	connect(this, &ZBNT::startRun, m_netWorker, &QNetworkWorker::startRun);
+	connect(this, &ZBNT::stopRun, m_netWorker, &QNetworkWorker::stopRun);
 
 	connect(m_netWorker, &QNetworkWorker::timeChanged, this, &ZBNT::onTimeChanged);
 	connect(m_netWorker, &QNetworkWorker::runningChanged, this, &ZBNT::onRunningChanged);

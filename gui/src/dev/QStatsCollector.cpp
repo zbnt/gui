@@ -34,7 +34,7 @@ void QStatsCollector::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(path);
+	m_logFile.setFileName(path + QString("/eth%1_stats.csv").arg(m_ports & 0xFF));
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 

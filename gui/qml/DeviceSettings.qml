@@ -164,9 +164,17 @@ GridLayout {
 			focusPolicy: Qt.NoFocus
 
 			onClicked: {
-				ZBNT.setActiveBitstream(ZBNT.bitstreamNames[bitstreamSelector.currentIndex])
-				ZBNT.setDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT, ZBNT.arrayFromNum(runTimeInput.text, 8))
-				root.changePending = 3
+				if(bitstreamSelector.currentIndex != ZBNT.bitstreamID)
+				{
+					root.changePending |= 1;
+					ZBNT.setActiveBitstream(ZBNT.bitstreamNames[bitstreamSelector.currentIndex])
+				}
+
+				if(runTimeInput.text != ZBNT.runTime)
+				{
+					root.changePending |= 2;
+					ZBNT.setDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT, ZBNT.arrayFromNum(runTimeInput.text, 8))
+				}
 			}
 		}
 

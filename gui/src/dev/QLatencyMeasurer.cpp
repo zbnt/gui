@@ -34,7 +34,7 @@ void QLatencyMeasurer::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(path);
+	m_logFile.setFileName(path + QString("/eth%1_eth%2_latency.csv").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF));
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 
