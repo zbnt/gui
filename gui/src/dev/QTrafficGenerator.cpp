@@ -91,73 +91,98 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 	}
 
 	QByteArray templateBytes, templateMask;
+	QByteArray fileContents = headersFile.readAll();
 
-	if(selectedPath.endsWith(".hex"))
+	bool inX = false, inComment = false;
+	quint8 lastChar = 0, currentMask = 0, maskCount = 0;
+	quint32 lineCount = 1;
+
+	for(char c : fileContents)
 	{
-		QByteArray fileContents = headersFile.readAll();
-		quint8 num = 0x10, maskCount = 0;
-		quint16 maskOffset = 0;
-		bool inX = false;
+		c = tolower(c);
 
-		templateMask.append(0xFF);
-
-		for(char c : fileContents)
+		if(inX)
 		{
-			if(inX)
+			if(c != 'x')
 			{
-				inX = false;
-				continue;
+				emit error(QString("Syntax error in line %1: Incomplete random byte sequence").arg(lineCount));
+				return false;
 			}
 
-			if(c == 'x' || c == 'X')
+			inX = false;
+			continue;
+		}
+
+		if(inComment)
+		{
+			if(c == '\n')
 			{
-				inX = true;
-				templateBytes.append('\0');
-
-				++maskCount;
-
-				if(maskCount >= 8)
-				{
-					maskCount = 0;
-					++maskOffset;
-					templateMask.append(0xFF);
-				}
+				inComment = false;
+				++lineCount;
 			}
-			else if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
+
+			continue;
+		}
+
+		if((c >= 'a' && c <= 'f') || (c >= '0' && c <= '9'))
+		{
+			if(lastChar)
 			{
-				c = tolower(c) - '0';
+				c -= '0';
+				lastChar -= '0';
 
 				if(c >= 10)
+				{
 					c -= 'a' - '9' - 1;
-
-				if(num <= 0xF)
-				{
-					templateBytes.append((num << 4) | c);
-					num = 0x10;
-
-					if(maskOffset < templateMask.size())
-					{
-						templateMask[maskOffset] = templateMask[maskOffset] & ~(1u << maskCount);
-						++maskCount;
-
-						if(maskCount >= 8)
-						{
-							maskCount = 0;
-							++maskOffset;
-							templateMask.append(0xFF);
-						}
-					}
 				}
-				else
+
+				if(lastChar >= 10)
 				{
-					num = c;
+					lastChar -= 'a' - '9' - 1;
 				}
+
+				templateBytes.append((lastChar << 4) | c);
+				lastChar = 0;
+				++maskCount;
+			}
+			else
+			{
+				lastChar = c;
 			}
 		}
-	}
-	else
-	{
-		templateBytes = headersFile.readAll();
+		else if(lastChar)
+		{
+			emit error(QString("Syntax error in line %1: Incomplete byte sequence").arg(lineCount));
+			return false;
+		}
+		else if(c == '\n')
+		{
+			++lineCount;
+		}
+		else if(c == '#')
+		{
+			inComment = true;
+		}
+		else if(c == 'x')
+		{
+			inX = true;
+
+			templateBytes.append('\0');
+			currentMask |= 1 << maskCount;
+			++maskCount;
+		}
+		else if(!isspace(c))
+		{
+			emit error(QString("Syntax error in line %1: Invalid character").arg(lineCount));
+			return false;
+		}
+
+		if(maskCount >= 8)
+		{
+			templateMask.append(currentMask);
+			currentMask = 0;
+			maskCount = 0;
+		}
 	}
 
 	if(templateBytes.size() > m_maxTemplateLength)
