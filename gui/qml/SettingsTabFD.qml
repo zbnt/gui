@@ -138,6 +138,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -149,6 +150,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -173,6 +175,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -184,6 +187,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -208,6 +212,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -219,6 +224,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -243,6 +249,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -254,6 +261,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -306,6 +314,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -317,6 +326,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -341,6 +351,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -352,6 +363,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -376,6 +388,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -387,6 +400,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -411,6 +425,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -422,6 +437,7 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
+					enabled: !ZBNT.running
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -465,7 +481,7 @@ Item {
 
 				CheckBox {
 					id: fixChecksumsInput
-					enabled: !root.changePending
+					enabled: !root.changePending && !ZBNT.running
 					checked: true
 					text: "Fix TCP/UDP/ICMP/ICMPv6 checksums if needed"
 
