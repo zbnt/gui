@@ -191,6 +191,9 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 		return false;
 	}
 
+	m_templateBytes = templateBytes;
+	m_templateMask = templateMask;
+
 	m_templateLength = templateBytes.length();
 	m_templatePath = selectedPath;
 	m_templateLoaded = true;
