@@ -106,6 +106,14 @@ void QNetworkWorker::sendData(const QByteArray &data)
 
 void QNetworkWorker::startRun(bool exportResults)
 {
+	for(QAbstractDevice *dev : m_devices)
+	{
+		dev->resetMeasurement();
+	}
+
+	m_currentTime = 0;
+	m_displayedTime = 0;
+
 	if(exportResults)
 	{
 		QString timeStamp = QDateTime::currentDateTime().toString("yyyy_MM_dd HH_mm_ss");
@@ -118,14 +126,6 @@ void QNetworkWorker::startRun(bool exportResults)
 			dev->enableLogging("measurements/" + timeStamp);
 		}
 	}
-
-	for(QAbstractDevice *dev : m_devices)
-	{
-		dev->resetMeasurement();
-	}
-
-	m_currentTime = 0;
-	m_displayedTime = 0;
 
 	emit timeChanged(0);
 	writeMessage(m_socket, MSG_ID_RUN_START, QByteArray());

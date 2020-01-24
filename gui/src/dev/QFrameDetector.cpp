@@ -82,8 +82,6 @@ void QFrameDetector::updateDisplayedValues()
 		m_detectionCountersStr[i] = QString::number(m_detectionCounters[i]);
 	}
 
-	m_mutex.unlock();
-
 	if(m_detectionListA->rowCount() > 1000)
 	{
 		m_detectionListA->removeRows(1000, m_detectionListA->rowCount());
@@ -93,6 +91,8 @@ void QFrameDetector::updateDisplayedValues()
 	{
 		m_detectionListB->removeRows(1000, m_detectionListB->rowCount());
 	}
+
+	m_mutex.unlock();
 
 	emit measurementChanged();
 }
@@ -108,9 +108,16 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	QByteArray match_ext_data = measurement.mid(12, ext_num).toHex();
 
 	if(ext_num > 16)
+	{
 		ext_num = 16;
+	}
 
-	match_dir = (match_dir == 'A');
+	match_dir -= 'A';
+
+	if(match_dir > 1)
+	{
+		return;
+	}
 
 	QString match_mask_str;
 	bool first = true;
@@ -161,7 +168,19 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 }
 
 void QFrameDetector::resetMeasurement()
-{ }
+{
+	QMutexLocker lock(&m_mutex);
+
+	m_pendingDetections[0].clear();
+	m_pendingDetections[1].clear();
+	m_detectionListA->clearRows();
+	m_detectionListB->clearRows();
+
+	for(int i = 0; i < m_detectionCounters.size(); ++i)
+	{
+		m_detectionCounters[i] = 0;
+	}
+}
 
 QString QFrameDetector::description() const
 {
