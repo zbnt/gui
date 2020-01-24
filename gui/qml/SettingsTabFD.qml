@@ -32,27 +32,40 @@ Item {
 	property int changePending: 0
 
 	Component.onCompleted: {
-		root.changePending = 1
+		root.changePending = 3
 		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE_CSUM_FIX)
+		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN)
 	}
 
 	Connections {
 		target: ZBNT
 
 		onPropertyChanged: {
-			if(devID == root.deviceID && propID == Messages.PROP_ENABLE_CSUM_FIX)
+			if(devID == root.deviceID)
 			{
-				if(success)
+				if(propID == Messages.PROP_ENABLE_CSUM_FIX)
 				{
-					fixChecksumsInput.checked = ZBNT.arrayToNum(value, 0, 1)
-					root.object.fixChecksums = fixChecksumsInput.checked
-				}
-				else
-				{
-					fixChecksumsInput.checked = root.object.fixChecksums
-				}
+					if(success)
+					{
+						fixChecksumsInput.checked = ZBNT.arrayToNum(value, 0, 1)
+						root.object.fixChecksums = fixChecksumsInput.checked
+					}
+					else
+					{
+						fixChecksumsInput.checked = root.object.fixChecksums
+					}
 
-				root.changePending = 0
+					root.changePending &= ~1
+				}
+				else if(propID == Messages.PROP_ENABLE_PATTERN)
+				{
+					if(success)
+					{
+						root.object.patternsEnabled = ZBNT.arrayToNum(value, 0, 4)
+					}
+
+					root.changePending &= ~2
+				}
 			}
 		}
 	}
@@ -89,6 +102,7 @@ Item {
 			{
 				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[root.patternID])
 				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[root.patternID])
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 			}
 		}
 	}
@@ -138,7 +152,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -150,13 +164,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(0)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[0])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[0])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 
@@ -175,7 +191,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -187,13 +203,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(1)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[1])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[1])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 
@@ -212,7 +230,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -224,13 +242,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(2)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[2])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[2])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 
@@ -249,7 +269,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -261,13 +281,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(3)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[3])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[3])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 			}
@@ -314,7 +336,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -326,13 +348,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(4)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[4])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[4])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 
@@ -351,7 +375,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -363,13 +387,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(5)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[5])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[5])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 
@@ -388,7 +414,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -400,13 +426,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(6)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[6])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[6])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 
@@ -425,7 +453,7 @@ Item {
 				Button {
 					icon.name: "folder-new"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
@@ -437,13 +465,15 @@ Item {
 				Button {
 					icon.name: "delete"
 					focus: false
-					enabled: !ZBNT.running
+					enabled: !ZBNT.running && !root.changePending
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
+						root.changePending |= 2
 						root.object.removePattern(7)
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[7])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[7])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
 					}
 				}
 			}
@@ -488,7 +518,7 @@ Item {
 					onCheckedChanged: {
 						if(enabled)
 						{
-							root.changePending = 1
+							root.changePending |= 1
 							ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_CSUM_FIX, ZBNT.arrayFromNum(+checked, 1))
 						}
 					}

@@ -37,6 +37,7 @@ class QFrameDetector : public QAbstractDevice
 	Q_PROPERTY(QVariantList patternFlags MEMBER m_patternFlags NOTIFY patternsChanged)
 	Q_PROPERTY(quint16 numPatterns MEMBER m_numPatterns NOTIFY patternsChanged)
 	Q_PROPERTY(quint16 maxPatternLength MEMBER m_maxPatternLength NOTIFY patternsChanged)
+	Q_PROPERTY(quint32 patternsEnabled MEMBER m_patternsEnabled NOTIFY patternsChanged)
 	Q_PROPERTY(bool fixChecksums MEMBER m_fixChecksums NOTIFY settingsChanged)
 
 	Q_PROPERTY(QStringList detectionCounters MEMBER m_detectionCountersStr NOTIFY measurementChanged)
@@ -83,6 +84,7 @@ private:
 	QVariantList m_patternFlags;
 	quint16 m_numPatterns;
 	quint16 m_maxPatternLength;
+	quint32 m_patternsEnabled;
 	bool m_fixChecksums = true;
 
 	QList<QStringList> m_pendingDetections[2];

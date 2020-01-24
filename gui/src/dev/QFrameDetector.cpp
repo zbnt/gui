@@ -33,6 +33,7 @@ QFrameDetector::QFrameDetector(QObject *parent)
 		m_detectionCountersStr.append("0");
 	}
 
+	m_patternsEnabled = 0;
 	m_detectionListA = new QTableModel(3, this);
 	m_detectionListB = new QTableModel(3, this);
 }
@@ -323,6 +324,7 @@ bool QFrameDetector::loadPattern(quint32 id, QUrl url)
 	m_patternPath[id] = selectedPath;
 	m_patternBytes[id] = patternBytes;
 	m_patternFlags[id] = patternFlags;
+	m_patternsEnabled |= (1 << id);
 	emit patternsChanged();
 
 	return true;
@@ -339,5 +341,6 @@ void QFrameDetector::removePattern(quint32 id)
 	m_patternPath[id] = "";
 	m_patternBytes[id] = patternData;
 	m_patternFlags[id] = patternData;
+	m_patternsEnabled &= ~(1 << id);
 	emit patternsChanged();
 }
