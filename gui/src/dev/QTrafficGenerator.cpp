@@ -185,6 +185,11 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 		}
 	}
 
+	if(maskCount != 0)
+	{
+		templateMask.append(currentMask);
+	}
+
 	if(templateBytes.size() > m_maxTemplateLength)
 	{
 		emit error(QString("Template can not be larger than %1 bytes").arg(m_maxTemplateLength));
