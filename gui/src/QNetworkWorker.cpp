@@ -264,6 +264,7 @@ void QNetworkWorker::onNetworkStateChanged(QAbstractSocket::SocketState state)
 		{
 			emit connectedChanged(ZBNT::Disconnected);
 			emit runningChanged(false);
+			m_helloTimer->stop();
 			break;
 		}
 
