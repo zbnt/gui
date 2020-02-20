@@ -7,7 +7,6 @@ set(ZBNT_GUI_SRC
 
 	"src/zbnt.cpp"
 	"src/QNetworkWorker.cpp"
-	"src/MessageReceiver.cpp"
 	"src/QDiscoveryClient.cpp"
 
 	"src/QIPValidator.cpp"
@@ -21,6 +20,7 @@ set(ZBNT_GUI_SRC
 	"src/dev/QFrameDetector.cpp"
 
 	"../common/src/Utils.cpp"
+	"../common/src/MessageReceiver.cpp"
 )
 
 set(ZBNT_GUI_HDR

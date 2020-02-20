@@ -1,5 +1,5 @@
 /*
-	zbnt_gui
+	zbnt_sw
 	Copyright (C) 2019 Oscar R.
 
 	This program is free software: you can redistribute it and/or modify
@@ -34,8 +34,8 @@ protected:
 	void handleIncomingData(const QByteArray &readData);
 
 	RxStatus m_rxStatus = MSG_RX_MAGIC;
-	quint16 m_rxByteCount = 0;
-	quint16 m_rxMsgSize = 0;
+	quint32 m_rxByteCount = 0;
+	quint32 m_rxMsgSize = 0;
 	quint16 m_rxMsgID = 0;
 	QByteArray m_rxBuffer;
 };
