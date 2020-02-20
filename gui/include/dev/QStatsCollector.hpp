@@ -56,6 +56,8 @@ public:
 	QStatsCollector(QObject *parent = nullptr);
 	~QStatsCollector();
 
+	void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props);
+
 	void enableLogging(const QString &path);
 	void disableLogging();
 
@@ -84,7 +86,7 @@ signals:
 	void measurementChanged();
 
 private:
-	quint8 m_idx = 0;
+	quint8 m_port = 0;
 	quint8 m_enable = 1;
 	QString m_samplePeriod = "12500000";
 

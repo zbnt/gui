@@ -91,8 +91,8 @@ public slots:
 	void onRunningChanged(bool running);
 	void onConnectedChanged(quint8 connected);
 	void onConnectionError(QString error);
-	void onBitstreamsChanged(QStringList names, BitstreamDevListList devLists);
-	void onActiveBitstreamChanged(quint8 success, const QString &value);
+	void onBitstreamsChanged(QStringList names);
+	void onActiveBitstreamChanged(quint8 success, const QString &name, const QList<BitstreamDevInfo> &devices);
 
 signals:
 	void timeChanged();
@@ -131,7 +131,6 @@ private:
 
 	QVariantList m_deviceList;
 	QStringList m_bitstreamNames;
-	BitstreamDevListList m_bitstreamDevLists;
 	QVector<QAbstractDevice*> m_bitstreamDevices;
 
 	quint64 m_runTime = 125000000ul;

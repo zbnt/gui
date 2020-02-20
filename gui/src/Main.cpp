@@ -43,7 +43,6 @@ int main(int argc, char *argv[])
 
 	// Register QML types
 
-	qRegisterMetaType<BitstreamDevListList>("BitstreamDevListList");
 	qRegisterMetaType<QVector<QAbstractDevice*>>("QVector<QAbstractDevice*>");
 
 	qmlRegisterSingletonType<ZBNT>("zbnt", 1, 0, "ZBNT",

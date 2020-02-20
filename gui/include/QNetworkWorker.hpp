@@ -72,9 +72,9 @@ signals:
 	void connectedChanged(quint8 connected);
 	void connectionError(QString error);
 
-	void bitstreamsChanged(QStringList names, BitstreamDevListList devLists);
+	void bitstreamsChanged(QStringList names);
 	void propertyChanged(quint8 success, quint8 devID, quint16 propID, const QByteArray &value);
-	void activeBitstreamChanged(quint8 success, const QString &value);
+	void activeBitstreamChanged(quint8 success, const QString &name, const QList<BitstreamDevInfo> &devices);
 
 private:
 	QTcpSocket *m_socket = nullptr;

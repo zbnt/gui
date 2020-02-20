@@ -264,24 +264,20 @@ void ZBNT::onConnectionError(QString error)
 	emit connectionError(error);
 }
 
-void ZBNT::onBitstreamsChanged(QStringList names, BitstreamDevListList devLists)
+void ZBNT::onBitstreamsChanged(QStringList names)
 {
 	m_bitstreamNames = names;
-	m_bitstreamDevLists = devLists;
 	emit bitstreamsChanged();
 }
 
-void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &value)
+void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &name, const QList<BitstreamDevInfo> &devices)
 {
-	Q_UNUSED(success)
+	Q_UNUSED(success);
 
-	auto it = std::find(m_bitstreamNames.cbegin(), m_bitstreamNames.cend(), value);
-	int idx = it - m_bitstreamNames.cbegin();
+	auto it = std::find(m_bitstreamNames.cbegin(), m_bitstreamNames.cend(), name);
 
-	if(it != m_bitstreamNames.cend() && idx < m_bitstreamDevLists.size())
+	if(it != m_bitstreamNames.cend())
 	{
-		BitstreamDevList devInfoList = m_bitstreamDevLists[idx];
-
 		for(QAbstractDevice *dev : m_bitstreamDevices)
 		{
 			dev->deleteLater();
@@ -289,11 +285,11 @@ void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &value)
 
 		m_bitstreamDevices.clear();
 
-		for(const BitstreamDevInfo &devInfo : devInfoList)
+		for(const BitstreamDevInfo &devInfo : devices)
 		{
 			QAbstractDevice *dev = nullptr;
 
-			switch(devInfo.first)
+			switch(devInfo.type)
 			{
 				case DEV_FRAME_DETECTOR:
 				{
@@ -324,13 +320,13 @@ void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &value)
 
 			if(dev)
 			{
-				dev->setExtraInfo(devInfo.second);
+				dev->loadInitialProperties(devInfo.properties);
 				m_bitstreamDevices.append(dev);
 			}
 		}
 
 		emit bitstreamDevicesChanged(m_bitstreamDevices);
-		emit activeBitstreamChanged(value);
+		emit activeBitstreamChanged(name);
 	}
 }
 

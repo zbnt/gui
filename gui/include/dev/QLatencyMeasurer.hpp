@@ -53,6 +53,8 @@ public:
 	QLatencyMeasurer(QObject *parent = nullptr);
 	~QLatencyMeasurer();
 
+	void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props);
+
 	void enableLogging(const QString &path);
 	void disableLogging();
 
@@ -77,6 +79,8 @@ signals:
 	void measurementChanged();
 
 private:
+	quint8 m_portA = 0;
+	quint8 m_portB = 0;
 	quint8 m_enable = 1;
 	QString m_framePadding;
 	QString m_delay;

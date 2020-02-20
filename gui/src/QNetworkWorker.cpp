@@ -148,46 +148,21 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 			if(data.size() < 2) break;
 
 			QStringList bitNames;
-			BitstreamDevListList devLists;
 
-			int idx = 2;
-			quint16 numBitstreams = readAsNumber<quint16>(data, 0);
-
-			for(int i = 0; i < numBitstreams; ++i)
+			for(int i = 0; i + 2 < data.size();)
 			{
-				if(idx + 1 >= data.size()) return;
+				quint16 nameLength = readAsNumber<quint16>(data, i);
+				i += 2;
 
-				quint16 nameLength = readAsNumber<quint16>(data, idx);
-				idx += 2;
+				if(!nameLength || i + nameLength - 1 >= data.size()) return;
 
-				if(!nameLength || idx + nameLength - 1 >= data.size()) return;
-
-				QByteArray name = data.mid(idx, nameLength);
-				idx += nameLength;
-
-				if(idx + 1 >= data.size()) return;
-
-				quint16 numDevices = readAsNumber<quint16>(data, idx);
-				idx += 2;
-
-				BitstreamDevList devList;
-
-				for(int j = 0; j < numDevices; ++j)
-				{
-					if(idx + 8 >= data.size()) return;
-
-					quint8 devType = readAsNumber<quint8>(data, idx);
-					quint64 devPorts = readAsNumber<quint64>(data, idx + 1);
-					idx += 9;
-
-					devList.append(qMakePair(DeviceType(devType), devPorts));
-				}
+				QByteArray name = data.mid(i, nameLength);
+				i += nameLength;
 
 				bitNames.append(QString::fromUtf8(name));
-				devLists.append(devList);
 			}
 
-			emit bitstreamsChanged(bitNames, devLists);
+			emit bitstreamsChanged(bitNames);
 
 			m_helloTimer->stop();
 			m_helloReceived = true;
@@ -197,12 +172,39 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 
 		case MSG_ID_PROGRAM_PL:
 		{
-			if(data.size() < 1) break;
+			if(data.size() < 3) break;
 
 			quint8 success = readAsNumber<quint8>(data, 0);
-			QString value = QString::fromUtf8(data.mid(1));
+			quint16 nameLength = readAsNumber<quint16>(data, 1);
+			QString name = QString::fromUtf8(data.mid(3, nameLength));
+			QList<BitstreamDevInfo> deviceList;
 
-			emit activeBitstreamChanged(success, value);
+			int i = 3 + nameLength;
+			while(i + 3 < data.size())
+			{
+				BitstreamDevInfo deviceInfo;
+				deviceInfo.id = readAsNumber<quint8>(data, i);
+				deviceInfo.type = DeviceType(readAsNumber<quint8>(data, i + 1));
+
+				quint16 propsSize = readAsNumber<quint16>(data, i + 2);
+				QByteArray propsData = data.mid(i + 4, propsSize);
+
+				int j = 0;
+				while(j + 3 < data.size())
+				{
+					PropertyID propID = PropertyID(readAsNumber<quint16>(propsData, j));
+					quint16 valueSize = readAsNumber<quint16>(propsData, j + 2);
+					QByteArray valueData = propsData.mid(j + 4, valueSize);
+
+					deviceInfo.properties.append(qMakePair(propID, valueData));
+					j += 4 + valueSize;
+				}
+
+				deviceList.append(deviceInfo);
+				i += 4 + propsSize;
+			}
+
+			emit activeBitstreamChanged(success, name, deviceList);
 			break;
 		}
 

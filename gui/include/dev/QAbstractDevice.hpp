@@ -24,9 +24,12 @@
 
 #include <Messages.hpp>
 
-typedef QPair<DeviceType, quint64> BitstreamDevInfo;
-typedef QList<BitstreamDevInfo>    BitstreamDevList;
-typedef QList<BitstreamDevList>    BitstreamDevListList;
+struct BitstreamDevInfo
+{
+	quint8 id;
+	DeviceType type;
+	QList<QPair<PropertyID, QByteArray>> properties;
+};
 
 class QAbstractDevice : public QObject
 {
@@ -36,7 +39,7 @@ public:
 	QAbstractDevice(QObject *parent = nullptr);
 	~QAbstractDevice();
 
-	virtual void setExtraInfo(quint64 values);
+	virtual void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props) = 0;
 
 	virtual void enableLogging(const QString &path) = 0;
 	virtual void disableLogging() = 0;
@@ -50,7 +53,4 @@ public slots:
 	virtual QString description() const = 0;
 	virtual QString settingsQml() const = 0;
 	virtual QString statusQml() const = 0;
-
-protected:
-	quint64 m_ports;
 };

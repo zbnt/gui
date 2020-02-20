@@ -30,11 +30,31 @@ QLatencyMeasurer::QLatencyMeasurer(QObject *parent)
 QLatencyMeasurer::~QLatencyMeasurer()
 { }
 
+void QLatencyMeasurer::loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props)
+{
+	for(auto prop : props)
+	{
+		switch(prop.first)
+		{
+			case PROP_PORTS:
+			{
+				if(prop.second.size() < 2) break;
+
+				m_portA = readAsNumber<quint8>(prop.second, 0);
+				m_portB = readAsNumber<quint8>(prop.second, 1);
+				break;
+			}
+
+			default: { }
+		}
+	}
+}
+
 void QLatencyMeasurer::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(path + QString("/eth%1_eth%2_latency.csv").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF));
+	m_logFile.setFileName(path + QString("/eth%1_eth%2_latency.csv").arg(m_portA).arg(m_portB));
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 
@@ -102,7 +122,7 @@ void QLatencyMeasurer::resetMeasurement()
 
 QString QLatencyMeasurer::description() const
 {
-	return QString("Latency measurer (eth%1, eth%2)").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF);
+	return QString("Latency measurer (eth%1, eth%2)").arg(m_portA).arg(m_portB);
 }
 
 QString QLatencyMeasurer::settingsQml() const

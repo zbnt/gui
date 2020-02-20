@@ -30,11 +30,30 @@ QStatsCollector::QStatsCollector(QObject *parent)
 QStatsCollector::~QStatsCollector()
 { }
 
+void QStatsCollector::loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props)
+{
+	for(auto prop : props)
+	{
+		switch(prop.first)
+		{
+			case PROP_PORTS:
+			{
+				if(prop.second.size() < 1) break;
+
+				m_port = readAsNumber<quint8>(prop.second, 0);
+				break;
+			}
+
+			default: { }
+		}
+	}
+}
+
 void QStatsCollector::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(path + QString("/eth%1_stats.csv").arg(m_ports & 0xFF));
+	m_logFile.setFileName(path + QString("/eth%1_stats.csv").arg(m_port));
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 
@@ -116,7 +135,7 @@ void QStatsCollector::resetMeasurement()
 
 QString QStatsCollector::description() const
 {
-	return QString("Statistics collector (eth%1)").arg(m_ports & 0xFF);
+	return QString("Statistics collector (eth%1)").arg(m_port);
 }
 
 QString QStatsCollector::settingsQml() const

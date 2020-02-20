@@ -30,10 +30,31 @@ QTrafficGenerator::QTrafficGenerator(QObject *parent)
 QTrafficGenerator::~QTrafficGenerator()
 { }
 
-void QTrafficGenerator::setExtraInfo(quint64 values)
+void QTrafficGenerator::loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props)
 {
-	m_ports = values & 0xFF;
-	m_maxTemplateLength = (values >> 16) & 0xFFFF;
+	for(auto prop : props)
+	{
+		switch(prop.first)
+		{
+			case PROP_PORTS:
+			{
+				if(prop.second.size() < 1) break;
+
+				m_port = readAsNumber<quint8>(prop.second, 0);
+				break;
+			}
+
+			case PROP_MAX_TEMPLATE_SIZE:
+			{
+				if(prop.second.size() < 4) break;
+
+				m_maxTemplateLength = readAsNumber<quint32>(prop.second, 0);
+				break;
+			}
+
+			default: { }
+		}
+	}
 }
 
 void QTrafficGenerator::enableLogging(const QString &path)
@@ -57,7 +78,7 @@ void QTrafficGenerator::resetMeasurement()
 
 QString QTrafficGenerator::description() const
 {
-	return QString("Traffic generator (eth%1)").arg(m_ports & 0xFF);
+	return QString("Traffic generator (eth%1)").arg(m_port);
 }
 
 QString QTrafficGenerator::settingsQml() const

@@ -32,11 +32,14 @@ class QFrameDetector : public QAbstractDevice
 {
 	Q_OBJECT
 
+	Q_PROPERTY(quint8 portA MEMBER m_portA NOTIFY settingsChanged)
+	Q_PROPERTY(quint8 portB MEMBER m_portB NOTIFY settingsChanged)
+	Q_PROPERTY(quint16 numScripts MEMBER m_numScripts NOTIFY settingsChanged)
+	Q_PROPERTY(quint16 maxScriptSize MEMBER m_maxScriptSize NOTIFY settingsChanged)
+
 	Q_PROPERTY(QVariantList patternPath MEMBER m_patternPath NOTIFY patternsChanged)
 	Q_PROPERTY(QVariantList patternBytes MEMBER m_patternBytes NOTIFY patternsChanged)
 	Q_PROPERTY(QVariantList patternFlags MEMBER m_patternFlags NOTIFY patternsChanged)
-	Q_PROPERTY(quint16 numPatterns MEMBER m_numPatterns NOTIFY patternsChanged)
-	Q_PROPERTY(quint16 maxPatternLength MEMBER m_maxPatternLength NOTIFY patternsChanged)
 	Q_PROPERTY(quint32 patternsEnabled MEMBER m_patternsEnabled NOTIFY patternsChanged)
 	Q_PROPERTY(bool fixChecksums MEMBER m_fixChecksums NOTIFY settingsChanged)
 
@@ -44,12 +47,11 @@ class QFrameDetector : public QAbstractDevice
 	Q_PROPERTY(QTableModel *detectionListA MEMBER m_detectionListA NOTIFY measurementChanged)
 	Q_PROPERTY(QTableModel *detectionListB MEMBER m_detectionListB NOTIFY measurementChanged)
 
-	Q_PROPERTY(quint32 portA READ portA CONSTANT)
-	Q_PROPERTY(quint32 portB READ portB CONSTANT)
-
 public:
 	QFrameDetector(QObject *parent = nullptr);
 	~QFrameDetector();
+
+	void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props);
 
 	void setExtraInfo(quint64 values);
 
@@ -66,11 +68,8 @@ public slots:
 	QString settingsQml() const;
 	QString statusQml() const;
 
-	quint32 portA() const;
-	quint32 portB() const;
-
-	bool loadPattern(quint32 id, QUrl url);
-	void removePattern(quint32 id);
+	bool loadScript(quint32 id, QUrl url);
+	void removeScript(quint32 id);
 
 signals:
 	void patternsChanged();
@@ -79,11 +78,15 @@ signals:
 	void error(const QString &msg);
 
 private:
+	quint8 m_portA = 0;
+	quint8 m_portB = 0;
+	quint32 m_featureBits = 0;
+	quint32 m_numScripts = 0;
+	quint32 m_maxScriptSize = 0;
+
 	QVariantList m_patternPath;
 	QVariantList m_patternBytes;
 	QVariantList m_patternFlags;
-	quint16 m_numPatterns;
-	quint16 m_maxPatternLength;
 	quint32 m_patternsEnabled;
 	bool m_fixChecksums = true;
 

@@ -41,25 +41,56 @@ QFrameDetector::QFrameDetector(QObject *parent)
 QFrameDetector::~QFrameDetector()
 { }
 
-void QFrameDetector::setExtraInfo(quint64 values)
+void QFrameDetector::loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props)
 {
-	m_ports = values & 0xFFFF;
-	m_numPatterns = (values >> 16) & 0xFFFF;
-	m_maxPatternLength = (values >> 32) & 0xFFFF;
+	for(auto prop : props)
+	{
+		switch(prop.first)
+		{
+			case PROP_PORTS:
+			{
+				if(prop.second.size() < 2) break;
 
-	for(int i = 0; i < m_numPatterns*2; ++i)
+				m_portA = readAsNumber<quint8>(prop.second, 0);
+				m_portB = readAsNumber<quint8>(prop.second, 1);
+				break;
+			}
+
+			case PROP_NUM_SCRIPTS:
+			{
+				if(prop.second.size() < 4) break;
+
+				m_numScripts = readAsNumber<quint32>(prop.second, 0);
+				break;
+			}
+
+			case PROP_MAX_SCRIPT_SIZE:
+			{
+				if(prop.second.size() < 4) break;
+
+				m_maxScriptSize = readAsNumber<quint32>(prop.second, 0);
+				break;
+			}
+
+			default: { }
+		}
+	}
+
+	for(quint32 i = 0; i < m_numScripts*2; ++i)
 	{
 		m_patternPath.append("");
 		m_patternBytes.append(QByteArray());
 		m_patternFlags.append(QByteArray());
 	}
+
+	emit settingsChanged();
 }
 
 void QFrameDetector::enableLogging(const QString &path)
 {
 	disableLogging();
 
-	m_logFile.setFileName(path + QString("/eth%1_eth%2_detector.csv").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF));
+	m_logFile.setFileName(path + QString("/eth%1_eth%2_detector.csv").arg(m_portA).arg(m_portB));
 	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
 }
 
@@ -184,7 +215,7 @@ void QFrameDetector::resetMeasurement()
 
 QString QFrameDetector::description() const
 {
-	return QString("Frame detector (eth%1, eth%2)").arg(m_ports & 0xFF).arg((m_ports >> 8) & 0xFF);
+	return QString("Frame detector (eth%1, eth%2)").arg(m_portA).arg(m_portB);
 }
 
 QString QFrameDetector::settingsQml() const
@@ -197,19 +228,9 @@ QString QFrameDetector::statusQml() const
 	return QString("qrc:/qml/StatusTabFD.qml");
 }
 
-quint32 QFrameDetector::portA() const
+bool QFrameDetector::loadScript(quint32 id, QUrl url)
 {
-	return m_ports & 0xFF;
-}
-
-quint32 QFrameDetector::portB() const
-{
-	return (m_ports >> 8) & 0xFF;
-}
-
-bool QFrameDetector::loadPattern(quint32 id, QUrl url)
-{
-	if(id >= m_numPatterns*2)
+	if(id >= m_numScripts*2)
 	{
 		emit error("Invalid pattern ID");
 		return false;
@@ -233,23 +254,23 @@ bool QFrameDetector::loadPattern(quint32 id, QUrl url)
 		return false;
 	}
 
-	QByteArray patternBytes(m_maxPatternLength + 2, '\0');
-	QByteArray patternFlags(m_maxPatternLength + 2, '\0');
+	QByteArray patternBytes(m_maxScriptSize + 2, '\0');
+	QByteArray patternFlags(m_maxScriptSize + 2, '\0');
 	QByteArray fileContents = patternFile.readAll();
 	quint32 num = 0x10;
 	bool inX = false;
-	int i = 2;
+	quint32 i = 2;
 
-	patternBytes[0] = (id >= m_numPatterns);
-	patternBytes[1] = (id % m_numPatterns);
+	patternBytes[0] = (id >= m_numScripts);
+	patternBytes[1] = (id % m_numScripts);
 	patternFlags[0] = patternBytes[0];
 	patternFlags[1] = patternBytes[1];
 
 	for(char c : fileContents)
 	{
-		if(i >= m_maxPatternLength + 2)
+		if(i >= m_maxScriptSize + 2)
 		{
-			emit error(QString("Pattern can not be larger than %1 bytes").arg(m_maxPatternLength));
+			emit error(QString("Pattern can not be larger than %1 bytes").arg(m_maxScriptSize));
 			return false;
 		}
 
@@ -335,7 +356,7 @@ bool QFrameDetector::loadPattern(quint32 id, QUrl url)
 		}
 	}
 
-	for(; i < m_maxPatternLength + 2; i++)
+	for(; i < m_maxScriptSize + 2; i++)
 	{
 		patternFlags[i] = 1;
 	}
@@ -349,13 +370,13 @@ bool QFrameDetector::loadPattern(quint32 id, QUrl url)
 	return true;
 }
 
-void QFrameDetector::removePattern(quint32 id)
+void QFrameDetector::removeScript(quint32 id)
 {
-	if(id >= m_numPatterns*2) return;
+	if(id >= m_numScripts*2) return;
 
 	QByteArray patternData;
-	patternData.append(id >= m_numPatterns);
-	patternData.append(id % m_numPatterns);
+	patternData.append(id >= m_numScripts);
+	patternData.append(id % m_numScripts);
 
 	m_patternPath[id] = "";
 	m_patternBytes[id] = patternData;

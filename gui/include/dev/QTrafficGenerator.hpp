@@ -48,7 +48,7 @@ public:
 	QTrafficGenerator(QObject *parent = nullptr);
 	~QTrafficGenerator();
 
-	void setExtraInfo(quint64 values);
+	void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props);
 
 	void enableLogging(const QString &path);
 	void disableLogging();
@@ -77,11 +77,10 @@ private:
 	QString m_templatePath;
 	QByteArray m_templateBytes;
 	QByteArray m_templateMask;
-	quint16 m_maxTemplateLength;
+	qint32 m_maxTemplateLength;
 
-	quint8 m_idx = 0;
+	quint8 m_port = 0;
 	quint8 m_enable = 1;
-
 	QString m_frameSize;
 	QString m_frameDelay;
 
