@@ -79,7 +79,10 @@ void QNetworkWorker::disconnectFromBoard()
 
 void QNetworkWorker::setActiveBitstream(const QString &value)
 {
-	writeMessage(m_socket, MSG_ID_PROGRAM_PL, value.toUtf8());
+	QByteArray args;
+	appendAsBytes<quint16>(args, value.size());
+	args.append(value.toUtf8());
+	writeMessage(m_socket, MSG_ID_PROGRAM_PL, args);
 }
 
 void QNetworkWorker::getDeviceProperty(quint8 devID, quint32 propID)
@@ -190,7 +193,7 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 				QByteArray propsData = data.mid(i + 4, propsSize);
 
 				int j = 0;
-				while(j + 3 < data.size())
+				while(j + 3 < propsData.size())
 				{
 					PropertyID propID = PropertyID(readAsNumber<quint16>(propsData, j));
 					quint16 valueSize = readAsNumber<quint16>(propsData, j + 2);
