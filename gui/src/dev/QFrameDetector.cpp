@@ -19,6 +19,8 @@
 #include <dev/QFrameDetector.hpp>
 
 #include <QFile>
+#include <QTextStream>
+#include <QRegularExpression>
 
 #include <Utils.hpp>
 #include <Messages.hpp>
@@ -28,12 +30,12 @@ QFrameDetector::QFrameDetector(QObject *parent)
 {
 	for(int i = 0; i < 8; ++i)
 	{
-		m_patternPath.append("");
+		m_scriptName.append("");
 		m_detectionCounters.append(0);
 		m_detectionCountersStr.append("0");
 	}
 
-	m_patternsEnabled = 0;
+	m_scriptsEnabled = 0;
 	m_detectionListA = new QTableModel(3, this);
 	m_detectionListB = new QTableModel(3, this);
 }
@@ -78,8 +80,8 @@ void QFrameDetector::loadInitialProperties(const QList<QPair<PropertyID, QByteAr
 
 	for(quint32 i = 0; i < m_numScripts*2; ++i)
 	{
-		m_patternPath.append("");
-		m_patternBytes.append(QByteArray());
+		m_scriptName.append("");
+		m_scriptBytes.append(QByteArray());
 		m_patternFlags.append(QByteArray());
 	}
 
@@ -232,7 +234,7 @@ bool QFrameDetector::loadScript(quint32 id, QUrl url)
 {
 	if(id >= m_numScripts*2)
 	{
-		emit error("Invalid pattern ID");
+		emit error("Invalid script ID");
 		return false;
 	}
 
@@ -244,128 +246,45 @@ bool QFrameDetector::loadScript(quint32 id, QUrl url)
 		return false;
 	}
 
-	QFile patternFile;
-	patternFile.setFileName(selectedPath);
-	patternFile.open(QIODevice::ReadOnly);
+	QFile scriptFile;
+	scriptFile.setFileName(selectedPath);
+	scriptFile.open(QIODevice::ReadOnly | QIODevice::Text);
 
-	if(!patternFile.isOpen())
+	if(!scriptFile.isOpen())
 	{
-		emit error("Can't read pattern file, make sure you have the required permissions");
+		emit error("Can't read script file, make sure you have the required permissions");
 		return false;
 	}
 
-	QByteArray patternBytes(m_maxScriptSize + 2, '\0');
-	QByteArray patternFlags(m_maxScriptSize + 2, '\0');
-	QByteArray fileContents = patternFile.readAll();
-	quint32 num = 0x10;
-	bool inX = false;
-	quint32 i = 2;
+	Script script;
+	QString errorMessage;
+	QTextStream fileInput(&scriptFile);
 
-	patternBytes[0] = (id >= m_numScripts);
-	patternBytes[1] = (id % m_numScripts);
-	patternFlags[0] = patternBytes[0];
-	patternFlags[1] = patternBytes[1];
+	script.comparator.fill(0, m_maxScriptSize);
+	script.editor.fill(0, m_maxScriptSize);
 
-	for(char c : fileContents)
+	if(!parseScript(fileInput, script, errorMessage))
 	{
-		if(i >= m_maxScriptSize + 2)
-		{
-			emit error(QString("Pattern can not be larger than %1 bytes").arg(m_maxScriptSize));
-			return false;
-		}
-
-		if(inX)
-		{
-			inX = false;
-			continue;
-		}
-
-		if(c == '$')
-		{
-			if(i < 1)
-			{
-				patternFlags[i] = patternFlags[i] | 0x2;
-				i++;
-			}
-			else
-			{
-				patternFlags[i-1] = patternFlags[i-1] | 0x2;
-			}
-
-			break;
-		}
-		else if(c == '!')
-		{
-			if(i >= 1)
-			{
-				patternFlags[i-1] = patternFlags[i-1] | 0x5;
-			}
-		}
-		else if(c == '+')
-		{
-			if(i >= 1)
-			{
-				if((patternFlags[i-1] & 0x60) == 0x20)
-				{
-					patternFlags[i-1] = patternFlags[i-1] | 0x41;
-					patternFlags[i-1] = patternFlags[i-1] & ~0x20;
-				}
-				else if(!(patternFlags[i-1] & 0x60))
-				{
-					patternFlags[i-1] = patternFlags[i-1] | 0x21;
-				}
-			}
-		}
-		else if(c == '?')
-		{
-			inX = true;
-			patternFlags[i] = patternFlags[i] | 0x11;
-			i++;
-		}
-		else if(c == 'r' || c == 'R')
-		{
-			inX = true;
-			patternFlags[i] = patternFlags[i] | 0x9;
-			i++;
-		}
-		else if(c == 'x' || c == 'X')
-		{
-			inX = true;
-			patternFlags[i] = patternFlags[i] | 0x1;
-			i++;
-		}
-		else if((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
-		{
-			c = tolower(c) - '0';
-
-			if(c >= 10)
-			{
-				c -= 'a' - '9' - 1;
-			}
-
-			if(num <= 0xF)
-			{
-				patternBytes[i] = (num << 4) | c;
-				num = 0x10;
-				i++;
-			}
-			else
-			{
-				num = c;
-			}
-		}
+		emit error(errorMessage);
+		return false;
 	}
 
-	for(; i < m_maxScriptSize + 2; i++)
+	QByteArray scriptBytes;
+
+	for(quint32 i = 0; i < m_maxScriptSize; ++i)
 	{
-		patternFlags[i] = 1;
+		quint32 fullInstr;
+
+		fullInstr = script.comparator[i];
+		fullInstr |= quint32(script.editor[i]) << 16;
+
+		appendAsBytes(scriptBytes, fullInstr);
 	}
 
-	m_patternPath[id] = selectedPath;
-	m_patternBytes[id] = patternBytes;
-	m_patternFlags[id] = patternFlags;
-	m_patternsEnabled |= (1 << id);
-	emit patternsChanged();
+	m_scriptName[id] = url.fileName();
+	m_scriptBytes[id] = scriptBytes;
+	m_scriptsEnabled |= (1 << id);
+	emit scriptsChanged();
 
 	return true;
 }
@@ -378,9 +297,521 @@ void QFrameDetector::removeScript(quint32 id)
 	patternData.append(id >= m_numScripts);
 	patternData.append(id % m_numScripts);
 
-	m_patternPath[id] = "";
-	m_patternBytes[id] = patternData;
+	m_scriptName[id] = "";
+	m_scriptBytes[id] = patternData;
 	m_patternFlags[id] = patternData;
-	m_patternsEnabled &= ~(1 << id);
-	emit patternsChanged();
+	m_scriptsEnabled &= ~(1 << id);
+	emit scriptsChanged();
+}
+
+bool QFrameDetector::parseScript(QTextStream &input, Script &script, QString &error) const
+{
+	QString line;
+	quint32 offset = 0;
+	int commentStart = -1, lineCount = 1, inSection = 0;
+
+	while(!input.atEnd())
+	{
+		// Read and prepare line
+
+		input.readLineInto(&line);
+
+		if((commentStart = line.indexOf('#')) != -1)
+		{
+			line.remove(commentStart, line.size() - commentStart);
+		}
+
+		line = line.simplified();
+
+		// Parse instruction
+
+		QVector<QStringRef> pieces = line.splitRef(' ', QString::SkipEmptyParts);
+
+		switch(pieces.size())
+		{
+			case 1:
+			case 2:
+			{
+				if(!parseScriptLine(pieces, script, offset, inSection, error))
+				{
+					error = QString("line %1: ").arg(lineCount) + error;
+					return false;
+				}
+
+				break;
+			}
+
+			case 0:
+			{
+				break;
+			}
+
+			default:
+			{
+				error = QString("line %1: Invalid syntax").arg(lineCount);
+				return false;
+			}
+		}
+
+		++lineCount;
+	}
+
+	return true;
+}
+
+bool QFrameDetector::parseScriptLine(const QVector<QStringRef> &pieces, Script &script, quint32 &offset, int &inSection, QString &error) const
+{
+	QStringRef param = (pieces.size() == 2) ? pieces[1] : QStringRef();
+	bool ok = false;
+
+	if(pieces[0].startsWith("."))
+	{
+		if(pieces[0] == ".comp")
+		{
+			inSection = 1;
+		}
+		else if(pieces[0] == ".extr")
+		{
+			inSection = 2;
+		}
+		else if(pieces[0] == ".edit")
+		{
+			inSection = 3;
+		}
+		else
+		{
+			error = "Invalid section";
+			return false;
+		}
+
+		if(pieces.size() == 2)
+		{
+			offset = pieces[1].toUInt(&ok, 0);
+
+			if(!ok)
+			{
+				error = "Invalid offset";
+				return false;
+			}
+
+			if(offset >= m_maxScriptSize)
+			{
+				error = "Offset is out of range";
+				return false;
+			}
+		}
+		else
+		{
+			offset = 0;
+		}
+
+		return true;
+	}
+
+	switch(inSection)
+	{
+		case 0:
+		{
+			error = "Invalid instruction, not inside a section";
+			return false;
+		}
+
+		case 1:
+		{
+			if(!parseComparatorInstr(pieces[0], param, script, offset, error))
+			{
+				return false;
+			}
+
+			break;
+		}
+
+		case 2:
+		{
+			if(!parseExtractorInstr(pieces[0], param, script, offset, error))
+			{
+				return false;
+			}
+
+			break;
+		}
+
+		case 3:
+		{
+			if(!parseEditorInstr(pieces[0], param, script, offset, error))
+			{
+				return false;
+			}
+
+			break;
+		}
+	}
+
+	return true;
+}
+
+bool QFrameDetector::parseComparatorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const
+{
+	static const QRegularExpression instrRegex(R"(^(?:nop|(s?[lg]tq?|eq|or|and)(8|16|24|32|40|48|56|64|[fd])(l?)|eof)$)");
+	static const QVector<QString> opList = {"eq", "gt", "lt", "gtq", "ltq", "or", "and"};
+
+	QRegularExpressionMatch regexMatch = instrRegex.match(instr);
+	bool ok = false;
+
+	if(!regexMatch.hasMatch())
+	{
+		error = "Unknown instruction: " + instr;
+		return false;
+	}
+
+	if(instr == "nop")
+	{
+		if(param.size())
+		{
+			quint32 paramInt = param.toUInt(&ok);
+
+			if(!ok)
+			{
+				error = "Invalid parameter, must be an unsigned integer";
+				return false;
+			}
+
+			if(offset + paramInt >= m_maxScriptSize)
+			{
+				error = "Instruction ends beyond the script size limit";
+				return false;
+			}
+
+			do
+			{
+				script.comparator[offset++] = 0;
+			}
+			while(--paramInt);
+		}
+		else
+		{
+			++offset;
+		}
+	}
+	else if(instr == "eof")
+	{
+		script.comparator[offset++] = 0b11110010;
+	}
+	else
+	{
+		if(!param.size())
+		{
+			error = "Instruction requires a parameter";
+			return false;
+		}
+
+		QString base = regexMatch.captured(1);
+		QString size = regexMatch.captured(2);
+		QByteArray value;
+		quint16 opcode = 0;
+		int sizeInt = 0;
+
+		if(!regexMatch.capturedRef(3).size())
+		{
+			// Big-endian
+			opcode |= 0b100;
+		}
+
+		if(base.startsWith("s"))
+		{
+			// Signed
+			opcode |= 0b1000;
+			base.remove(0, 1);
+		}
+
+		if(size == "f")
+		{
+			sizeInt = 4;
+			appendAsBytes(value, param.toFloat(&ok));
+		}
+		else if(size == "d")
+		{
+			sizeInt = 8;
+			appendAsBytes(value, param.toDouble(&ok));
+		}
+		else
+		{
+			sizeInt = size.toInt() / 8;
+
+			if(opcode & 0b1000)
+			{
+				appendAsBytes(value, param.toLongLong(&ok, 0));
+
+				for(int i = sizeInt; i < 8; ++i)
+				{
+					if(value.at(i) != value.at(sizeInt) || value.at(i) != -1 || value.at(i) != 0)
+					{
+						ok = false;
+						break;
+					}
+				}
+			}
+			else
+			{
+				appendAsBytes(value, param.toULongLong(&ok, 0));
+
+				for(int i = sizeInt; i < 8; ++i)
+				{
+					if(value.at(i) != 0)
+					{
+						ok = false;
+						break;
+					}
+				}
+			}
+		}
+
+		if(!ok)
+		{
+			error = "Invalid parameter";
+			return false;
+		}
+
+		opcode |= opList.indexOf(base) << 4;
+
+		for(int i = 0; i < sizeInt; ++i)
+		{
+			if(offset >= m_maxScriptSize)
+			{
+				error = "Instruction ends beyond the script size limit";
+				return false;
+			}
+
+			if(opcode & 0b100)
+			{
+				script.comparator[offset] = opcode | (quint16(value[sizeInt-i-1]) << 8);
+			}
+			else
+			{
+				script.comparator[offset] = opcode | (quint16(value[i]) << 8);
+			}
+
+			if(i == sizeInt - 1)
+			{
+				script.comparator[offset] |= 0b11;
+			}
+			else
+			{
+				script.comparator[offset] |= 0b01;
+			}
+
+			++offset;
+		}
+	}
+
+	return true;
+}
+
+bool QFrameDetector::parseExtractorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const
+{
+	static const QRegularExpression instrRegex(R"(^(?:nop|ext)$)");
+	QRegularExpressionMatch regexMatch = instrRegex.match(instr);
+	bool ok = false;
+
+	if(!regexMatch.hasMatch())
+	{
+		error = "Unknown instruction: " + instr;
+		return false;
+	}
+
+	if(param.size())
+	{
+		quint32 paramInt = param.toUInt(&ok);
+
+		if(!ok)
+		{
+			error = "Invalid parameter, must be an unsigned integer";
+			return false;
+		}
+
+		if(offset + paramInt >= m_maxScriptSize)
+		{
+			error = "Instruction ends beyond the script size limit";
+			return false;
+		}
+
+		if(instr == "ext")
+		{
+			do
+			{
+				script.editor[offset++] |= 1;
+			}
+			while(--paramInt);
+		}
+		else
+		{
+			do
+			{
+				script.editor[offset++] &= ~1;
+			}
+			while(--paramInt);
+		}
+	}
+
+	return true;
+}
+
+bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const
+{
+	const QRegularExpression instrRegex(R"(^(?:nop|(setr?|(?:xn)?or|and|add|s?mul)(8|16|32|64|[fd])(l?)|drop|corrupt)$)");
+	QRegularExpressionMatch regexMatch = instrRegex.match(instr);
+	bool ok = false;
+
+	static const QHash<QString, quint16> opMap =
+	{
+		{"nop", 0b00'00'000'0},
+		{"set", 0b00'00'001'0},
+		{"setr", 0b00'01'001'0},
+		{"and", 0b00'00'010'0},
+		{"or", 0b00'01'010'0},
+		{"xor", 0b00'10'010'0},
+		{"xnor", 0b00'11'010'0},
+		{"add", 0b00'00'011'0},
+		{"mul", 0b00'00'100'0},
+		{"smul", 0b00'10'100'0},
+		{"drop", 0b00'10'000'0},
+		{"corrupt", 0b00'01'000'0}
+	};
+
+	if(!regexMatch.hasMatch())
+	{
+		error = "Unknown instruction: " + instr;
+		return false;
+	}
+
+	if(instr == "nop")
+	{
+		if(param.size())
+		{
+			quint32 paramInt = param.toUInt(&ok);
+
+			if(!ok)
+			{
+				error = "Invalid parameter, must be an unsigned integer";
+				return false;
+			}
+
+			if(offset + paramInt >= m_maxScriptSize)
+			{
+				error = "Instruction ends beyond the script size limit";
+				return false;
+			}
+
+			do
+			{
+				script.editor[offset++] = 0;
+			}
+			while(--paramInt);
+		}
+		else
+		{
+			++offset;
+		}
+	}
+	else if(instr == "drop" || instr == "corrupt")
+	{
+		script.comparator[offset++] = opMap[instr.toString()];
+	}
+	else
+	{
+		if(!param.size())
+		{
+			error = "Instruction requires a parameter";
+			return false;
+		}
+
+		QString base = regexMatch.captured(1);
+		QString size = regexMatch.captured(2);
+		QByteArray value;
+		quint16 opcode = 0;
+		int sizeInt = 0;
+
+		opcode = opMap[instr.toString()];
+
+		if(!regexMatch.capturedRef(3).size())
+		{
+			// Big-endian
+			opcode |= 0b10000;
+		}
+
+		if(size == "f")
+		{
+			sizeInt = 4;
+			appendAsBytes(value, param.toFloat(&ok));
+		}
+		else if(size == "d")
+		{
+			sizeInt = 8;
+			appendAsBytes(value, param.toDouble(&ok));
+		}
+		else
+		{
+			sizeInt = size.toInt() / 8;
+
+			if(opcode & 0b100000)
+			{
+				appendAsBytes(value, param.toLongLong(&ok, 0));
+
+				for(int i = sizeInt; i < 8; ++i)
+				{
+					if(value.at(i) != value.at(sizeInt) || value.at(i) != -1 || value.at(i) != 0)
+					{
+						ok = false;
+						break;
+					}
+				}
+			}
+			else
+			{
+				appendAsBytes(value, param.toULongLong(&ok, 0));
+
+				for(int i = sizeInt; i < 8; ++i)
+				{
+					if(value.at(i) != 0)
+					{
+						ok = false;
+						break;
+					}
+				}
+			}
+		}
+
+		if(!ok)
+		{
+			error = "Invalid parameter";
+			return false;
+		}
+
+		for(int i = 0; i < sizeInt; ++i)
+		{
+			if(offset >= m_maxScriptSize)
+			{
+				error = "Instruction ends beyond the script size limit";
+				return false;
+			}
+
+			if(opcode & 0b10000)
+			{
+				script.editor[offset] = quint16(value[sizeInt-i-1]) << 8;
+			}
+			else
+			{
+				script.editor[offset] = quint16(value[i]) << 8;
+			}
+
+			if(i == sizeInt - 1)
+			{
+				script.editor[offset] |= opcode;
+			}
+
+			++offset;
+		}
+	}
+
+	return true;
 }

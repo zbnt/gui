@@ -28,7 +28,7 @@ Item {
 
 	property var object: undefined
 	property var deviceID: 0
-	property int patternID: 0
+	property int scriptID: 0
 	property int changePending: 0
 
 	Component.onCompleted: {
@@ -61,7 +61,7 @@ Item {
 				{
 					if(success)
 					{
-						root.object.patternsEnabled = ZBNT.arrayToNum(value, 0, 4)
+						root.object.scriptsEnabled = ZBNT.arrayToNum(value, 0, 4)
 					}
 
 					root.changePending &= ~2
@@ -95,14 +95,14 @@ Item {
 		selectExisting: true
 		selectMultiple: false
 		selectFolder: false
-		nameFilters: ["Filter pattern (.hex) (*.hex)"]
+		nameFilters: ["ZBNT Script (.zbscr) (*.zbscr)"]
 
 		onAccepted: {
-			if(root.object.loadPattern(root.patternID, fileUrl))
+			if(root.object.loadScript(root.scriptID, fileUrl))
 			{
-				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[root.patternID])
-				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[root.patternID])
-				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+				/*ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[root.scriptID])
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[root.scriptID])
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))*/
 			}
 		}
 	}
@@ -112,7 +112,7 @@ Item {
 		spacing: 10
 
 		GroupBox {
-			title: "Patterns (eth" + root.object.portA + " → eth" + root.object.portB + ")"
+			title: "Scripts (eth" + root.object.portA + " → eth" + root.object.portB + ")"
 			topPadding: 26
 			bottomPadding: 15
 			Layout.columnSpan: 2
@@ -138,14 +138,14 @@ Item {
 				anchors.rightMargin: 5
 
 				Label {
-					text: "Pattern 1: "
+					text: "Script 1: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[0]
+					text: root.object.scriptName[0]
 					Layout.fillWidth: true
 				}
 
@@ -156,7 +156,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 0
+						root.scriptID = 0
 						filePicker.open()
 					}
 				}
@@ -169,22 +169,21 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(0)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[0])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[0])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						root.object.removeScript(0)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[0])
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 
 				Label {
-					text: "Pattern 2: "
+					text: "Script 2: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[1]
+					text: root.object.scriptName[1]
 					Layout.fillWidth: true
 				}
 
@@ -195,7 +194,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 1
+						root.scriptID = 1
 						filePicker.open()
 					}
 				}
@@ -208,22 +207,22 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(1)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[1])
+						root.object.removeScript(1)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[1])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[1])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 
 				Label {
-					text: "Pattern 3: "
+					text: "Script 3: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[2]
+					text: root.object.scriptName[2]
 					Layout.fillWidth: true
 				}
 
@@ -234,7 +233,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 2
+						root.scriptID = 2
 						filePicker.open()
 					}
 				}
@@ -247,22 +246,22 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(2)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[2])
+						root.object.removeScript(2)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[2])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[2])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 
 				Label {
-					text: "Pattern 4: "
+					text: "Script 4: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[3]
+					text: root.object.scriptName[3]
 					Layout.fillWidth: true
 				}
 
@@ -273,7 +272,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 3
+						root.scriptID = 3
 						filePicker.open()
 					}
 				}
@@ -286,17 +285,17 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(3)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[3])
+						root.object.removeScript(3)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[3])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[3])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 			}
 		}
 
 		GroupBox {
-			title: "Patterns (eth" + root.object.portB + " → eth" + root.object.portA + ")"
+			title: "Scripts (eth" + root.object.portB + " → eth" + root.object.portA + ")"
 			topPadding: 26
 			bottomPadding: 15
 			Layout.columnSpan: 2
@@ -322,14 +321,14 @@ Item {
 				anchors.rightMargin: 5
 
 				Label {
-					text: "Pattern 1: "
+					text: "Script 1: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[4]
+					text: root.object.scriptName[4]
 					Layout.fillWidth: true
 				}
 
@@ -340,7 +339,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 4
+						root.scriptID = 4
 						filePicker.open()
 					}
 				}
@@ -353,22 +352,22 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(4)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[4])
+						root.object.removeScript(4)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[4])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[4])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 
 				Label {
-					text: "Pattern 2: "
+					text: "Script 2: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[5]
+					text: root.object.scriptName[5]
 					Layout.fillWidth: true
 				}
 
@@ -379,7 +378,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 5
+						root.scriptID = 5
 						filePicker.open()
 					}
 				}
@@ -392,22 +391,22 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(5)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[5])
+						root.object.removeScript(5)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[5])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[5])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 
 				Label {
-					text: "Pattern 3: "
+					text: "Script 3: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[6]
+					text: root.object.scriptName[6]
 					Layout.fillWidth: true
 				}
 
@@ -418,7 +417,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 6
+						root.scriptID = 6
 						filePicker.open()
 					}
 				}
@@ -431,22 +430,22 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(6)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[6])
+						root.object.removeScript(6)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[6])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[6])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 
 				Label {
-					text: "Pattern 4: "
+					text: "Script 4: "
 					font.weight: Font.Bold
 					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 				}
 
 				TextField {
 					readOnly: true
-					text: root.object.patternPath[7]
+					text: root.object.scriptName[7]
 					Layout.fillWidth: true
 				}
 
@@ -457,7 +456,7 @@ Item {
 					focusPolicy: Qt.NoFocus
 
 					onPressed: {
-						root.patternID = 7
+						root.scriptID = 7
 						filePicker.open()
 					}
 				}
@@ -470,10 +469,10 @@ Item {
 
 					onPressed: {
 						root.changePending |= 2
-						root.object.removePattern(7)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.patternBytes[7])
+						root.object.removeScript(7)
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[7])
 						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[7])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.patternsEnabled, 4))
+						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 					}
 				}
 			}

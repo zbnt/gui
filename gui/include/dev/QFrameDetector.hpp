@@ -24,6 +24,8 @@
 #include <QList>
 #include <QMutex>
 #include <QVariant>
+#include <QBitArray>
+#include <QTextStream>
 
 #include <QTableModel.hpp>
 #include <dev/QAbstractDevice.hpp>
@@ -37,23 +39,26 @@ class QFrameDetector : public QAbstractDevice
 	Q_PROPERTY(quint16 numScripts MEMBER m_numScripts NOTIFY settingsChanged)
 	Q_PROPERTY(quint16 maxScriptSize MEMBER m_maxScriptSize NOTIFY settingsChanged)
 
-	Q_PROPERTY(QVariantList patternPath MEMBER m_patternPath NOTIFY patternsChanged)
-	Q_PROPERTY(QVariantList patternBytes MEMBER m_patternBytes NOTIFY patternsChanged)
-	Q_PROPERTY(QVariantList patternFlags MEMBER m_patternFlags NOTIFY patternsChanged)
-	Q_PROPERTY(quint32 patternsEnabled MEMBER m_patternsEnabled NOTIFY patternsChanged)
+	Q_PROPERTY(QVariantList scriptName MEMBER m_scriptName NOTIFY scriptsChanged)
+	Q_PROPERTY(QVariantList scriptBytes MEMBER m_scriptBytes NOTIFY scriptsChanged)
+	Q_PROPERTY(quint32 scriptsEnabled MEMBER m_scriptsEnabled NOTIFY scriptsChanged)
 	Q_PROPERTY(bool fixChecksums MEMBER m_fixChecksums NOTIFY settingsChanged)
 
 	Q_PROPERTY(QStringList detectionCounters MEMBER m_detectionCountersStr NOTIFY measurementChanged)
 	Q_PROPERTY(QTableModel *detectionListA MEMBER m_detectionListA NOTIFY measurementChanged)
 	Q_PROPERTY(QTableModel *detectionListB MEMBER m_detectionListB NOTIFY measurementChanged)
 
+	struct Script
+	{
+		QVector<quint16> comparator;
+		QVector<quint16> editor;
+	};
+
 public:
 	QFrameDetector(QObject *parent = nullptr);
 	~QFrameDetector();
 
 	void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props);
-
-	void setExtraInfo(quint64 values);
 
 	void enableLogging(const QString &path);
 	void disableLogging();
@@ -71,8 +76,16 @@ public slots:
 	bool loadScript(quint32 id, QUrl url);
 	void removeScript(quint32 id);
 
+private:
+	bool parseScript(QTextStream &input, Script &script, QString &error) const;
+
+	bool parseScriptLine(const QVector<QStringRef> &pieces, Script &script, quint32 &offset, int &inSection, QString &error) const;
+	bool parseComparatorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const;
+	bool parseExtractorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const;
+	bool parseEditorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const;
+
 signals:
-	void patternsChanged();
+	void scriptsChanged();
 	void settingsChanged();
 	void measurementChanged();
 	void error(const QString &msg);
@@ -84,10 +97,10 @@ private:
 	quint32 m_numScripts = 0;
 	quint32 m_maxScriptSize = 0;
 
-	QVariantList m_patternPath;
-	QVariantList m_patternBytes;
+	QVariantList m_scriptName;
+	QVariantList m_scriptBytes;
 	QVariantList m_patternFlags;
-	quint32 m_patternsEnabled;
+	quint32 m_scriptsEnabled;
 	bool m_fixChecksums = true;
 
 	QList<QStringList> m_pendingDetections[2];
