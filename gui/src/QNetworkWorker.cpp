@@ -93,6 +93,15 @@ void QNetworkWorker::getDeviceProperty(quint8 devID, quint32 propID)
 	writeMessage(m_socket, MSG_ID_GET_PROPERTY, args);
 }
 
+void QNetworkWorker::getDevicePropertyWithArgs(quint8 devID, quint32 propID, const QByteArray &params)
+{
+	QByteArray args;
+	appendAsBytes<quint8>(args, devID);
+	appendAsBytes<quint16>(args, propID);
+	args.append(params);
+	writeMessage(m_socket, MSG_ID_GET_PROPERTY, args);
+}
+
 void QNetworkWorker::setDeviceProperty(quint8 devID, quint32 propID, const QByteArray &values)
 {
 	QByteArray args;

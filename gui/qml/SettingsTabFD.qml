@@ -31,10 +31,37 @@ Item {
 	property int scriptID: 0
 	property int changePending: 0
 
+	function updateScript(id, path) {
+		var scriptBytes = root.object.loadScript(id, path)
+
+		if(scriptBytes.byteLength)
+		{
+			root.changePending |= 4
+			ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT, scriptBytes)
+			ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT_NAME, ZBNT.arrayConcat(ZBNT.arrayFromNum(id, 4), ZBNT.arrayFromStr(root.object.scriptName[id])))
+			ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_SCRIPT, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
+		}
+	}
+
+	function clearScript(id) {
+		root.changePending |= 4
+		root.object.removeScript(id)
+		ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT, ZBNT.arrayFromNum(id, 4))
+		ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT_NAME, ZBNT.arrayFromNum(id, 4))
+		ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_SCRIPT, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
+	}
+
 	Component.onCompleted: {
-		root.changePending = 3
-		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE_CSUM_FIX)
-		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN)
+		root.changePending = 7
+
+		for(var i = 0; i < 2*root.object.numScripts; i++)
+		{
+			ZBNT.getDevicePropertyWithArgs(root.deviceID, Messages.PROP_FRAME_SCRIPT_NAME, ZBNT.arrayFromNum(i, 4));
+		}
+
+		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE)
+		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE_LOG)
+		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE_SCRIPT)
 	}
 
 	Connections {
@@ -43,28 +70,54 @@ Item {
 		onPropertyChanged: {
 			if(devID == root.deviceID)
 			{
-				if(propID == Messages.PROP_ENABLE_CSUM_FIX)
+				if(propID == Messages.PROP_ENABLE)
 				{
 					if(success)
 					{
-						fixChecksumsInput.checked = ZBNT.arrayToNum(value, 0, 1)
-						root.object.fixChecksums = fixChecksumsInput.checked
+						enableInput.checked = ZBNT.arrayToNum(value, 0, 1)
+						root.object.enable = enableInput.checked
 					}
 					else
 					{
-						fixChecksumsInput.checked = root.object.fixChecksums
+						enableInput.checked = root.object.enable
 					}
 
 					root.changePending &= ~1
 				}
-				else if(propID == Messages.PROP_ENABLE_PATTERN)
+				else if(propID == Messages.PROP_ENABLE_LOG)
+				{
+					if(success)
+					{
+						logEnableInput.checked = ZBNT.arrayToNum(value, 0, 1)
+						root.object.logEnable = logEnableInput.checked
+					}
+					else
+					{
+						logEnableInput.checked = root.object.logEnable
+					}
+
+					root.changePending &= ~2
+				}
+				else if(propID == Messages.PROP_ENABLE_SCRIPT)
 				{
 					if(success)
 					{
 						root.object.scriptsEnabled = ZBNT.arrayToNum(value, 0, 4)
 					}
 
-					root.changePending &= ~2
+					root.changePending &= ~4
+				}
+				else if(propID == Messages.PROP_FRAME_SCRIPT_NAME)
+				{
+					if(success)
+					{
+						var index = ZBNT.arrayToNum(value, 0, 4)
+
+						if(index < 2*root.object.numScripts)
+						{
+							root.object.scriptName[index] = ZBNT.arrayToStr(value, 4, -1)
+						}
+					}
 				}
 			}
 		}
@@ -98,18 +151,144 @@ Item {
 		nameFilters: ["ZBNT Script (.zbscr) (*.zbscr)"]
 
 		onAccepted: {
-			if(root.object.loadScript(root.scriptID, fileUrl))
-			{
-				/*ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[root.scriptID])
-				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[root.scriptID])
-				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))*/
-			}
+			root.updateScript(root.scriptID, fileUrl)
 		}
 	}
 
 	ColumnLayout {
 		anchors.fill: parent
 		spacing: 10
+
+		GroupBox {
+			title: "Settings"
+			topPadding: 26
+			bottomPadding: 15
+			Layout.columnSpan: 2
+
+			label: Label {
+				y: 5
+				text: parent.title
+				font.weight: Font.Bold
+				verticalAlignment: Text.AlignTop
+				horizontalAlignment: Text.AlignHCenter
+				anchors.horizontalCenter: parent.horizontalCenter
+			}
+
+			Layout.fillWidth: true
+
+			GridLayout {
+				columns: 4
+				rowSpacing: 5
+				columnSpacing: 5
+
+				anchors.fill: parent
+				anchors.topMargin: 5
+				anchors.leftMargin: 5
+				anchors.rightMargin: 5
+
+				Item {
+					Layout.rowSpan: 5
+					Layout.fillWidth: true
+				}
+
+				Label {
+					text: "Enable: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				CheckBox {
+					id: enableInput
+					enabled: !root.changePending
+
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+
+					onCheckedChanged: {
+						if(enabled)
+						{
+							root.changePending |= 1
+							ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE, ZBNT.arrayFromNum(+checked, 1))
+						}
+					}
+				}
+
+				Item {
+					Layout.rowSpan: 5
+					Layout.fillWidth: true
+				}
+
+				Label {
+					text: "Enable log: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				CheckBox {
+					id: logEnableInput
+					enabled: !root.changePending
+
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+
+					onCheckedChanged: {
+						if(enabled)
+						{
+							root.changePending |= 2
+							ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_LOG, ZBNT.arrayFromNum(+checked, 1))
+						}
+					}
+				}
+
+				Label {
+					text: "Capabilities: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				RowLayout {
+					spacing: 10
+
+					CapabilityDisplay {
+						text: "Comparator"
+						available: !!(root.object.featureBits & 1)
+					}
+
+					CapabilityDisplay {
+						text: "Editor"
+						available: !!(root.object.featureBits & 2)
+					}
+
+					CapabilityDisplay {
+						text: "Checksum"
+						available: !!(root.object.featureBits & 4)
+					}
+
+					CapabilityDisplay {
+						text: "FPU"
+						available: !!(root.object.featureBits & 8)
+					}
+				}
+
+				Label {
+					text: "Max script size: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				Label {
+					text: root.object.maxScriptSize + " words per unit"
+				}
+
+				Label {
+					text: "FIFO sizes: "
+					font.weight: Font.Bold
+					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+				}
+
+				Label {
+					text: root.object.txFifoSize + " bytes for transmission, " + root.object.extrFifoSize + " bytes for extraction"
+				}
+			}
+		}
 
 		GroupBox {
 			title: "Scripts (eth" + root.object.portA + " → eth" + root.object.portB + ")"
@@ -120,6 +299,7 @@ Item {
 			label: Label {
 				y: 5
 				text: parent.title
+				font.weight: Font.Bold
 				verticalAlignment: Text.AlignTop
 				horizontalAlignment: Text.AlignHCenter
 				anchors.horizontalCenter: parent.horizontalCenter
@@ -128,7 +308,7 @@ Item {
 			Layout.fillWidth: true
 
 			GridLayout {
-				columns: 4
+				columns: 5
 				rowSpacing: 10
 				columnSpacing: 5
 
@@ -137,158 +317,82 @@ Item {
 				anchors.leftMargin: 5
 				anchors.rightMargin: 5
 
-				Label {
-					text: "Script 1: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
+				Repeater {
+					model: root.object.numScripts
 
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[0]
-					Layout.fillWidth: true
-				}
-
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.scriptID = 0
-						filePicker.open()
+					Label {
+						text: "Script " + (index + 1) + ": "
+						font.weight: Font.Bold
+						Layout.row: index
+						Layout.column: 0
+						Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 					}
 				}
 
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
+				Repeater {
+					model: root.object.numScripts
 
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(0)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[0])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
+					TextField {
+						readOnly: true
+						text: " " + root.object.scriptName[index]
+						Layout.row: index
+						Layout.column: 1
+						Layout.fillWidth: true
 					}
 				}
 
-				Label {
-					text: "Script 2: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
+				Repeater {
+					model: root.object.numScripts
 
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[1]
-					Layout.fillWidth: true
-				}
+					Button {
+						icon.name: "folder-new"
+						focus: false
+						enabled: !ZBNT.running && !root.changePending
+						focusPolicy: Qt.NoFocus
 
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
+						Layout.row: index
+						Layout.column: 2
 
-					onPressed: {
-						root.scriptID = 1
-						filePicker.open()
+						onPressed: {
+							root.scriptID = index
+							filePicker.open()
+						}
 					}
 				}
 
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
+				Repeater {
+					model: root.object.numScripts
 
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(1)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[1])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[1])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
+					Button {
+						icon.name: "view-refresh"
+						focus: false
+						enabled: !ZBNT.running && !root.changePending && root.object.scriptPath[index].toString().length
+						focusPolicy: Qt.NoFocus
+
+						Layout.row: index
+						Layout.column: 3
+
+						onPressed: {
+							root.updateScript(index, root.object.scriptPath[index])
+						}
 					}
 				}
 
-				Label {
-					text: "Script 3: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
+				Repeater {
+					model: root.object.numScripts
 
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[2]
-					Layout.fillWidth: true
-				}
+					Button {
+						icon.name: "delete"
+						focus: false
+						enabled: !ZBNT.running && !root.changePending
+						focusPolicy: Qt.NoFocus
 
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
+						Layout.row: index
+						Layout.column: 4
 
-					onPressed: {
-						root.scriptID = 2
-						filePicker.open()
-					}
-				}
-
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(2)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[2])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[2])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
-					}
-				}
-
-				Label {
-					text: "Script 4: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
-
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[3]
-					Layout.fillWidth: true
-				}
-
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.scriptID = 3
-						filePicker.open()
-					}
-				}
-
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(3)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[3])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[3])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
+						onPressed: {
+							root.clearScript(index)
+						}
 					}
 				}
 			}
@@ -303,6 +407,7 @@ Item {
 			label: Label {
 				y: 5
 				text: parent.title
+				font.weight: Font.Bold
 				verticalAlignment: Text.AlignTop
 				horizontalAlignment: Text.AlignHCenter
 				anchors.horizontalCenter: parent.horizontalCenter
@@ -311,7 +416,7 @@ Item {
 			Layout.fillWidth: true
 
 			GridLayout {
-				columns: 4
+				columns: 5
 				rowSpacing: 10
 				columnSpacing: 5
 
@@ -320,211 +425,83 @@ Item {
 				anchors.leftMargin: 5
 				anchors.rightMargin: 5
 
-				Label {
-					text: "Script 1: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
+				Repeater {
+					model: root.object.numScripts
 
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[4]
-					Layout.fillWidth: true
-				}
-
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.scriptID = 4
-						filePicker.open()
+					Label {
+						text: "Script " + (index + 1) + ": "
+						font.weight: Font.Bold
+						Layout.row: index
+						Layout.column: 0
+						Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 					}
 				}
 
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
+				Repeater {
+					model: root.object.numScripts
 
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(4)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[4])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[4])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
+					TextField {
+						readOnly: true
+						text: " " + root.object.scriptName[index + root.object.numScripts]
+						Layout.row: index
+						Layout.column: 1
+						Layout.fillWidth: true
 					}
 				}
 
-				Label {
-					text: "Script 2: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
+				Repeater {
+					model: root.object.numScripts
 
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[5]
-					Layout.fillWidth: true
-				}
+					Button {
+						icon.name: "folder-new"
+						focus: false
+						enabled: !ZBNT.running && !root.changePending
+						focusPolicy: Qt.NoFocus
 
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
+						Layout.row: index
+						Layout.column: 2
 
-					onPressed: {
-						root.scriptID = 5
-						filePicker.open()
-					}
-				}
-
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(5)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[5])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[5])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
-					}
-				}
-
-				Label {
-					text: "Script 3: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
-
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[6]
-					Layout.fillWidth: true
-				}
-
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.scriptID = 6
-						filePicker.open()
-					}
-				}
-
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(6)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[6])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[6])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
-					}
-				}
-
-				Label {
-					text: "Script 4: "
-					font.weight: Font.Bold
-					Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-				}
-
-				TextField {
-					readOnly: true
-					text: root.object.scriptName[7]
-					Layout.fillWidth: true
-				}
-
-				Button {
-					icon.name: "folder-new"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.scriptID = 7
-						filePicker.open()
-					}
-				}
-
-				Button {
-					icon.name: "delete"
-					focus: false
-					enabled: !ZBNT.running && !root.changePending
-					focusPolicy: Qt.NoFocus
-
-					onPressed: {
-						root.changePending |= 2
-						root.object.removeScript(7)
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.scriptBytes[7])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN_FLAGS, root.object.patternFlags[7])
-						ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_PATTERN, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
-					}
-				}
-			}
-		}
-
-		GroupBox {
-			title: "Other settings"
-			topPadding: 26
-			bottomPadding: 15
-			Layout.columnSpan: 2
-
-			label: Label {
-				y: 5
-				text: parent.title
-				verticalAlignment: Text.AlignTop
-				horizontalAlignment: Text.AlignHCenter
-				anchors.horizontalCenter: parent.horizontalCenter
-			}
-
-			Layout.fillWidth: true
-
-			GridLayout {
-				columns: 3
-				rowSpacing: 10
-				columnSpacing: 5
-
-				anchors.fill: parent
-				anchors.topMargin: 5
-				anchors.leftMargin: 5
-				anchors.rightMargin: 5
-
-				Item {
-					Layout.fillWidth: true
-				}
-
-				CheckBox {
-					id: fixChecksumsInput
-					enabled: !root.changePending && !ZBNT.running
-					checked: true
-					text: "Fix TCP/UDP/ICMP/ICMPv6 checksums if needed"
-
-					onCheckedChanged: {
-						if(enabled)
-						{
-							root.changePending |= 1
-							ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_CSUM_FIX, ZBNT.arrayFromNum(+checked, 1))
+						onPressed: {
+							root.scriptID = index + root.object.numScripts
+							filePicker.open()
 						}
 					}
 				}
 
-				Item {
-					Layout.fillWidth: true
+				Repeater {
+					model: root.object.numScripts
+
+					Button {
+						icon.name: "view-refresh"
+						focus: false
+						enabled: !ZBNT.running && !root.changePending && root.object.scriptPath[index + root.object.numScripts].toString().length
+						focusPolicy: Qt.NoFocus
+
+						Layout.row: index
+						Layout.column: 3
+
+						onPressed: {
+							root.updateScript(index + root.object.numScripts, root.object.scriptPath[index + root.object.numScripts])
+						}
+					}
+				}
+
+				Repeater {
+					model: root.object.numScripts
+
+					Button {
+						icon.name: "delete"
+						focus: false
+						enabled: !ZBNT.running && !root.changePending
+						focusPolicy: Qt.NoFocus
+
+						Layout.row: index
+						Layout.column: 4
+
+						onPressed: {
+							root.clearScript(index + root.object.numScripts)
+						}
+					}
 				}
 			}
 		}

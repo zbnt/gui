@@ -58,6 +58,14 @@ void QFrameDetector::loadInitialProperties(const QList<QPair<PropertyID, QByteAr
 				break;
 			}
 
+			case PROP_FEATURE_BITS:
+			{
+				if(prop.second.size() < 4) break;
+
+				m_featureBits = readAsNumber<quint32>(prop.second, 0);
+				break;
+			}
+
 			case PROP_NUM_SCRIPTS:
 			{
 				if(prop.second.size() < 4) break;
@@ -74,6 +82,15 @@ void QFrameDetector::loadInitialProperties(const QList<QPair<PropertyID, QByteAr
 				break;
 			}
 
+			case PROP_FIFO_SIZE:
+			{
+				if(prop.second.size() < 8) break;
+
+				m_txFifoSize = readAsNumber<quint32>(prop.second, 0);
+				m_extrFifoSize = readAsNumber<quint32>(prop.second, 4);
+				break;
+			}
+
 			default: { }
 		}
 	}
@@ -81,8 +98,7 @@ void QFrameDetector::loadInitialProperties(const QList<QPair<PropertyID, QByteAr
 	for(quint32 i = 0; i < m_numScripts*2; ++i)
 	{
 		m_scriptName.append("");
-		m_scriptBytes.append(QByteArray());
-		m_patternFlags.append(QByteArray());
+		m_scriptPath.append("");
 	}
 
 	emit settingsChanged();
@@ -230,12 +246,14 @@ QString QFrameDetector::statusQml() const
 	return QString("qrc:/qml/StatusTabFD.qml");
 }
 
-bool QFrameDetector::loadScript(quint32 id, QUrl url)
+QByteArray QFrameDetector::loadScript(quint32 id, QUrl url)
 {
+	QByteArray scriptBytes;
+
 	if(id >= m_numScripts*2)
 	{
 		emit error("Invalid script ID");
-		return false;
+		return scriptBytes;
 	}
 
 	QString selectedPath = url.toLocalFile();
@@ -243,7 +261,13 @@ bool QFrameDetector::loadScript(quint32 id, QUrl url)
 	if(!selectedPath.length())
 	{
 		emit error("No file selected");
-		return false;
+		return scriptBytes;
+	}
+
+	if(!selectedPath.endsWith(".zbscr"))
+	{
+		emit error("Invalid file selected");
+		return scriptBytes;
 	}
 
 	QFile scriptFile;
@@ -253,7 +277,7 @@ bool QFrameDetector::loadScript(quint32 id, QUrl url)
 	if(!scriptFile.isOpen())
 	{
 		emit error("Can't read script file, make sure you have the required permissions");
-		return false;
+		return scriptBytes;
 	}
 
 	Script script;
@@ -266,41 +290,39 @@ bool QFrameDetector::loadScript(quint32 id, QUrl url)
 	if(!parseScript(fileInput, script, errorMessage))
 	{
 		emit error(errorMessage);
-		return false;
+		return scriptBytes;
 	}
 
-	QByteArray scriptBytes;
+	appendAsBytes(scriptBytes, id);
 
 	for(quint32 i = 0; i < m_maxScriptSize; ++i)
 	{
 		quint32 fullInstr;
 
-		fullInstr = script.comparator[i];
-		fullInstr |= quint32(script.editor[i]) << 16;
+		fullInstr = script.comparator[i] & 0xFF;
+		fullInstr |= (script.editor[i] & 0xFF) << 8;
+		fullInstr |= quint32(script.comparator[i] & 0xFF00) << 8;
+		fullInstr |= quint32(script.editor[i] & 0xFF00) << 16;
 
 		appendAsBytes(scriptBytes, fullInstr);
 	}
 
-	m_scriptName[id] = url.fileName();
-	m_scriptBytes[id] = scriptBytes;
+	m_scriptName[id] = url.fileName().chopped(6);
+	m_scriptPath[id] = url;
 	m_scriptsEnabled |= (1 << id);
-	emit scriptsChanged();
 
-	return true;
+	emit scriptsChanged();
+	return scriptBytes;
 }
 
 void QFrameDetector::removeScript(quint32 id)
 {
 	if(id >= m_numScripts*2) return;
 
-	QByteArray patternData;
-	patternData.append(id >= m_numScripts);
-	patternData.append(id % m_numScripts);
-
 	m_scriptName[id] = "";
-	m_scriptBytes[id] = patternData;
-	m_patternFlags[id] = patternData;
+	m_scriptPath[id] = "";
 	m_scriptsEnabled &= ~(1 << id);
+
 	emit scriptsChanged();
 }
 
@@ -321,7 +343,7 @@ bool QFrameDetector::parseScript(QTextStream &input, Script &script, QString &er
 			line.remove(commentStart, line.size() - commentStart);
 		}
 
-		line = line.simplified();
+		line = line.simplified().toLower();
 
 		// Parse instruction
 

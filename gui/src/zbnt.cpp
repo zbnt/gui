@@ -51,6 +51,7 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(this, &ZBNT::setActiveBitstream, m_netWorker, &QNetworkWorker::setActiveBitstream);
 	connect(this, &ZBNT::setDeviceProperty, m_netWorker, &QNetworkWorker::setDeviceProperty);
 	connect(this, &ZBNT::getDeviceProperty, m_netWorker, &QNetworkWorker::getDeviceProperty);
+	connect(this, &ZBNT::getDevicePropertyWithArgs, m_netWorker, &QNetworkWorker::getDevicePropertyWithArgs);
 	connect(this, &ZBNT::startRun, m_netWorker, &QNetworkWorker::startRun);
 	connect(this, &ZBNT::stopRun, m_netWorker, &QNetworkWorker::stopRun);
 
@@ -65,6 +66,11 @@ ZBNT::ZBNT() : QObject(nullptr)
 
 ZBNT::~ZBNT()
 { }
+
+QByteArray ZBNT::arrayConcat(const QByteArray &a, const QByteArray &b)
+{
+	return a + b;
+}
 
 QByteArray ZBNT::arrayFromStr(const QString &data)
 {
@@ -112,7 +118,7 @@ QByteArray ZBNT::arrayFromNum(const QString &data, qint32 size)
 
 QString ZBNT::arrayToStr(const QByteArray &data, qint32 start, qint32 size)
 {
-	return QString::fromUtf8(data).mid(start, size);
+	return QString::fromUtf8(data.mid(start, size));
 }
 
 QVariant ZBNT::arrayToNum(const QByteArray &data, qint32 start, qint32 size)

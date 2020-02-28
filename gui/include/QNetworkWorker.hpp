@@ -53,6 +53,7 @@ public slots:
 
 	void setActiveBitstream(const QString &value);
 	void getDeviceProperty(quint8 devID, quint32 propID);
+	void getDevicePropertyWithArgs(quint8 devID, quint32 propID, const QByteArray &params);
 	void setDeviceProperty(quint8 devID, quint32 propID, const QByteArray &values);
 
 	void sendData(const QByteArray &data);

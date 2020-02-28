@@ -66,6 +66,7 @@ public:
 	Q_ENUM(ConnectionStatus)
 
 public slots:
+	QByteArray arrayConcat(const QByteArray &a, const QByteArray &b);
 	QByteArray arrayFromStr(const QString &data);
 	QByteArray arrayFromNum(const QString &data, qint32 size);
 	QString arrayToStr(const QByteArray &data, qint32 start, qint32 size);
@@ -115,6 +116,7 @@ signals:
 	void stopRun();
 	void setActiveBitstream(const QString &value);
 	void getDeviceProperty(quint8 devID, quint32 propID);
+	void getDevicePropertyWithArgs(quint8 devID, quint32 propID, const QByteArray &params);
 	void setDeviceProperty(quint8 devID, quint16 propID, const QByteArray &values);
 
 private slots:

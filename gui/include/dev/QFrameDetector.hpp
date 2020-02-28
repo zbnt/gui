@@ -36,11 +36,16 @@ class QFrameDetector : public QAbstractDevice
 
 	Q_PROPERTY(quint8 portA MEMBER m_portA NOTIFY settingsChanged)
 	Q_PROPERTY(quint8 portB MEMBER m_portB NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 numScripts MEMBER m_numScripts NOTIFY settingsChanged)
-	Q_PROPERTY(quint16 maxScriptSize MEMBER m_maxScriptSize NOTIFY settingsChanged)
+	Q_PROPERTY(quint32 featureBits MEMBER m_featureBits NOTIFY settingsChanged)
+	Q_PROPERTY(quint32 numScripts MEMBER m_numScripts NOTIFY settingsChanged)
+	Q_PROPERTY(quint32 maxScriptSize MEMBER m_maxScriptSize NOTIFY settingsChanged)
+	Q_PROPERTY(quint32 txFifoSize MEMBER m_txFifoSize NOTIFY settingsChanged)
+	Q_PROPERTY(quint32 extrFifoSize MEMBER m_extrFifoSize NOTIFY settingsChanged)
 
-	Q_PROPERTY(QVariantList scriptName MEMBER m_scriptName NOTIFY scriptsChanged)
-	Q_PROPERTY(QVariantList scriptBytes MEMBER m_scriptBytes NOTIFY scriptsChanged)
+	Q_PROPERTY(quint8 enable MEMBER m_enable NOTIFY settingsChanged)
+	Q_PROPERTY(quint8 logEnable MEMBER m_logEnable NOTIFY settingsChanged)
+	Q_PROPERTY(QStringList scriptName MEMBER m_scriptName NOTIFY scriptsChanged)
+	Q_PROPERTY(QVariantList scriptPath MEMBER m_scriptPath NOTIFY scriptsChanged)
 	Q_PROPERTY(quint32 scriptsEnabled MEMBER m_scriptsEnabled NOTIFY scriptsChanged)
 	Q_PROPERTY(bool fixChecksums MEMBER m_fixChecksums NOTIFY settingsChanged)
 
@@ -73,7 +78,7 @@ public slots:
 	QString settingsQml() const;
 	QString statusQml() const;
 
-	bool loadScript(quint32 id, QUrl url);
+	QByteArray loadScript(quint32 id, QUrl url);
 	void removeScript(quint32 id);
 
 private:
@@ -96,10 +101,13 @@ private:
 	quint32 m_featureBits = 0;
 	quint32 m_numScripts = 0;
 	quint32 m_maxScriptSize = 0;
+	quint32 m_txFifoSize = 0;
+	quint32 m_extrFifoSize = 0;
 
-	QVariantList m_scriptName;
-	QVariantList m_scriptBytes;
-	QVariantList m_patternFlags;
+	quint8 m_enable = 0;
+	quint8 m_logEnable = 0;
+	QStringList m_scriptName;
+	QVariantList m_scriptPath;
 	quint32 m_scriptsEnabled;
 	bool m_fixChecksums = true;
 
