@@ -28,13 +28,6 @@
 QFrameDetector::QFrameDetector(QObject *parent)
 	: QAbstractDevice(parent)
 {
-	for(int i = 0; i < 8; ++i)
-	{
-		m_scriptName.append("");
-		m_detectionCounters.append(0);
-		m_detectionCountersStr.append("0");
-	}
-
 	m_scriptsEnabled = 0;
 	m_detectionListA = new QTableModel(3, this);
 	m_detectionListB = new QTableModel(3, this);
@@ -99,6 +92,8 @@ void QFrameDetector::loadInitialProperties(const QList<QPair<PropertyID, QByteAr
 	{
 		m_scriptName.append("");
 		m_scriptPath.append("");
+		m_detectionCounters.append(0);
+		m_detectionCountersStr.append("0");
 	}
 
 	emit settingsChanged();
@@ -126,7 +121,7 @@ void QFrameDetector::updateDisplayedValues()
 	m_pendingDetections[0].clear();
 	m_pendingDetections[1].clear();
 
-	for(int i = 0; i < 8; ++i)
+	for(quint32 i = 0; i < m_numScripts; ++i)
 	{
 		m_detectionCountersStr[i] = QString::number(m_detectionCounters[i]);
 	}
@@ -151,53 +146,38 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	if(measurement.size() < 12) return;
 
 	quint64 time = readAsNumber<quint64>(measurement, 0);
-	quint8 match_dir = readAsNumber<quint8>(measurement, 8);
-	quint8 match_mask = readAsNumber<quint8>(measurement, 9);
-	quint16 ext_num = readAsNumber<quint16>(measurement, 10);
-	QByteArray match_ext_data = measurement.mid(12, ext_num).toHex();
+	quint8 matchDir = readAsNumber<quint8>(measurement, 8);
+	quint8 logWidth = readAsNumber<quint8>(measurement, 9);
+	quint16 matchMask = readAsNumber<quint16>(measurement, 10);
 
-	if(ext_num > 16)
+	qint32 extOffset = (logWidth + 11) / 12;
+	quint32 extCount = (extOffset < measurement.size()) ? (measurement.size() - extOffset) : 0;
+
+	matchMask -= 'A';
+	if(matchMask > 1) return;
+
+	QString matchMaskStr;
+	for(quint32 i = 0; i < m_numScripts; ++i)
 	{
-		ext_num = 16;
-	}
-
-	match_dir -= 'A';
-
-	if(match_dir > 1)
-	{
-		return;
-	}
-
-	QString match_mask_str;
-	bool first = true;
-
-	for(int i = 0; i < 4; ++i)
-	{
-		if(match_mask & (1 << i))
-		{
-			if(!first) match_mask_str.append(", ");
-			match_mask_str.append(QString::number(i + 1));
-		}
-
-		first = false;
+		matchMaskStr.prepend(QString::number(!!(matchMask & (1 << i))));
 	}
 
 	QStringList matchInfo =
 	{
 		QString::number(time * 8),
-		match_mask_str,
-		QString::fromUtf8(match_ext_data),
+		matchMaskStr,
+		QString("%1 bytes").arg(extCount),
 	};
 
 	m_mutex.lock();
 
-	m_pendingDetections[match_dir].append(matchInfo);
+	m_pendingDetections[matchDir].append(matchInfo);
 
-	for(int i = 0; i < 4; ++i)
+	for(quint32 i = 0; i < m_numScripts; ++i)
 	{
-		if(match_mask & (1 << i))
+		if(matchMask & (1 << i))
 		{
-			m_detectionCounters[i + 4*match_dir] += 1;
+			m_detectionCounters[i + m_numScripts*matchDir] += 1;
 		}
 	}
 
@@ -207,11 +187,11 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	{
 		m_logFile.write(QByteArray::number(time));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(match_dir));
+		m_logFile.write(QByteArray::number(matchDir));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(match_mask));
+		m_logFile.write(QByteArray::number(matchMask));
 		m_logFile.putChar(',');
-		m_logFile.write(match_ext_data);
+		m_logFile.write(measurement.mid(extOffset).toHex());
 		m_logFile.putChar('\n');
 	}
 }

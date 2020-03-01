@@ -46,126 +46,106 @@ Item {
 
 			Layout.fillWidth: true
 
-			GridLayout {
-				columns: 4
-				rowSpacing: 4
-				columnSpacing: 5
+			RowLayout {
+				id: countContainer
+				spacing: 5
 
 				anchors.fill: parent
 				anchors.topMargin: 5
-				anchors.leftMargin: 5
-				anchors.rightMargin: 5
+				anchors.leftMargin: 0
+				anchors.rightMargin: 0
 
-				Label {
-					text: "eth" + root.object.portA + " → eth" + root.object.portB
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignHCenter
-					Layout.minimumWidth: parent.width / 2
-					Layout.columnSpan: 2
-				}
+				Flickable {
+					id: countFlickable
 
-				Label {
-					text: "eth" + root.object.portB + " → eth" + root.object.portA
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignHCenter
-					Layout.minimumWidth: parent.width / 2
-					Layout.columnSpan: 2
-				}
+					clip: true
+					contentWidth: countLayout.width
+					contentHeight: countLayout.height
+					boundsBehavior: Flickable.StopAtBounds
 
-				Label {
-					text: "Pattern 1:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
-
-				Label {
-					text: root.object.detectionCounters[0]
 					Layout.fillWidth: true
-				}
+					Layout.minimumHeight: Math.min(5 * countHeaderLabel.height + 20, contentHeight)
 
-				Label {
-					text: "Pattern 1:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
+					ScrollBar.vertical: ScrollBar {
+						parent: countContainer
+						orientation: Qt.Vertical
 
-				Label {
-					text: root.object.detectionCounters[4]
-					Layout.fillWidth: true
-				}
+						Layout.column: 1
+						Layout.maximumHeight: Math.min(5 * countHeaderLabel.height + 20, countLayout.height)
+					}
 
-				Label {
-					text: "Pattern 2:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
+					GridLayout {
+						id: countLayout
+						width: countFlickable.width
 
-				Label {
-					text: root.object.detectionCounters[1]
-					Layout.fillWidth: true
-				}
+						columns: 5
+						rowSpacing: 5
+						columnSpacing: 15
 
-				Label {
-					text: "Pattern 2:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
+						Item {
+							Layout.fillWidth: true
+						}
 
-				Label {
-					text: root.object.detectionCounters[5]
-					Layout.fillWidth: true
-				}
+						Label {
+							text: " "
+						}
 
-				Label {
-					text: "Pattern 3:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
+						Label {
+							id: countHeaderLabel
+							text: "eth" + root.object.portA + " → eth" + root.object.portB + " "
+							font.weight: Font.Bold
+							horizontalAlignment: Text.AlignHCenter
+							Layout.minimumWidth: 0.25 * root.width
+						}
 
-				Label {
-					text: root.object.detectionCounters[2]
-					Layout.fillWidth: true
-				}
+						Label {
+							text: "eth" + root.object.portB + " → eth" + root.object.portA + " "
+							font.weight: Font.Bold
+							horizontalAlignment: Text.AlignHCenter
+							Layout.minimumWidth: 0.25 * root.width
+						}
 
-				Label {
-					text: "Pattern 3:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
+						Item {
+							Layout.fillWidth: true
+						}
 
-				Label {
-					text: root.object.detectionCounters[6]
-					Layout.fillWidth: true
-				}
+						Repeater {
+							model: root.object.numScripts
 
-				Label {
-					text: "Pattern 4:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
+							Label {
+								text: "Script " + (index + 1) + ":"
+								font.weight: Font.Bold
 
-				Label {
-					text: root.object.detectionCounters[3]
-					Layout.fillWidth: true
-				}
+								Layout.row: index + 1
+								Layout.column: 1
+								Layout.alignment: Qt.AlignRight
+							}
+						}
 
-				Label {
-					text: "Pattern 4:"
-					font.weight: Font.Bold
-					horizontalAlignment: Text.AlignRight
-					Layout.minimumWidth: parent.width / 4
-				}
+						Repeater {
+							model: root.object.numScripts
 
-				Label {
-					text: root.object.detectionCounters[7]
-					Layout.fillWidth: true
+							Label {
+								text: root.object.detectionCounters[index]
+
+								Layout.row: index + 1
+								Layout.column: 2
+								Layout.alignment: Qt.AlignHCenter
+							}
+						}
+
+						Repeater {
+							model: root.object.numScripts
+
+							Label {
+								text: root.object.detectionCounters[index + root.object.numScripts]
+
+								Layout.row: index + 1
+								Layout.column: 3
+								Layout.alignment: Qt.AlignHCenter
+							}
+						}
+					}
 				}
 			}
 		}
@@ -210,7 +190,7 @@ Item {
 				}
 
 				Label {
-					text: "Extracted data"
+					text: "Extracted bytes"
 					font.weight: Font.Bold
 					Layout.fillWidth: true
 				}
