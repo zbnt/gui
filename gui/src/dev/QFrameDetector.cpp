@@ -121,7 +121,7 @@ void QFrameDetector::updateDisplayedValues()
 	m_pendingDetections[0].clear();
 	m_pendingDetections[1].clear();
 
-	for(quint32 i = 0; i < m_numScripts; ++i)
+	for(quint32 i = 0; i < 2*m_numScripts; ++i)
 	{
 		m_detectionCountersStr[i] = QString::number(m_detectionCounters[i]);
 	}
@@ -150,11 +150,11 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	quint8 logWidth = readAsNumber<quint8>(measurement, 9);
 	quint16 matchMask = readAsNumber<quint16>(measurement, 10);
 
-	qint32 extOffset = (logWidth + 11) / 12;
+	qint32 extOffset = ((logWidth + 11) / logWidth) * logWidth;
 	quint32 extCount = (extOffset < measurement.size()) ? (measurement.size() - extOffset) : 0;
 
-	matchMask -= 'A';
-	if(matchMask > 1) return;
+	matchDir -= 'A';
+	if(matchDir > 1) return;
 
 	QString matchMaskStr;
 	for(quint32 i = 0; i < m_numScripts; ++i)
@@ -168,6 +168,8 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 		matchMaskStr,
 		QString("%1 bytes").arg(extCount),
 	};
+
+	QByteArray extractedData = measurement.mid(extOffset);
 
 	m_mutex.lock();
 
@@ -191,7 +193,7 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 		m_logFile.putChar(',');
 		m_logFile.write(QByteArray::number(matchMask));
 		m_logFile.putChar(',');
-		m_logFile.write(measurement.mid(extOffset).toHex());
+		m_logFile.write(extractedData.toHex());
 		m_logFile.putChar('\n');
 	}
 }
@@ -478,7 +480,7 @@ bool QFrameDetector::parseComparatorInstr(const QStringRef &instr, const QString
 				return false;
 			}
 
-			if(offset + paramInt >= m_maxScriptSize)
+			if(offset + paramInt > m_maxScriptSize)
 			{
 				error = "Instruction ends beyond the script size limit";
 				return false;
@@ -631,7 +633,7 @@ bool QFrameDetector::parseExtractorInstr(const QStringRef &instr, const QStringR
 			return false;
 		}
 
-		if(offset + paramInt >= m_maxScriptSize)
+		if(offset + paramInt > m_maxScriptSize)
 		{
 			error = "Instruction ends beyond the script size limit";
 			return false;
@@ -660,7 +662,7 @@ bool QFrameDetector::parseExtractorInstr(const QStringRef &instr, const QStringR
 
 bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const
 {
-	const QRegularExpression instrRegex(R"(^(?:nop|(setr?|(?:xn)?or|and|add|s?mul)(8|16|32|64|[fd])(l?)|drop|corrupt)$)");
+	const QRegularExpression instrRegex(R"(^(?:nop|setr|(set|(?:xn)?or|and|add|s?mul)(8|16|32|64|[fd])(l?)|drop|corrupt)$)");
 	QRegularExpressionMatch regexMatch = instrRegex.match(instr);
 	bool ok = false;
 
@@ -686,7 +688,7 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 		return false;
 	}
 
-	if(instr == "nop")
+	if(instr == "nop" || instr == "setr")
 	{
 		if(param.size())
 		{
@@ -698,7 +700,7 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 				return false;
 			}
 
-			if(offset + paramInt >= m_maxScriptSize)
+			if(offset + paramInt > m_maxScriptSize)
 			{
 				error = "Instruction ends beyond the script size limit";
 				return false;
@@ -721,19 +723,19 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 	}
 	else
 	{
-		if(!param.size())
-		{
-			error = "Instruction requires a parameter";
-			return false;
-		}
-
 		QString base = regexMatch.captured(1);
 		QString size = regexMatch.captured(2);
 		QByteArray value;
 		quint16 opcode = 0;
 		int sizeInt = 0;
 
-		opcode = opMap[instr.toString()];
+		if(!param.size())
+		{
+			error = "Instruction requires a parameter";
+			return false;
+		}
+
+		opcode = opMap[base];
 
 		if(!regexMatch.capturedRef(3).size())
 		{

@@ -170,11 +170,8 @@ GridLayout {
 					ZBNT.setActiveBitstream(ZBNT.bitstreamNames[bitstreamSelector.currentIndex])
 				}
 
-				if(runTimeInput.text != ZBNT.runTime)
-				{
-					root.changePending |= 2;
-					ZBNT.setDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT, ZBNT.arrayFromNum(runTimeInput.text, 8))
-				}
+				root.changePending |= 2;
+				ZBNT.setDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT, ZBNT.arrayFromNum(runTimeInput.text, 8))
 			}
 		}
 
