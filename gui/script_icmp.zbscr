@@ -1,0 +1,15 @@
+
+.comp 12
+	eq16 0x0800        # Type: IPv4
+
+	eq8  0x45          # IPv4 header size: 20
+	nop                # Diff services
+	nop  2             # Total size
+	nop  2             # Identifier
+	nop  2             # Flags
+	nop                # TTL
+	eq8  0x01          # Protocol: ICMP
+
+.extr 26
+	ext 4              # Source IP
+	ext 4              # Destination IP
