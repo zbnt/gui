@@ -143,18 +143,21 @@ void QFrameDetector::updateDisplayedValues()
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 {
-	if(measurement.size() < 12) return;
+	if(measurement.size() < 14) return;
 
 	quint64 time = readAsNumber<quint64>(measurement, 0);
 	quint8 matchDir = readAsNumber<quint8>(measurement, 8);
 	quint8 logWidth = readAsNumber<quint8>(measurement, 9);
-	quint16 matchMask = readAsNumber<quint16>(measurement, 10);
+	quint16 extCount = readAsNumber<quint16>(measurement, 10);
+	quint16 matchMask = readAsNumber<quint16>(measurement, 12);
 
-	qint32 extOffset = ((logWidth + 11) / logWidth) * logWidth;
-	quint32 extCount = (extOffset < measurement.size()) ? (measurement.size() - extOffset) : 0;
+	qint32 extOffset = ((logWidth + 13) / logWidth) * logWidth;
 
 	matchDir -= 'A';
+
 	if(matchDir > 1) return;
+	if(measurement.size() % logWidth != 0) return;
+	if(extCount > measurement.size() - extOffset) return;
 
 	QString matchMaskStr;
 	for(quint32 i = 0; i < m_numScripts; ++i)
@@ -170,6 +173,11 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	};
 
 	QByteArray extractedData = measurement.mid(extOffset);
+
+	if(extractedData.size() && extCount % logWidth != 0)
+	{
+		extractedData.remove(extractedData.size() - logWidth, logWidth - extCount % logWidth);
+	}
 
 	m_mutex.lock();
 
@@ -623,9 +631,11 @@ bool QFrameDetector::parseExtractorInstr(const QStringRef &instr, const QStringR
 		return false;
 	}
 
+	quint32 paramInt = 1;
+
 	if(param.size())
 	{
-		quint32 paramInt = param.toUInt(&ok);
+		paramInt = param.toUInt(&ok);
 
 		if(!ok)
 		{
@@ -638,23 +648,23 @@ bool QFrameDetector::parseExtractorInstr(const QStringRef &instr, const QStringR
 			error = "Instruction ends beyond the script size limit";
 			return false;
 		}
+	}
 
-		if(instr == "ext")
+	if(instr == "ext")
+	{
+		do
 		{
-			do
-			{
-				script.editor[offset++] |= 1;
-			}
-			while(--paramInt);
+			script.editor[offset++] |= 1;
 		}
-		else
+		while(--paramInt);
+	}
+	else
+	{
+		do
 		{
-			do
-			{
-				script.editor[offset++] &= ~1;
-			}
-			while(--paramInt);
+			script.editor[offset++] &= ~1;
 		}
+		while(--paramInt);
 	}
 
 	return true;
