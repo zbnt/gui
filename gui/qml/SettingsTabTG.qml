@@ -128,7 +128,6 @@ Item {
 			Button {
 				text: "Open"
 				focus: false
-				enabled: !ZBNT.running
 				focusPolicy: Qt.NoFocus
 
 				onPressed: {

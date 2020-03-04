@@ -346,8 +346,7 @@ Item {
 
 					Button {
 						icon.name: "folder-new"
-						focus: false
-						enabled: !ZBNT.running && !root.changePending
+						enabled: !root.changePending
 						focusPolicy: Qt.NoFocus
 
 						Layout.row: index
@@ -365,8 +364,7 @@ Item {
 
 					Button {
 						icon.name: "view-refresh"
-						focus: false
-						enabled: !ZBNT.running && !root.changePending && root.object.scriptPath[index].toString().length
+						enabled: !root.changePending && root.object.scriptPath[index].toString().length
 						focusPolicy: Qt.NoFocus
 
 						Layout.row: index
@@ -383,8 +381,7 @@ Item {
 
 					Button {
 						icon.name: "delete"
-						focus: false
-						enabled: !ZBNT.running && !root.changePending
+						enabled: !root.changePending
 						focusPolicy: Qt.NoFocus
 
 						Layout.row: index
@@ -454,8 +451,7 @@ Item {
 
 					Button {
 						icon.name: "folder-new"
-						focus: false
-						enabled: !ZBNT.running && !root.changePending
+						enabled: !root.changePending
 						focusPolicy: Qt.NoFocus
 
 						Layout.row: index
@@ -473,8 +469,7 @@ Item {
 
 					Button {
 						icon.name: "view-refresh"
-						focus: false
-						enabled: !ZBNT.running && !root.changePending && root.object.scriptPath[index + root.object.numScripts].toString().length
+						enabled: !root.changePending && root.object.scriptPath[index + root.object.numScripts].toString().length
 						focusPolicy: Qt.NoFocus
 
 						Layout.row: index
@@ -491,8 +486,7 @@ Item {
 
 					Button {
 						icon.name: "delete"
-						focus: false
-						enabled: !ZBNT.running && !root.changePending
+						enabled: !root.changePending
 						focusPolicy: Qt.NoFocus
 
 						Layout.row: index
