@@ -718,7 +718,9 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 
 			do
 			{
-				script.editor[offset++] = 0;
+				script.editor[offset] &= 1;
+				script.editor[offset] |= opMap[instr.toString()];
+				offset++;
 			}
 			while(--paramInt);
 		}
@@ -729,7 +731,8 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 	}
 	else if(instr == "drop" || instr == "corrupt")
 	{
-		script.comparator[offset++] = opMap[instr.toString()];
+		script.editor[offset] = opMap[instr.toString()] | (script.editor[offset] & 1);
+		offset++;
 	}
 	else
 	{
@@ -747,7 +750,7 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 
 		opcode = opMap[base];
 
-		if(!regexMatch.capturedRef(3).size())
+		if(!regexMatch.capturedRef(3).size() && base != "set")
 		{
 			// Big-endian
 			opcode |= 0b10000;
@@ -795,6 +798,27 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 			}
 		}
 
+		switch(sizeInt)
+		{
+			case 2:
+			{
+				opcode |= 1 << 6;
+				break;
+			}
+
+			case 4:
+			{
+				opcode |= 2 << 6;
+				break;
+			}
+
+			case 8:
+			{
+				opcode |= 3 << 6;
+				break;
+			}
+		}
+
 		if(!ok)
 		{
 			error = "Invalid parameter";
@@ -809,13 +833,15 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 				return false;
 			}
 
+			script.editor[offset] &= 1;
+
 			if(opcode & 0b10000)
 			{
-				script.editor[offset] = quint16(value[sizeInt-i-1]) << 8;
+				script.editor[offset] |= quint16(value[sizeInt-i-1]) << 8;
 			}
 			else
 			{
-				script.editor[offset] = quint16(value[i]) << 8;
+				script.editor[offset] |= quint16(value[i]) << 8;
 			}
 
 			if(i == sizeInt - 1)
