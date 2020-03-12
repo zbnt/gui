@@ -32,7 +32,6 @@ Item {
 
 		onBitstreamDevicesChanged: {
 			var deviceDescriptions = []
-			var idx = 0
 
 			for(var obj of root.stackLayoutObjects)
 			{
@@ -48,10 +47,8 @@ Item {
 				if(qmlPath.length)
 				{
 					deviceDescriptions.push(dev.description())
-					root.stackLayoutObjects.push(Qt.createComponent(qmlPath).createObject(stackLayout, {object: dev, deviceID: idx}))
+					root.stackLayoutObjects.push(Qt.createComponent(qmlPath).createObject(stackLayout, {object: dev, deviceID: dev.id}))
 				}
-
-				idx += 1
 			}
 
 			categorySelector.model = deviceDescriptions

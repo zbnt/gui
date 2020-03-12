@@ -19,8 +19,18 @@
 #include <dev/QAbstractDevice.hpp>
 
 QAbstractDevice::QAbstractDevice(QObject *parent)
-	: QObject(parent)
+	: QObject(parent), m_id(0)
 { }
 
 QAbstractDevice::~QAbstractDevice()
 { }
+
+quint8 QAbstractDevice::id() const
+{
+	return m_id;
+}
+
+void QAbstractDevice::setID(quint8 id)
+{
+	m_id = id;
+}

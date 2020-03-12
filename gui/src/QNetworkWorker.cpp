@@ -53,7 +53,12 @@ void QNetworkWorker::startWork()
 
 void QNetworkWorker::setDevices(const QVector<QAbstractDevice*> &devList)
 {
-	m_devices = devList;
+	m_devices.clear();
+
+	for(QAbstractDevice *d : devList)
+	{
+		m_devices.insert(d->id(), d);
+	}
 }
 
 void QNetworkWorker::updateDisplayedValues()
@@ -259,11 +264,12 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 			if(id & MSG_ID_MEASUREMENT)
 			{
 				quint16 devID = id & ~MSG_ID_MEASUREMENT;
+				auto it = m_devices.constFind(devID);
 
-				if(devID < m_devices.size() && data.size() >= 8)
+				if(it != m_devices.constEnd() && data.size() >= 8)
 				{
 					m_currentTime = readAsNumber<quint64>(data, 0);
-					m_devices[devID]->receiveMeasurement(data);
+					it.value()->receiveMeasurement(data);
 				}
 			}
 		}

@@ -84,7 +84,7 @@ private:
 	quint64 m_currentTime = 0;
 	quint64 m_displayedTime = 0;
 
-	QVector<QAbstractDevice*> m_devices;
+	QHash<quint8, QAbstractDevice*> m_devices;
 
 	QTimer *m_helloTimer = nullptr;
 	bool m_helloReceived = false;

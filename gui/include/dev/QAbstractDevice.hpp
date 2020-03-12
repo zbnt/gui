@@ -35,9 +35,14 @@ class QAbstractDevice : public QObject
 {
 	Q_OBJECT
 
+	Q_PROPERTY(quint8 id MEMBER m_id READ id)
+
 public:
 	QAbstractDevice(QObject *parent = nullptr);
 	~QAbstractDevice();
+
+	quint8 id() const;
+	void setID(quint8 id);
 
 	virtual void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props) = 0;
 
@@ -53,4 +58,7 @@ public slots:
 	virtual QString description() const = 0;
 	virtual QString settingsQml() const = 0;
 	virtual QString statusQml() const = 0;
+
+private:
+	quint8 m_id;
 };

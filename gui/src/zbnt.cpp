@@ -326,6 +326,7 @@ void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &name, const Q
 
 			if(dev)
 			{
+				dev->setID(devInfo.id);
 				dev->loadInitialProperties(devInfo.properties);
 				m_bitstreamDevices.append(dev);
 			}
