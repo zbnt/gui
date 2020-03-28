@@ -379,7 +379,7 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 	device["port"] = readAsNumber<quint16>(data, 65);
 
 	Q_IPV6ADDR ip6;
-	memcpy(ip6.c, data.constData() + 45, 16);
+	memcpy(ip6.c, data.constData() + 49, 16);
 
 	if(memcmp(ip6.c, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16))
 	{
@@ -388,7 +388,7 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 		m_deviceList.append(device);
 	}
 
-	quint32 ip4 = readAsNumber<quint32>(data, 49);
+	quint32 ip4 = readAsNumber<quint32>(data, 45);
 
 	if(ip4)
 	{
