@@ -22,6 +22,7 @@
 #include <QDateTime>
 
 #include <Utils.hpp>
+#include <Version.hpp>
 #include <Messages.hpp>
 
 ZBNT::ZBNT() : QObject(nullptr)

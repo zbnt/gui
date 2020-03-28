@@ -21,6 +21,7 @@ set(ZBNT_GUI_SRC
 
 	"../common/src/Utils.cpp"
 	"../common/src/MessageReceiver.cpp"
+	"${CMAKE_BINARY_DIR}/Version.cpp"
 )
 
 set(ZBNT_GUI_HDR
@@ -51,15 +52,12 @@ set(ZBNT_GUI_RES
 qt5_wrap_cpp(ZBNT_GUI_SRC_MOC ${ZBNT_GUI_HDR})
 qt5_add_resources(ZBNT_GUI_SRC_RES ${ZBNT_GUI_RES})
 
-add_executable(zbnt_gui ${ZBNT_GUI_SRC} ${ZBNT_GUI_SRC_RES} ${ZBNT_GUI_SRC_MOC})
-target_link_libraries(zbnt_gui Qt5::Core Qt5::Gui Qt5::Network Qt5::Qml Qt5::Widgets -lpthread)
-target_include_directories(zbnt_gui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/../common/include")
+set_source_files_properties("${CMAKE_BINARY_DIR}/Version.cpp" PROPERTIES GENERATED 1)
 
-target_compile_definitions(
-	zbnt_gui PUBLIC
-	ZBNT_VERSION="${PROJECT_VERSION}"
-	ZBNT_VERSION_INT=${ZBNT_VERSION_INT}
-)
+add_executable(zbnt_gui ${ZBNT_GUI_SRC} ${ZBNT_GUI_SRC_RES} ${ZBNT_GUI_SRC_MOC})
+add_dependencies(zbnt_gui zbnt_genver)
+target_link_libraries(zbnt_gui Qt5::Core Qt5::Gui Qt5::Network Qt5::Qml Qt5::Widgets -lpthread)
+target_include_directories(zbnt_gui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/../common/include" "${CMAKE_BINARY_DIR}")
 
 install(
 	TARGETS zbnt_gui
