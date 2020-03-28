@@ -18,7 +18,7 @@
 
 #include <QDiscoveryClient.hpp>
 
-#include <QDateTime>
+#include <QRandomGenerator>
 #include <QNetworkDatagram>
 #include <QNetworkInterface>
 
@@ -38,12 +38,12 @@ void QDiscoveryClient::findDevices()
 {
 	QByteArray message;
 
-	m_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+	m_validator = QRandomGenerator::system()->generate64();
 
 	message.append(MSG_MAGIC_IDENTIFIER, 4);
 	appendAsBytes<quint16>(message, MSG_ID_DISCOVERY);
 	appendAsBytes<quint16>(message, 8);
-	appendAsBytes<quint64>(message, m_time);
+	appendAsBytes<quint64>(message, m_validator);
 
 	for(const QNetworkInterface &iface : QNetworkInterface::allInterfaces())
 	{
@@ -56,14 +56,14 @@ void QDiscoveryClient::findDevices()
 	}
 }
 
-quint64 QDiscoveryClient::scanTime()
+quint64 QDiscoveryClient::validator()
 {
-	return m_time;
+	return m_validator;
 }
 
 void QDiscoveryClient::onMessageReceived(quint16 id, const QByteArray &data)
 {
-	if(id == MSG_ID_DISCOVERY && data.length() > 36)
+	if(id == MSG_ID_DISCOVERY && data.length() > 67)
 	{
 		emit deviceDiscovered(data);
 	}

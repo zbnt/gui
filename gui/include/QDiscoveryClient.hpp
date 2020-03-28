@@ -31,7 +31,7 @@ public:
 	~QDiscoveryClient();
 
 	void findDevices();
-	quint64 scanTime();
+	quint64 validator();
 
 	void onMessageReceived(quint16 id, const QByteArray &data);
 	void onReadyRead();
@@ -40,6 +40,6 @@ signals:
 	void deviceDiscovered(const QByteArray &data);
 
 private:
-	quint64 m_time = 0;
+	quint64 m_validator = 0;
 	QUdpSocket *m_client = nullptr;
 };

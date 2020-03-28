@@ -340,20 +340,46 @@ void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &name, const Q
 
 void ZBNT::onDeviceDiscovered(const QByteArray &data)
 {
-	quint32 version = readAsNumber<quint32>(data, 0);
-	quint64 time = readAsNumber<quint64>(data, 4);
+	quint64 validator = readAsNumber<quint64>(data, 0);
+	quint32 version = readAsNumber<quint32>(data, 8);
 
-	if(time != m_discovery->scanTime()) return;
+	if(validator != m_discovery->validator()) return;
 	if((version & 0xFF000000) != (ZBNT_VERSION_INT & 0xFF000000)) return;
+
+	QString versionStr = QString("%1.%2.%3").arg(version >> 24).arg((version >> 16) & 0xFF).arg(version & 0xFFFF);
+	QString versionPrerel = QString::fromUtf8(data.mid(12, 16));
+	QString versionCommit = QString::fromUtf8(data.mid(28, 16));
+	quint8 versionDirty = readAsNumber<quint8>(data, 44);
+
+	if(versionPrerel.size())
+	{
+		versionStr += "-";
+		versionStr += versionPrerel;
+	}
+
+	if(versionCommit.size())
+	{
+		versionStr += "+";
+		versionStr += versionCommit;
+
+		if(versionDirty)
+		{
+			versionStr += ".d";
+		}
+	}
+	else if(versionDirty)
+	{
+		versionStr += "+d";
+	}
 
 	QVariantMap device;
 	device["version"] = version;
-	device["versionstr"] = QString("%1.%2.%3").arg(version >> 24).arg((version >> 16) & 0xFF).arg(version & 0xFFFF);
-	device["hostname"] = QByteArray(data.constData() + 36, data.size() - 36);
-	device["port"] = readAsNumber<quint16>(data, 32);
+	device["versionstr"] = versionStr;
+	device["hostname"] = QByteArray(data.constData() + 67, data.size() - 67);
+	device["port"] = readAsNumber<quint16>(data, 65);
 
 	Q_IPV6ADDR ip6;
-	memcpy(ip6.c, data.constData() + 16, 16);
+	memcpy(ip6.c, data.constData() + 45, 16);
 
 	if(memcmp(ip6.c, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16))
 	{
@@ -362,7 +388,7 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 		m_deviceList.append(device);
 	}
 
-	quint32 ip4 = readAsNumber<quint32>(data, 12);
+	quint32 ip4 = readAsNumber<quint32>(data, 49);
 
 	if(ip4)
 	{
