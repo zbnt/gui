@@ -27,8 +27,13 @@
 QDiscoveryClient::QDiscoveryClient(QObject *parent) : QObject(parent)
 {
 	m_client = new QUdpSocket(this);
+	m_timer = new QTimer(this);
+
+	m_timer->setSingleShot(true);
+	m_timer->setInterval(2000);
 
 	connect(m_client, &QUdpSocket::readyRead, this, &QDiscoveryClient::onReadyRead);
+	connect(m_timer, &QTimer::timeout, this, &QDiscoveryClient::discoveryTimeout);
 }
 
 QDiscoveryClient::~QDiscoveryClient()
@@ -60,6 +65,8 @@ void QDiscoveryClient::findDevices()
 
 		m_client->writeDatagram(message, multicastAddr, MSG_DISCOVERY_PORT);
 	}
+
+	m_timer->start();
 }
 
 quint64 QDiscoveryClient::validator()
@@ -73,6 +80,11 @@ void QDiscoveryClient::onReadyRead()
 	{
 		QNetworkDatagram datagram = m_client->receiveDatagram();
 		QByteArray rx_message = datagram.data();
+
+		if(!m_timer->isActive())
+		{
+			continue;
+		}
 
 		if(rx_message.size() <= 47)
 		{

@@ -45,6 +45,7 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(m_updateTimer, &QTimer::timeout, this, &ZBNT::updateMeasurements);
 
 	connect(m_discovery, &QDiscoveryClient::deviceDiscovered, this, &ZBNT::onDeviceDiscovered);
+	connect(m_discovery, &QDiscoveryClient::discoveryTimeout, this, &ZBNT::onDiscoveryTimeout);
 
 	connect(this, &ZBNT::bitstreamDevicesChanged, m_netWorker, &QNetworkWorker::setDevices);
 	connect(this, &ZBNT::connectToBoard, m_netWorker, &QNetworkWorker::connectToBoard);
@@ -393,5 +394,9 @@ void ZBNT::onDeviceDiscovered(const QHostAddress &addr, const QByteArray &data)
 	}
 
 	m_deviceList.append(device);
+}
+
+void ZBNT::onDiscoveryTimeout()
+{
 	emit devicesChanged();
 }

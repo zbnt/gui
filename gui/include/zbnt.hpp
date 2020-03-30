@@ -121,6 +121,7 @@ signals:
 
 private slots:
 	void onDeviceDiscovered(const QHostAddress &addr, const QByteArray &data);
+	void onDiscoveryTimeout();
 
 private:
 	QDiscoveryClient *m_discovery = nullptr;

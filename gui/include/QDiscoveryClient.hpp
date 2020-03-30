@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <QTimer>
 #include <QUdpSocket>
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
@@ -36,9 +37,11 @@ public:
 	void onReadyRead();
 
 signals:
+	void discoveryTimeout();
 	void deviceDiscovered(const QHostAddress &addr, const QByteArray &data);
 
 private:
 	quint64 m_validator = 0;
+	QTimer *m_timer = nullptr;
 	QUdpSocket *m_client = nullptr;
 };
