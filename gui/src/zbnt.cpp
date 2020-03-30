@@ -398,5 +398,26 @@ void ZBNT::onDeviceDiscovered(const QHostAddress &addr, const QByteArray &data)
 
 void ZBNT::onDiscoveryTimeout()
 {
+	std::sort(m_deviceList.begin(), m_deviceList.end(),
+		[](const QVariant &a, const QVariant &b)
+		{
+			QVariantMap mapA = a.toMap();
+			QVariantMap mapB = b.toMap();
+
+			if(mapA["hostname"].toString() < mapB["hostname"].toString())
+			{
+				return true;
+			}
+
+			if(mapA["fullAddr"].toString().startsWith("[") && !mapB["fullAddr"].toString().startsWith("["))
+			{
+				return true;
+			}
+
+			return false;
+		}
+	);
+
 	emit devicesChanged();
+	emit discoveryDone();
 }

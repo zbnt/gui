@@ -27,12 +27,17 @@ Item {
 	id: root
 
 	property bool changePending: false
+	property bool discoveryBusy: true
 
 	Connections {
 		target: ZBNT
 
 		onRunningChanged: {
 			root.changePending = false;
+		}
+
+		onDiscoveryDone: {
+			root.discoveryBusy = false;
 		}
 
 		onConnectionError: {
@@ -124,13 +129,14 @@ Item {
 
 					Button {
 						text: "Rescan"
-						enabled: ZBNT.connected == ZBNT.Disconnected
+						enabled: ZBNT.connected == ZBNT.Disconnected && !root.discoveryBusy
 						focusPolicy: Qt.NoFocus
 
 						Layout.alignment: Qt.AlignRight
 
 						onClicked: {
 							ZBNT.scanDevices()
+							root.discoveryBusy = true
 						}
 					}
 

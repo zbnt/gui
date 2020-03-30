@@ -109,6 +109,8 @@ signals:
 	void connectedChanged();
 	void connectionError(QString error);
 
+	void discoveryDone();
+
 	void connectToBoard(const QString &ip, quint16 port);
 	void disconnectFromBoard();
 
