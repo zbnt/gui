@@ -338,7 +338,7 @@ void ZBNT::onActiveBitstreamChanged(quint8 success, const QString &name, const Q
 	}
 }
 
-void ZBNT::onDeviceDiscovered(const QByteArray &data)
+void ZBNT::onDeviceDiscovered(const QHostAddress &addr, const QByteArray &data)
 {
 	quint64 validator = readAsNumber<quint64>(data, 0);
 	quint32 version = readAsNumber<quint32>(data, 8);
@@ -375,27 +375,23 @@ void ZBNT::onDeviceDiscovered(const QByteArray &data)
 	QVariantMap device;
 	device["version"] = version;
 	device["versionstr"] = versionStr;
-	device["hostname"] = QByteArray(data.constData() + 67, data.size() - 67);
-	device["port"] = readAsNumber<quint16>(data, 65);
+	device["hostname"] = QByteArray(data.constData() + 47, data.size() - 47);
+	device["port"] = readAsNumber<quint16>(data, 45);
 
-	Q_IPV6ADDR ip6;
-	memcpy(ip6.c, data.constData() + 49, 16);
+	bool ok = false;
+	quint32 ip4 = addr.toIPv4Address(&ok);
 
-	if(memcmp(ip6.c, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16))
-	{
-		device["ip"] = QHostAddress(ip6).toString();
-		device["fullAddr"] = "[" + device["ip"].toString() + "]:" + device["port"].toString();
-		m_deviceList.append(device);
-	}
-
-	quint32 ip4 = readAsNumber<quint32>(data, 45);
-
-	if(ip4)
+	if(ok)
 	{
 		device["ip"] = QHostAddress(ip4).toString();
 		device["fullAddr"] = device["ip"].toString() + ":" + device["port"].toString();
-		m_deviceList.append(device);
+	}
+	else
+	{
+		device["ip"] = addr.toString();
+		device["fullAddr"] = "[" + device["ip"].toString() + "]:" + device["port"].toString();
 	}
 
+	m_deviceList.append(device);
 	emit devicesChanged();
 }

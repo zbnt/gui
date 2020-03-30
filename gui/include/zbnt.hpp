@@ -120,7 +120,7 @@ signals:
 	void setDeviceProperty(quint8 devID, quint16 propID, const QByteArray &values);
 
 private slots:
-	void onDeviceDiscovered(const QByteArray &data);
+	void onDeviceDiscovered(const QHostAddress &addr, const QByteArray &data);
 
 private:
 	QDiscoveryClient *m_discovery = nullptr;

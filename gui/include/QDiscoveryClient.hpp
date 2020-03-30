@@ -22,7 +22,7 @@
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
 
-class QDiscoveryClient : public QObject, public MessageReceiver
+class QDiscoveryClient : public QObject
 {
 	Q_OBJECT
 
@@ -33,11 +33,10 @@ public:
 	void findDevices();
 	quint64 validator();
 
-	void onMessageReceived(quint16 id, const QByteArray &data);
 	void onReadyRead();
 
 signals:
-	void deviceDiscovered(const QByteArray &data);
+	void deviceDiscovered(const QHostAddress &addr, const QByteArray &data);
 
 private:
 	quint64 m_validator = 0;

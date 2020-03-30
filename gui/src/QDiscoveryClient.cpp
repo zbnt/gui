@@ -53,6 +53,12 @@ void QDiscoveryClient::findDevices()
 		{
 			m_client->writeDatagram(message, address.broadcast(), MSG_DISCOVERY_PORT);
 		}
+
+		QHostAddress multicastAddr;
+		multicastAddr.setAddress(QString("ff12::%1").arg(MSG_DISCOVERY_PORT));
+		multicastAddr.setScopeId(iface.name());
+
+		m_client->writeDatagram(message, multicastAddr, MSG_DISCOVERY_PORT);
 	}
 }
 
@@ -61,19 +67,31 @@ quint64 QDiscoveryClient::validator()
 	return m_validator;
 }
 
-void QDiscoveryClient::onMessageReceived(quint16 id, const QByteArray &data)
-{
-	if(id == MSG_ID_DISCOVERY && data.length() > 67)
-	{
-		emit deviceDiscovered(data);
-	}
-}
-
 void QDiscoveryClient::onReadyRead()
 {
 	while(m_client->hasPendingDatagrams())
 	{
 		QNetworkDatagram datagram = m_client->receiveDatagram();
-		handleIncomingData(datagram.data());
+		QByteArray rx_message = datagram.data();
+
+		if(rx_message.size() <= 47)
+		{
+			continue;
+		}
+
+		if(!rx_message.startsWith(MSG_MAGIC_IDENTIFIER))
+		{
+			continue;
+		}
+
+		uint16_t messageID = readAsNumber<uint16_t>(rx_message, 4);
+		uint16_t messageSize = readAsNumber<uint16_t>(rx_message, 6);
+
+		if(messageID != MSG_ID_DISCOVERY || messageSize <= 47)
+		{
+			continue;
+		}
+
+		emit deviceDiscovered(datagram.senderAddress(), rx_message.mid(8, messageSize));
 	}
 }
