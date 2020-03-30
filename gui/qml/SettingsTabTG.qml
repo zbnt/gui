@@ -60,7 +60,7 @@ Item {
 			if(root.object.loadTemplate(fileUrl))
 			{
 				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_TEMPLATE, root.object.templateBytes)
-				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_PATTERN, root.object.templateMask)
+				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_TEMPLATE_MASK, root.object.templateMask)
 			}
 		}
 	}
