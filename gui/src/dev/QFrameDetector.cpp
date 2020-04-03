@@ -844,7 +844,7 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 				script.editor[offset] |= quint16(value[i]) << 8;
 			}
 
-			if(i == sizeInt - 1)
+			if(i == 0)
 			{
 				script.editor[offset] |= opcode;
 			}
