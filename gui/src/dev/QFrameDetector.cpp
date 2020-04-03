@@ -472,7 +472,7 @@ bool QFrameDetector::parseComparatorInstr(const QStringRef &instr, const QString
 
 	if(!regexMatch.hasMatch())
 	{
-		error = "Unknown instruction: " + instr;
+		error = "Unknown comparator instruction: " + instr;
 		return false;
 	}
 
@@ -627,7 +627,7 @@ bool QFrameDetector::parseExtractorInstr(const QStringRef &instr, const QStringR
 
 	if(!regexMatch.hasMatch())
 	{
-		error = "Unknown instruction: " + instr;
+		error = "Unknown extractor instruction: " + instr;
 		return false;
 	}
 
@@ -672,29 +672,29 @@ bool QFrameDetector::parseExtractorInstr(const QStringRef &instr, const QStringR
 
 bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef &param, Script &script, quint32 &offset, QString &error) const
 {
-	const QRegularExpression instrRegex(R"(^(?:nop|setr|(set|(?:xn)?or|and|add|s?mul)(8|16|32|64|[fd])(l?)|drop|corrupt)$)");
+	const QRegularExpression instrRegex(R"(^(?:nop|setr|(set|(?:xn|x)?or|and|add|s?mul)(8|16|32|64|[fd])(l?)|drop|corrupt)$)");
 	QRegularExpressionMatch regexMatch = instrRegex.match(instr);
 	bool ok = false;
 
 	static const QHash<QString, quint16> opMap =
 	{
-		{"nop", 0b00'00'000'0},
-		{"set", 0b00'00'001'0},
-		{"setr", 0b00'01'001'0},
-		{"and", 0b00'00'010'0},
-		{"or", 0b00'01'010'0},
-		{"xor", 0b00'10'010'0},
-		{"xnor", 0b00'11'010'0},
-		{"add", 0b00'00'011'0},
-		{"mul", 0b00'00'100'0},
-		{"smul", 0b00'10'100'0},
-		{"drop", 0b00'10'000'0},
+		{"nop",     0b00'00'000'0},
+		{"set",     0b00'00'001'0},
+		{"setr",    0b00'01'001'0},
+		{"and",     0b00'00'010'0},
+		{"or",      0b00'01'010'0},
+		{"xor",     0b00'10'010'0},
+		{"xnor",    0b00'11'010'0},
+		{"add",     0b00'00'011'0},
+		{"mul",     0b00'00'100'0},
+		{"smul",    0b00'10'100'0},
+		{"drop",    0b00'10'000'0},
 		{"corrupt", 0b00'01'000'0}
 	};
 
 	if(!regexMatch.hasMatch())
 	{
-		error = "Unknown instruction: " + instr;
+		error = "Unknown editor instruction: " + instr;
 		return false;
 	}
 
@@ -741,6 +741,8 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 		QByteArray value;
 		quint16 opcode = 0;
 		int sizeInt = 0;
+		bool isBigEndian = false;
+		bool isSigned = false;
 
 		if(!param.size())
 		{
@@ -750,10 +752,25 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 
 		opcode = opMap[base];
 
-		if(!regexMatch.capturedRef(3).size() && base != "set")
+		if(!regexMatch.capturedRef(3).size())
 		{
-			// Big-endian
-			opcode |= 0b10000;
+			isBigEndian = true;
+
+			if(base == "add" || base == "mul" || base == "smul")
+			{
+				// Big-endian
+				opcode |= 0b10000;
+			}
+		}
+
+		if((opcode & 0b0100) != 0b0100)
+		{
+			isSigned = opcode & 0b100000;
+		}
+
+		if(base == "add" && param[0] == "-")
+		{
+			isSigned = true;
 		}
 
 		if(size == "f")
@@ -770,7 +787,7 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 		{
 			sizeInt = size.toInt() / 8;
 
-			if(opcode & 0b100000)
+			if(isSigned)
 			{
 				appendAsBytes(value, param.toLongLong(&ok, 0));
 
@@ -835,7 +852,7 @@ bool QFrameDetector::parseEditorInstr(const QStringRef &instr, const QStringRef 
 
 			script.editor[offset] &= 1;
 
-			if(opcode & 0b10000)
+			if(isBigEndian)
 			{
 				script.editor[offset] |= quint16(value[sizeInt-i-1]) << 8;
 			}
