@@ -13,3 +13,4 @@
 .extr 26
 	ext 4              # Source IP
 	ext 4              # Destination IP
+	ext 1              # ICMP type
