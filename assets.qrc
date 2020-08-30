@@ -1,0 +1,6 @@
+<RCC>
+	<qresource prefix="/assets">
+		<file alias="MaterialIcons-Regular.ttf">third-party/MaterialIcons-Regular.ttf</file>
+	</qresource>
+</RCC>
+

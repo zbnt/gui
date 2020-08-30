@@ -1,17 +1,12 @@
 cmake_minimum_required(VERSION 3.7)
-project(zbnt_sw)
+project(zbnt_gui)
+
+find_package(Qt5 COMPONENTS Core Gui Network Qml Widgets REQUIRED)
 
 set(ZBNT_FALLBACK_VERSION "2.0.0-beta.2")
 set(CMAKE_CXX_STANDARD 14)
 
-option(BUILD_GUI      "Build the reference GUI"           ON)
-option(BUILD_DAEMON   "Build the daemon for Zynq devices" OFF)
-option(USE_SANITIZERS "Compile with ASan and UBSan"       OFF)
-
-set(CFG_PATH      "/etc/zbnt"              CACHE PATH "Location of configuration files")
-set(FIRMWARE_PATH "/usr/lib/firmware/zbnt" CACHE PATH "Location of bitstream and device tree files")
-set(SYSFS_PATH    "/sys"                   CACHE PATH "Path where sysfs is mounted")
-set(CONFIGFS_PATH "/sys/kernel/config"     CACHE PATH "Path where configfs is mounted")
+option(USE_SANITIZERS "Compile with ASan and UBSan" OFF)
 
 if(USE_SANITIZERS)
 	set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -Wall -fsanitize=address -fsanitize=undefined")
@@ -29,10 +24,67 @@ add_custom_target(
 	COMMENT "Generating version files"
 )
 
-if(BUILD_GUI)
-	add_subdirectory(gui)
-endif()
+set(ZBNT_GUI_SRC
+	"src/Main.cpp"
+	"src/QTableModel.cpp"
 
-if(BUILD_DAEMON)
-	add_subdirectory(daemon)
-endif()
+	"src/zbnt.cpp"
+	"src/Utils.cpp"
+	"src/QNetworkWorker.cpp"
+	"src/QDiscoveryClient.cpp"
+
+	"src/QIPValidator.cpp"
+	"src/QUInt64Validator.cpp"
+	"src/QUInt64RangeValidator.cpp"
+
+	"src/dev/QAbstractDevice.cpp"
+	"src/dev/QStatsCollector.cpp"
+	"src/dev/QTrafficGenerator.cpp"
+	"src/dev/QLatencyMeasurer.cpp"
+	"src/dev/QFrameDetector.cpp"
+
+	"server-shared/src/MessageUtils.cpp"
+	"server-shared/src/MessageReceiver.cpp"
+	"${CMAKE_BINARY_DIR}/Version.cpp"
+)
+
+set(ZBNT_GUI_HDR
+	"include/QTableModel.hpp"
+
+	"include/zbnt.hpp"
+	"include/QNetworkWorker.hpp"
+	"include/QDiscoveryClient.hpp"
+
+	"include/QIPValidator.hpp"
+	"include/QUInt64Validator.hpp"
+	"include/QUInt64RangeValidator.hpp"
+
+	"include/dev/QAbstractDevice.hpp"
+	"include/dev/QStatsCollector.hpp"
+	"include/dev/QTrafficGenerator.hpp"
+	"include/dev/QLatencyMeasurer.hpp"
+	"include/dev/QFrameDetector.hpp"
+
+	"server-shared/include/Messages.hpp"
+)
+
+set(ZBNT_GUI_RES
+	"assets.qrc"
+	"qml.qrc"
+)
+
+qt5_wrap_cpp(ZBNT_GUI_SRC_MOC ${ZBNT_GUI_HDR})
+qt5_add_resources(ZBNT_GUI_SRC_RES ${ZBNT_GUI_RES})
+
+set_source_files_properties("${CMAKE_BINARY_DIR}/Version.cpp" PROPERTIES GENERATED 1)
+
+add_executable(zbnt_gui ${ZBNT_GUI_SRC} ${ZBNT_GUI_SRC_RES} ${ZBNT_GUI_SRC_MOC})
+add_dependencies(zbnt_gui zbnt_genver)
+target_link_libraries(zbnt_gui Qt5::Core Qt5::Gui Qt5::Network Qt5::Qml Qt5::Widgets -lpthread)
+target_include_directories(zbnt_gui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/server-shared/include" "${CMAKE_BINARY_DIR}")
+
+install(
+	TARGETS zbnt_gui
+	PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+	DESTINATION bin
+)
