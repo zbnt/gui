@@ -21,25 +21,6 @@
 #include <array>
 #include <initializer_list>
 
-void padByteArray(QByteArray &array, int length, char padding)
-{
-	if(array.size() > length)
-	{
-		array.resize(length);
-	}
-	else if(array.size() < length)
-	{
-		array.append(length - array.size(), padding);
-	}
-}
-
-QByteArray padString(const char *str, int length, char padding)
-{
-	QByteArray array(str);
-	padByteArray(array, length, padding);
-	return array;
-}
-
 void cyclesToTime(uint64_t cycles, QString &time)
 {
 	static const std::initializer_list<std::pair<const char*, uint64_t>> convTable =

@@ -21,10 +21,6 @@
 #include <cstdint>
 
 #include <QString>
-#include <QByteArray>
-
-extern void padByteArray(QByteArray &array, int length, char padding = 0);
-extern QByteArray padString(const char *str, int length, char padding = 0);
 
 extern void cyclesToTime(uint64_t cycles, QString &time);
 extern void bytesToHumanReadable(uint64_t bytes, QString &res, bool dec = false);
