@@ -1,6 +1,6 @@
 # zbnt/gui
 
-GUI for ZBNT, a set of network tools for Xilinx FPGAs/SoCs
+GUI for controlling ZBNT devices
 
 ## Related projects
 
@@ -27,13 +27,13 @@ git submodule update --init
 mkdir build && cd build
 ~~~~
 
-3. Run `cmake`:
+4. Run `cmake`:
 
 ~~~~
 cmake -DCMAKE_BUILD_TYPE=Release ..
 ~~~~
 
-4. Run `make`, you can use the `-j` parameter to control the number of parallel jobs:
+5. Run `make`, you can use the `-j` parameter to control the number of parallel jobs:
 
 ~~~
 make -j16
