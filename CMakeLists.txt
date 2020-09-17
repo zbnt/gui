@@ -28,7 +28,7 @@ set(ZBNT_GUI_SRC
 	"src/Main.cpp"
 	"src/QTableModel.cpp"
 
-	"src/zbnt.cpp"
+	"src/Zbnt.cpp"
 	"src/Utils.cpp"
 	"src/QDiscoveryClient.cpp"
 
@@ -55,7 +55,7 @@ set(ZBNT_GUI_SRC
 set(ZBNT_GUI_HDR
 	"include/QTableModel.hpp"
 
-	"include/zbnt.hpp"
+	"include/Zbnt.hpp"
 	"include/QDiscoveryClient.hpp"
 
 	"include/net/NetWorker.hpp"

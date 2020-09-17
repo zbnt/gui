@@ -34,7 +34,7 @@
 #include <QDiscoveryClient.hpp>
 #include <net/NetWorker.hpp>
 
-class ZBNT : public QObject
+class Zbnt : public QObject
 {
 	Q_OBJECT
 
@@ -53,8 +53,8 @@ class ZBNT : public QObject
 	Q_PROPERTY(quint32 currentProgress MEMBER m_currentProgress NOTIFY timeChanged)
 
 public:
-	ZBNT();
-	~ZBNT();
+	Zbnt();
+	~Zbnt();
 
 	enum ConnectionStatus
 	{
@@ -66,15 +66,15 @@ public:
 	Q_ENUM(ConnectionStatus)
 
 public slots:
-	QByteArray arrayConcat(const QByteArray &a, const QByteArray &b);
-	QByteArray arrayFromStr(const QString &data);
-	QByteArray arrayFromNum(const QString &data, qint32 size);
-	QString arrayToStr(const QByteArray &data, qint32 start, qint32 size);
-	QVariant arrayToNum(const QByteArray &data, qint32 start, qint32 size);
+	static QByteArray arrayConcat(const QByteArray &a, const QByteArray &b);
+	static QByteArray arrayFromStr(const QString &data);
+	static QByteArray arrayFromNum(const QString &data, qint32 size);
+	static QString arrayToStr(const QByteArray &data, qint32 start, qint32 size);
+	static QVariant arrayToNum(const QByteArray &data, qint32 start, qint32 size);
 
-	QString cyclesToTime(QString cycles);
-	QString bytesToHumanReadable(QString bytes);
-	QString estimateDataRate(quint64 size, quint64 delay);
+	static QString cyclesToTime(QString cycles);
+	static QString bytesToHumanReadable(QString bytes);
+	static QString estimateDataRate(quint64 size, quint64 delay);
 
 	void scanDevices();
 	void updateMeasurements();

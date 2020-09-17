@@ -22,7 +22,7 @@
 #include <QQmlContext>
 #include <QScreen>
 
-#include <zbnt.hpp>
+#include <Zbnt.hpp>
 #include <dev/QStatsCollector.hpp>
 #include <dev/QTrafficGenerator.hpp>
 #include <dev/QLatencyMeasurer.hpp>
@@ -46,12 +46,12 @@ int main(int argc, char *argv[])
 	qRegisterMetaType<QList<BitstreamDevInfo>>("QList<BitstreamDevInfo>");
 	qRegisterMetaType<QVector<QAbstractDevice*>>("QVector<QAbstractDevice*>");
 
-	qmlRegisterSingletonType<ZBNT>("zbnt", 1, 0, "ZBNT",
+	qmlRegisterSingletonType<Zbnt>("zbnt", 1, 0, "ZBNT",
 		[](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject*
 		{
 			Q_UNUSED(engine)
 			Q_UNUSED(scriptEngine);
-			return new ZBNT();
+			return new Zbnt();
 		}
 	);
 

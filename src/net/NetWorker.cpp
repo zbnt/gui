@@ -30,7 +30,7 @@
 #include <net/ZbntLocalClient.hpp>
 #include <net/ZbntTcpClient.hpp>
 
-#include <zbnt.hpp>
+#include <Zbnt.hpp>
 #include <MessageUtils.hpp>
 
 NetWorker::NetWorker(QObject *parent)
@@ -187,7 +187,7 @@ void NetWorker::onStateChanged(ZbntClient::State state)
 	{
 		case ZbntClient::Disconnected:
 		{
-			emit connectedChanged(ZBNT::Disconnected);
+			emit connectedChanged(Zbnt::Disconnected);
 			emit runningChanged(false);
 			m_helloTimer->stop();
 			break;
@@ -195,7 +195,7 @@ void NetWorker::onStateChanged(ZbntClient::State state)
 
 		case ZbntClient::Connecting:
 		{
-			emit connectedChanged(ZBNT::Connecting);
+			emit connectedChanged(Zbnt::Connecting);
 			break;
 		}
 
@@ -245,7 +245,7 @@ void NetWorker::onMessageReceived(quint16 id, const QByteArray &data)
 
 			m_helloTimer->stop();
 			m_helloReceived = true;
-			emit connectedChanged(ZBNT::Connected);
+			emit connectedChanged(Zbnt::Connected);
 			break;
 		}
 
