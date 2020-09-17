@@ -30,8 +30,12 @@ set(ZBNT_GUI_SRC
 
 	"src/zbnt.cpp"
 	"src/Utils.cpp"
-	"src/QNetworkWorker.cpp"
 	"src/QDiscoveryClient.cpp"
+
+	"src/net/NetWorker.cpp"
+	"src/net/ZbntClient.cpp"
+	"src/net/ZbntLocalClient.cpp"
+	"src/net/ZbntTcpClient.cpp"
 
 	"src/QIPValidator.cpp"
 	"src/QUInt64Validator.cpp"
@@ -52,8 +56,10 @@ set(ZBNT_GUI_HDR
 	"include/QTableModel.hpp"
 
 	"include/zbnt.hpp"
-	"include/QNetworkWorker.hpp"
 	"include/QDiscoveryClient.hpp"
+
+	"include/net/NetWorker.hpp"
+	"include/net/ZbntClient.hpp"
 
 	"include/QIPValidator.hpp"
 	"include/QUInt64Validator.hpp"

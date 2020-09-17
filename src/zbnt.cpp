@@ -34,9 +34,9 @@ ZBNT::ZBNT() : QObject(nullptr)
 	m_netThread = new QThread();
 	m_netThread->start();
 
-	m_netWorker = new QNetworkWorker();
+	m_netWorker = new NetWorker();
 	m_netWorker->moveToThread(m_netThread);
-	QTimer::singleShot(0, m_netWorker, &QNetworkWorker::startWork);
+	QTimer::singleShot(0, m_netWorker, &NetWorker::startWork);
 
 	m_updateTimer = new QTimer(this);
 	m_updateTimer->setInterval(250);
@@ -48,23 +48,24 @@ ZBNT::ZBNT() : QObject(nullptr)
 	connect(m_discovery, &QDiscoveryClient::deviceDiscovered, this, &ZBNT::onDeviceDiscovered);
 	connect(m_discovery, &QDiscoveryClient::discoveryTimeout, this, &ZBNT::onDiscoveryTimeout);
 
-	connect(this, &ZBNT::bitstreamDevicesChanged, m_netWorker, &QNetworkWorker::setDevices);
-	connect(this, &ZBNT::connectToBoard, m_netWorker, &QNetworkWorker::connectToBoard);
-	connect(this, &ZBNT::disconnectFromBoard, m_netWorker, &QNetworkWorker::disconnectFromBoard);
-	connect(this, &ZBNT::setActiveBitstream, m_netWorker, &QNetworkWorker::setActiveBitstream);
-	connect(this, &ZBNT::setDeviceProperty, m_netWorker, &QNetworkWorker::setDeviceProperty);
-	connect(this, &ZBNT::getDeviceProperty, m_netWorker, &QNetworkWorker::getDeviceProperty);
-	connect(this, &ZBNT::getDevicePropertyWithArgs, m_netWorker, &QNetworkWorker::getDevicePropertyWithArgs);
-	connect(this, &ZBNT::startRun, m_netWorker, &QNetworkWorker::startRun);
-	connect(this, &ZBNT::stopRun, m_netWorker, &QNetworkWorker::stopRun);
+	connect(this, &ZBNT::bitstreamDevicesChanged, m_netWorker, &NetWorker::setDevices);
+	connect(this, &ZBNT::connectTcp, m_netWorker, &NetWorker::connectTcp);
+	connect(this, &ZBNT::connectLocal, m_netWorker, &NetWorker::connectLocal);
+	connect(this, &ZBNT::disconnectFromBoard, m_netWorker, &NetWorker::disconnectFromBoard);
+	connect(this, &ZBNT::setActiveBitstream, m_netWorker, &NetWorker::setActiveBitstream);
+	connect(this, &ZBNT::setDeviceProperty, m_netWorker, &NetWorker::setDeviceProperty);
+	connect(this, &ZBNT::getDeviceProperty, m_netWorker, &NetWorker::getDeviceProperty);
+	connect(this, &ZBNT::getDevicePropertyWithArgs, m_netWorker, &NetWorker::getDevicePropertyWithArgs);
+	connect(this, &ZBNT::startRun, m_netWorker, &NetWorker::startRun);
+	connect(this, &ZBNT::stopRun, m_netWorker, &NetWorker::stopRun);
 
-	connect(m_netWorker, &QNetworkWorker::timeChanged, this, &ZBNT::onTimeChanged);
-	connect(m_netWorker, &QNetworkWorker::runningChanged, this, &ZBNT::onRunningChanged);
-	connect(m_netWorker, &QNetworkWorker::connectedChanged, this, &ZBNT::onConnectedChanged);
-	connect(m_netWorker, &QNetworkWorker::connectionError, this, &ZBNT::onConnectionError);
-	connect(m_netWorker, &QNetworkWorker::bitstreamsChanged, this, &ZBNT::onBitstreamsChanged);
-	connect(m_netWorker, &QNetworkWorker::activeBitstreamChanged, this, &ZBNT::onActiveBitstreamChanged);
-	connect(m_netWorker, &QNetworkWorker::propertyChanged, this, &ZBNT::propertyChanged);
+	connect(m_netWorker, &NetWorker::timeChanged, this, &ZBNT::onTimeChanged);
+	connect(m_netWorker, &NetWorker::runningChanged, this, &ZBNT::onRunningChanged);
+	connect(m_netWorker, &NetWorker::connectedChanged, this, &ZBNT::onConnectedChanged);
+	connect(m_netWorker, &NetWorker::connectionError, this, &ZBNT::onConnectionError);
+	connect(m_netWorker, &NetWorker::bitstreamsChanged, this, &ZBNT::onBitstreamsChanged);
+	connect(m_netWorker, &NetWorker::activeBitstreamChanged, this, &ZBNT::onActiveBitstreamChanged);
+	connect(m_netWorker, &NetWorker::propertyChanged, this, &ZBNT::propertyChanged);
 }
 
 ZBNT::~ZBNT()

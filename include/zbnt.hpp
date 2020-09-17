@@ -32,7 +32,7 @@
 #include <Messages.hpp>
 #include <MessageReceiver.hpp>
 #include <QDiscoveryClient.hpp>
-#include <QNetworkWorker.hpp>
+#include <net/NetWorker.hpp>
 
 class ZBNT : public QObject
 {
@@ -111,7 +111,8 @@ signals:
 
 	void discoveryDone();
 
-	void connectToBoard(const QString &ip, quint16 port);
+	void connectTcp(const QString &ip, quint16 port);
+	void connectLocal(qint64 pid);
 	void disconnectFromBoard();
 
 	void startRun(bool enableLog);
@@ -127,7 +128,7 @@ private slots:
 
 private:
 	QDiscoveryClient *m_discovery = nullptr;
-	QNetworkWorker *m_netWorker = nullptr;
+	NetWorker *m_netWorker = nullptr;
 	QThread *m_netThread = nullptr;
 	QTimer *m_updateTimer = nullptr;
 

@@ -16,7 +16,7 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QNetworkWorker.hpp>
+#include <net/NetWorker.hpp>
 
 #include <QDir>
 #include <QDateTime>
@@ -27,31 +27,29 @@
 #include <dev/QFrameDetector.hpp>
 #include <dev/QAbstractDevice.hpp>
 
+#include <net/ZbntLocalClient.hpp>
+#include <net/ZbntTcpClient.hpp>
+
 #include <zbnt.hpp>
 #include <MessageUtils.hpp>
 
-QNetworkWorker::QNetworkWorker(QObject *parent) : QObject(parent), MessageReceiver()
+NetWorker::NetWorker(QObject *parent)
+	: QObject(parent)
 { }
 
-QNetworkWorker::~QNetworkWorker()
+NetWorker::~NetWorker()
 { }
 
-void QNetworkWorker::startWork()
+void NetWorker::startWork()
 {
-	m_socket = new QTcpSocket(this);
-	m_socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
-
 	m_helloTimer = new QTimer(this);
 	m_helloTimer->setInterval(MSG_HELLO_TIMEOUT);
 	m_helloTimer->setSingleShot(false);
 
-	connect(m_helloTimer, &QTimer::timeout, this, &QNetworkWorker::onHelloTimeout);
-	connect(m_socket, &QTcpSocket::stateChanged, this, &QNetworkWorker::onNetworkStateChanged);
-	connect(m_socket, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), this, &QNetworkWorker::onNetworkError);
-	connect(m_socket, &QTcpSocket::readyRead, this, &QNetworkWorker::onReadyRead);
+	connect(m_helloTimer, &QTimer::timeout, this, &NetWorker::onHelloTimeout);
 }
 
-void QNetworkWorker::setDevices(const QVector<QAbstractDevice*> &devList)
+void NetWorker::setDevices(const QVector<QAbstractDevice*> &devList)
 {
 	m_devices.clear();
 
@@ -61,7 +59,7 @@ void QNetworkWorker::setDevices(const QVector<QAbstractDevice*> &devList)
 	}
 }
 
-void QNetworkWorker::updateDisplayedValues()
+void NetWorker::updateDisplayedValues()
 {
 	QMutexLocker lock(&m_mutex);
 
@@ -72,56 +70,85 @@ void QNetworkWorker::updateDisplayedValues()
 	}
 }
 
-void QNetworkWorker::connectToBoard(const QString &ip, quint16 port)
+void NetWorker::connectTcp(const QString &ip, quint16 port)
 {
-	m_socket->connectToHost(ip, port);
+	if(m_client)
+	{
+		m_client->abortConnection();
+		m_client->deleteLater();
+	}
+
+	m_client = new ZbntTcpClient(ip, port, this);
+
+	connect(m_client, &ZbntClient::stateChanged, this, &NetWorker::onStateChanged);
+	connect(m_client, &ZbntClient::connectionError, this, &NetWorker::onConnectionError);
+	connect(m_client, &ZbntClient::messageReceived, this, &NetWorker::onMessageReceived);
+
+	m_client->connectToServer();
 }
 
-void QNetworkWorker::disconnectFromBoard()
+void NetWorker::connectLocal(qint64 pid)
 {
-	m_socket->disconnectFromHost();
+	if(m_client)
+	{
+		m_client->abortConnection();
+		m_client->deleteLater();
+	}
+
+	m_client = new ZbntLocalClient(pid, this);
+
+	connect(m_client, &ZbntClient::stateChanged, this, &NetWorker::onStateChanged);
+	connect(m_client, &ZbntClient::connectionError, this, &NetWorker::onConnectionError);
+	connect(m_client, &ZbntClient::messageReceived, this, &NetWorker::onMessageReceived);
+
+	m_client->connectToServer();
 }
 
-void QNetworkWorker::setActiveBitstream(const QString &value)
+void NetWorker::disconnectFromBoard()
+{
+	m_client->closeConnection();
+}
+
+void NetWorker::setActiveBitstream(const QString &value)
 {
 	QByteArray args;
 	appendAsBytes<quint16>(args, value.size());
 	args.append(value.toUtf8());
-	writeMessage(m_socket, MSG_ID_PROGRAM_PL, args);
+	m_client->writeMessage(MSG_ID_PROGRAM_PL, args);
 }
 
-void QNetworkWorker::getDeviceProperty(quint8 devID, quint32 propID)
+void NetWorker::getDeviceProperty(quint8 devID, quint32 propID)
 {
 	QByteArray args;
 	appendAsBytes<quint8>(args, devID);
 	appendAsBytes<quint16>(args, propID);
-	writeMessage(m_socket, MSG_ID_GET_PROPERTY, args);
+	m_client->writeMessage(MSG_ID_GET_PROPERTY, args);
 }
 
-void QNetworkWorker::getDevicePropertyWithArgs(quint8 devID, quint32 propID, const QByteArray &params)
+void NetWorker::getDevicePropertyWithArgs(quint8 devID, quint32 propID, const QByteArray &params)
 {
 	QByteArray args;
 	appendAsBytes<quint8>(args, devID);
 	appendAsBytes<quint16>(args, propID);
 	args.append(params);
-	writeMessage(m_socket, MSG_ID_GET_PROPERTY, args);
+	m_client->writeMessage(MSG_ID_GET_PROPERTY, args);
 }
 
-void QNetworkWorker::setDeviceProperty(quint8 devID, quint32 propID, const QByteArray &values)
+void NetWorker::setDeviceProperty(quint8 devID, quint32 propID, const QByteArray &values)
 {
 	QByteArray args;
 	appendAsBytes<quint8>(args, devID);
 	appendAsBytes<quint16>(args, propID);
 	args.append(values);
-	writeMessage(m_socket, MSG_ID_SET_PROPERTY, args);
+	m_client->writeMessage(MSG_ID_SET_PROPERTY, args);
 }
 
-void QNetworkWorker::sendData(const QByteArray &data)
+void NetWorker::sendData(const QByteArray &data)
 {
-	m_socket->write(data);
+	m_client->write(data);
 }
 
-void QNetworkWorker::startRun(bool exportResults)
+void NetWorker::startRun(bool exportResults)
 {
 	for(QAbstractDevice *dev : m_devices)
 	{
@@ -145,16 +172,51 @@ void QNetworkWorker::startRun(bool exportResults)
 	}
 
 	emit timeChanged(0);
-	writeMessage(m_socket, MSG_ID_RUN_START, QByteArray());
+	m_client->writeMessage(MSG_ID_RUN_START, QByteArray());
 	setDeviceProperty(0xFF, PROP_ENABLE, QByteArray(1, '\1'));
 }
 
-void QNetworkWorker::stopRun()
+void NetWorker::stopRun()
 {
-	writeMessage(m_socket, MSG_ID_RUN_STOP, QByteArray());
+	m_client->writeMessage(MSG_ID_RUN_STOP, QByteArray());
 }
 
-void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
+void NetWorker::onStateChanged(ZbntClient::State state)
+{
+	switch(state)
+	{
+		case ZbntClient::Disconnected:
+		{
+			emit connectedChanged(ZBNT::Disconnected);
+			emit runningChanged(false);
+			m_helloTimer->stop();
+			break;
+		}
+
+		case ZbntClient::Connecting:
+		{
+			emit connectedChanged(ZBNT::Connecting);
+			break;
+		}
+
+		case ZbntClient::Connected:
+		{
+			m_helloReceived = false;
+			m_client->writeMessage(MSG_ID_HELLO, QByteArray());
+			m_helloTimer->start();
+			break;
+		}
+
+		default: { }
+	}
+}
+
+void NetWorker::onConnectionError(const char *error)
+{
+	emit connectionError(error);
+}
+
+void NetWorker::onMessageReceived(quint16 id, const QByteArray &data)
 {
 	if(!(m_helloReceived ^ (id == MSG_ID_HELLO))) return;
 
@@ -276,73 +338,9 @@ void QNetworkWorker::onMessageReceived(quint16 id, const QByteArray &data)
 	}
 }
 
-void QNetworkWorker::onNetworkStateChanged(QAbstractSocket::SocketState state)
-{
-	switch(state)
-	{
-		case QAbstractSocket::UnconnectedState:
-		{
-			emit connectedChanged(ZBNT::Disconnected);
-			emit runningChanged(false);
-			m_helloTimer->stop();
-			break;
-		}
-
-		case QAbstractSocket::ConnectingState:
-		{
-			emit connectedChanged(ZBNT::Connecting);
-			break;
-		}
-
-		case QAbstractSocket::ConnectedState:
-		{
-			writeMessage(m_socket, MSG_ID_HELLO, QByteArray());
-			m_helloReceived = false;
-			m_helloTimer->start();
-			break;
-		}
-
-		default: { }
-	}
-}
-
-void QNetworkWorker::onNetworkError(QAbstractSocket::SocketError error)
-{
-	switch(error)
-	{
-		case QAbstractSocket::NetworkError:
-		{
-			emit connectionError("Unreachable address");
-			break;
-		}
-
-		case QAbstractSocket::SocketTimeoutError:
-		{
-			emit connectionError("Timeout");
-			break;
-		}
-
-		case QAbstractSocket::ConnectionRefusedError:
-		{
-			emit connectionError("Connection refused");
-			break;
-		}
-
-		default:
-		{
-			emit connectionError("Unknown error");
-		}
-	}
-}
-
-void QNetworkWorker::onHelloTimeout()
+void NetWorker::onHelloTimeout()
 {
 	emit connectionError("Server timeout, HELLO message not received");
+	m_client->abortConnection();
 	m_helloTimer->stop();
-	m_socket->abort();
-}
-
-void QNetworkWorker::onReadyRead()
-{
-	handleIncomingData(m_socket->readAll());
 }

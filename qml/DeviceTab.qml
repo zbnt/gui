@@ -157,7 +157,16 @@ Item {
 								}
 								else
 								{
-									ZBNT.connectToBoard(ZBNT.deviceList[deviceSelector.currentIndex].ip, ZBNT.deviceList[deviceSelector.currentIndex].port);
+									var device = ZBNT.deviceList[deviceSelector.currentIndex];
+
+									if(!device.local)
+									{
+										ZBNT.connectTcp(device.ip, device.port);
+									}
+									else
+									{
+										ZBNT.connectLocal(device.pid);
+									}
 								}
 							}
 							else
