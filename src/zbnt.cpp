@@ -374,11 +374,26 @@ void ZBNT::onDeviceDiscovered(const QHostAddress &addr, const QByteArray &data)
 		versionStr += "+d";
 	}
 
+	quint8 local = readAsNumber<quint8>(data, 45);
+	quint16 port = 0;
+	qint64 pid = -1;
+
+	if(!local)
+	{
+		port = readAsNumber<quint16>(data, 46);
+	}
+	else
+	{
+		pid = readAsNumber<qint64>(data, 46);
+	}
+
 	QVariantMap device;
 	device["version"] = version;
 	device["versionstr"] = versionStr;
-	device["hostname"] = QByteArray(data.constData() + 47, data.size() - 47);
-	device["port"] = readAsNumber<quint16>(data, 45);
+	device["name"] = QByteArray(data.constData() + 54, data.size() - 54);
+	device["local"] = local;
+	device["port"] = port;
+	device["pid"] = pid;
 
 	bool ok = false;
 	quint32 ip4 = addr.toIPv4Address(&ok);
@@ -405,7 +420,12 @@ void ZBNT::onDiscoveryTimeout()
 			QVariantMap mapA = a.toMap();
 			QVariantMap mapB = b.toMap();
 
-			if(mapA["hostname"].toString() < mapB["hostname"].toString())
+			if(mapA["local"].toUInt() && !mapB["local"].toUInt())
+			{
+				return true;
+			}
+
+			if(mapA["name"].toString() < mapB["name"].toString())
 			{
 				return true;
 			}

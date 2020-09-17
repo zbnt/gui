@@ -50,6 +50,8 @@ void QDiscoveryClient::findDevices()
 	appendAsBytes<quint16>(message, 8);
 	appendAsBytes<quint64>(message, m_validator);
 
+	m_client->writeDatagram(message, QHostAddress::LocalHost, MSG_DISCOVERY_PORT);
+
 	for(const QNetworkInterface &iface : QNetworkInterface::allInterfaces())
 	{
 		if(iface.type() == QNetworkInterface::Loopback) continue;
@@ -79,31 +81,31 @@ void QDiscoveryClient::onReadyRead()
 	while(m_client->hasPendingDatagrams())
 	{
 		QNetworkDatagram datagram = m_client->receiveDatagram();
-		QByteArray rx_message = datagram.data();
+		QByteArray response = datagram.data();
 
 		if(!m_timer->isActive())
 		{
 			continue;
 		}
 
-		if(rx_message.size() <= 47)
+		if(response.size() <= 54)
 		{
 			continue;
 		}
 
-		if(!rx_message.startsWith(MSG_MAGIC_IDENTIFIER))
+		if(!response.startsWith(MSG_MAGIC_IDENTIFIER))
 		{
 			continue;
 		}
 
-		uint16_t messageID = readAsNumber<uint16_t>(rx_message, 4);
-		uint16_t messageSize = readAsNumber<uint16_t>(rx_message, 6);
+		uint16_t messageID = readAsNumber<uint16_t>(response, 4);
+		uint16_t messageSize = readAsNumber<uint16_t>(response, 6);
 
-		if(messageID != MSG_ID_DISCOVERY || messageSize <= 47)
+		if(messageID != MSG_ID_DISCOVERY || messageSize <= 54)
 		{
 			continue;
 		}
 
-		emit deviceDiscovered(datagram.senderAddress(), rx_message.mid(8, messageSize));
+		emit deviceDiscovered(datagram.senderAddress(), response.mid(8, messageSize));
 	}
 }

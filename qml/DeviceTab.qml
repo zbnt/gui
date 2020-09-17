@@ -98,7 +98,7 @@ Item {
 					Layout.fillWidth: true
 
 					delegate: ItemDelegate {
-						text: modelData.hostname + " (v" + modelData.versionstr + " at " + modelData.fullAddr + ")"
+						text: modelData.name + " (v" + modelData.versionstr + (!modelData.local ? (" at " + modelData.fullAddr) : "") + ")"
 						width: parent.width
 
 						onClicked: {
@@ -115,7 +115,7 @@ Item {
 						else
 						{
 							var activeItem = ZBNT.deviceList[deviceSelector.currentIndex]
-							displayText = activeItem.hostname + " (v" + activeItem.versionstr + " at " + activeItem.fullAddr + ")"
+							displayText = activeItem.name + " (v" + activeItem.versionstr + (!activeItem.local ? (" at " + activeItem.fullAddr) : "") + ")"
 						}
 					}
 				}
