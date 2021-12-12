@@ -56,14 +56,14 @@ Item {
 				anchors.rightMargin: 5
 
 				Label {
-					text: "Ping-pongs:"
+					text: "Pings:"
 					font.weight: Font.Bold
 					horizontalAlignment: Text.AlignRight
 					Layout.minimumWidth: parent.width / 2
 				}
 
 				Label {
-					text: root.object.numPingPongs
+					text: root.object.numPings
 					Layout.fillWidth: true
 				}
 
@@ -127,7 +127,7 @@ Item {
 				}
 
 				Label {
-					text: root.object.lastPing
+					text: root.object.pingTime
 					Layout.fillWidth: true
 				}
 
@@ -139,7 +139,7 @@ Item {
 				}
 
 				Label {
-					text: root.object.lastPong
+					text: root.object.pongTime
 					Layout.fillWidth: true
 				}
 			}

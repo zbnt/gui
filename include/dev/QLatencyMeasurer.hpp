@@ -33,20 +33,20 @@ class QLatencyMeasurer : public QAbstractDevice
 	Q_PROPERTY(QString delay MEMBER m_delay NOTIFY settingsChanged)
 	Q_PROPERTY(QString timeout MEMBER m_timeout NOTIFY settingsChanged)
 
-	Q_PROPERTY(QString numPingPongs READ numPingPongs NOTIFY measurementChanged)
+	Q_PROPERTY(QString numPings READ numPings NOTIFY measurementChanged)
+	Q_PROPERTY(QString pingTime READ pingTime NOTIFY measurementChanged)
+	Q_PROPERTY(QString pongTime READ pongTime NOTIFY measurementChanged)
 	Q_PROPERTY(QString numLostPings READ numLostPings NOTIFY measurementChanged)
 	Q_PROPERTY(QString numLostPongs READ numLostPongs NOTIFY measurementChanged)
-	Q_PROPERTY(QString lastPing READ lastPing NOTIFY measurementChanged)
-	Q_PROPERTY(QString lastPong READ lastPong NOTIFY measurementChanged)
 
 	struct Measurement
 	{
 		quint64 time = 0;
-		quint64 numPingPongs = 0;
+		quint64 numPings = 0;
+		quint32 pingTime = 0;
+		quint32 pongTime = 0;
 		quint64 numLostPings = 0;
 		quint64 numLostPongs = 0;
-		quint64 lastPing = 0;
-		quint64 lastPong = 0;
 	};
 
 public:
@@ -68,11 +68,11 @@ public slots:
 	QString settingsQml() const;
 	QString statusQml() const;
 
-	QString numPingPongs();
+	QString numPings();
+	QString pingTime();
+	QString pongTime();
 	QString numLostPings();
 	QString numLostPongs();
-	QString lastPing();
-	QString lastPong();
 
 signals:
 	void settingsChanged();

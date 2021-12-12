@@ -81,10 +81,10 @@ void QLatencyMeasurer::receiveMeasurement(const QByteArray &measurement)
 
 	m_currentValues.time = readAsNumber<quint64>(measurement, 0);
 
-	m_currentValues.lastPing = readAsNumber<quint32>(measurement, 8);
-	m_currentValues.lastPong = readAsNumber<quint32>(measurement, 12);
+	m_currentValues.numPings = readAsNumber<quint64>(measurement, 8);
+	m_currentValues.pingTime = readAsNumber<quint32>(measurement, 16);
+	m_currentValues.pongTime = readAsNumber<quint32>(measurement, 20);
 
-	m_currentValues.numPingPongs = readAsNumber<quint64>(measurement, 16);
 	m_currentValues.numLostPings = readAsNumber<quint64>(measurement, 24);
 	m_currentValues.numLostPongs = readAsNumber<quint64>(measurement, 32);
 
@@ -94,11 +94,11 @@ void QLatencyMeasurer::receiveMeasurement(const QByteArray &measurement)
 	{
 		m_logFile.write(QByteArray::number(m_currentValues.time));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(m_currentValues.lastPing));
+		m_logFile.write(QByteArray::number(m_currentValues.numPings));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(m_currentValues.lastPong));
+		m_logFile.write(QByteArray::number(m_currentValues.pingTime));
 		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(m_currentValues.numPingPongs));
+		m_logFile.write(QByteArray::number(m_currentValues.pongTime));
 		m_logFile.putChar(',');
 		m_logFile.write(QByteArray::number(m_currentValues.numLostPings));
 		m_logFile.putChar(',');
@@ -113,10 +113,10 @@ void QLatencyMeasurer::resetMeasurement()
 
 	m_currentValues.time = 0;
 
-	m_currentValues.lastPing = 0;
-	m_currentValues.lastPong = 0;
+	m_currentValues.numPings = 0;
+	m_currentValues.pingTime = 0;
+	m_currentValues.pongTime = 0;
 
-	m_currentValues.numPingPongs = 0;
 	m_currentValues.numLostPings = 0;
 	m_currentValues.numLostPongs = 0;
 }
@@ -136,9 +136,23 @@ QString QLatencyMeasurer::statusQml() const
 	return QString("qrc:/qml/StatusTabLM.qml");
 }
 
-QString QLatencyMeasurer::numPingPongs()
+QString QLatencyMeasurer::numPings()
 {
-	return QString::number(m_currentValues.numPingPongs);
+	return QString::number(m_currentValues.numPings);
+}
+
+QString QLatencyMeasurer::pingTime()
+{
+	QString res;
+	cyclesToTime(m_currentValues.pingTime, res);
+	return res;
+}
+
+QString QLatencyMeasurer::pongTime()
+{
+	QString res;
+	cyclesToTime(m_currentValues.pongTime, res);
+	return res;
 }
 
 QString QLatencyMeasurer::numLostPings()
@@ -149,18 +163,4 @@ QString QLatencyMeasurer::numLostPings()
 QString QLatencyMeasurer::numLostPongs()
 {
 	return QString::number(m_currentValues.numLostPongs);
-}
-
-QString QLatencyMeasurer::lastPong()
-{
-	QString res;
-	cyclesToTime(m_currentValues.lastPong, res);
-	return res;
-}
-
-QString QLatencyMeasurer::lastPing()
-{
-	QString res;
-	cyclesToTime(m_currentValues.lastPing, res);
-	return res;
 }
