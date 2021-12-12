@@ -143,41 +143,33 @@ void QFrameDetector::updateDisplayedValues()
 
 void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 {
-	if(measurement.size() < 14) return;
+	if(measurement.size() < 15) return;
 
 	quint64 time = readAsNumber<quint64>(measurement, 0);
-	quint8 matchDir = readAsNumber<quint8>(measurement, 8);
-	quint8 logWidth = readAsNumber<quint8>(measurement, 9);
-	quint16 extCount = readAsNumber<quint16>(measurement, 10);
-	quint16 matchMask = readAsNumber<quint16>(measurement, 12);
+	quint32 number = readAsNumber<quint32>(measurement, 8);
+	quint8 matchDir = readAsNumber<quint8>(measurement, 12);
+	quint8 logWidth = readAsNumber<quint8>(measurement, 13);
+	quint8 matchMask = readAsNumber<quint8>(measurement, 14);
 
-	qint32 extOffset = ((logWidth + 13) / logWidth) * logWidth;
+	qint32 extOffset = ((logWidth + 23) / logWidth) * logWidth - 8;
 
 	matchDir -= 'A';
-
 	if(matchDir > 1) return;
-	if(measurement.size() % logWidth != 0) return;
-	if(extCount > measurement.size() - extOffset) return;
 
 	QString matchMaskStr;
+	matchMaskStr.resize(m_numScripts, '0');
+
 	for(quint32 i = 0; i < m_numScripts; ++i)
 	{
-		matchMaskStr.prepend(QString::number(!!(matchMask & (1 << i))));
+		matchMaskStr[m_numScripts - i - 1] = '0' + !!(matchMask & (1 << i));
 	}
 
 	QStringList matchInfo =
 	{
 		QString::number(time * 8),
 		matchMaskStr,
-		QString("%1 bytes").arg(extCount),
+		QString("%1 bytes").arg(measurement.size() - extOffset),
 	};
-
-	QByteArray extractedData = measurement.mid(extOffset);
-
-	if(extractedData.size() && extCount % logWidth != 0)
-	{
-		extractedData.remove(extractedData.size() - logWidth, logWidth - extCount % logWidth);
-	}
 
 	m_mutex.lock();
 
@@ -195,7 +187,11 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 
 	if(m_logFile.isWritable())
 	{
+		QByteArray extractedData = measurement.mid(extOffset);
+
 		m_logFile.write(QByteArray::number(time));
+		m_logFile.putChar(',');
+		m_logFile.write(QByteArray::number(number));
 		m_logFile.putChar(',');
 		m_logFile.write(QByteArray::number(matchDir));
 		m_logFile.putChar(',');
