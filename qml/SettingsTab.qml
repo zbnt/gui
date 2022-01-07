@@ -30,7 +30,7 @@ Item {
 	Connections {
 		target: ZBNT
 
-		onBitstreamDevicesChanged: {
+		function onBitstreamDevicesChanged(devices) {
 			var deviceDescriptions = []
 
 			for(var obj of root.stackLayoutObjects)
@@ -54,7 +54,7 @@ Item {
 			categorySelector.model = deviceDescriptions
 		}
 
-		onConnectedChanged: {
+		function onConnectedChanged() {
 			if(ZBNT.connected == ZBNT.Disconnected)
 			{
 				for(var obj of root.stackLayoutObjects)

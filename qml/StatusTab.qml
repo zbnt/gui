@@ -30,7 +30,7 @@ Item {
 	Connections {
 		target: ZBNT
 
-		onBitstreamDevicesChanged: {
+		function onBitstreamDevicesChanged(devices) {
 			var deviceDescriptions = []
 
 			for(var obj of root.stackLayoutObjects)

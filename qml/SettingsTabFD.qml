@@ -67,7 +67,7 @@ Item {
 	Connections {
 		target: ZBNT
 
-		onPropertyChanged: {
+		function onPropertyChanged(success, devID, propID, value) {
 			if(devID == root.deviceID)
 			{
 				if(propID == Messages.PROP_ENABLE)
@@ -126,7 +126,7 @@ Item {
 	Connections {
 		target: root.object
 
-		onError: {
+		function onError(msg) {
 			errorDialog.text = msg;
 			errorDialog.open();
 		}

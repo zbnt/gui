@@ -40,7 +40,7 @@ GridLayout {
 	Connections {
 		target: ZBNT
 
-		onConnectedChanged: {
+		function onConnectedChanged() {
 			if(ZBNT.connected == ZBNT.Connected)
 			{
 				ZBNT.getDeviceProperty(0xFF, Messages.PROP_TIMER_LIMIT)
@@ -51,13 +51,13 @@ GridLayout {
 			}
 		}
 
-		onActiveBitstreamChanged: {
+		function onActiveBitstreamChanged(value) {
 			bitstreamSelector.currentIndex = ZBNT.bitstreamNames.indexOf(value)
 			ZBNT.bitstreamID = bitstreamSelector.currentIndex
 			root.changePending &= ~1
 		}
 
-		onPropertyChanged: {
+		function onPropertyChanged(success, devID, propID, value) {
 			if(devID == 0xFF && propID == Messages.PROP_TIMER_LIMIT)
 			{
 				root.changePending &= ~2

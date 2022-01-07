@@ -32,7 +32,7 @@ Item {
 	Connections {
 		target: root.object
 
-		onError: {
+		function onError(msg) {
 			errorDialog.text = msg;
 			errorDialog.open();
 		}

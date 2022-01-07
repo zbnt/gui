@@ -75,7 +75,7 @@ RowLayout {
 	Connections {
 		target: ZBNT
 
-		onPropertyChanged: {
+		function onPropertyChanged(success, devID, propID, value) {
 			if(devID == root.deviceID && propID == root.propertyID)
 			{
 				root.changePending = false

@@ -32,15 +32,15 @@ Item {
 	Connections {
 		target: ZBNT
 
-		onRunningChanged: {
+		function onRunningChanged() {
 			root.changePending = false;
 		}
 
-		onDiscoveryDone: {
+		function onDiscoveryDone() {
 			root.discoveryBusy = false;
 		}
 
-		onConnectionError: {
+		function onConnectionError(error) {
 			errorDialog.text = "Failed to connect to device : " + error;
 			errorDialog.open();
 		}
