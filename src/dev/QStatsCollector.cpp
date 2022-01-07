@@ -25,7 +25,7 @@
 #include <MessageUtils.hpp>
 
 QStatsCollector::QStatsCollector(QObject *parent)
-	: QAbstractDevice(parent)
+	: QAbstractDevice(DEV_STATS_COLLECTOR, parent)
 { }
 
 QStatsCollector::~QStatsCollector()

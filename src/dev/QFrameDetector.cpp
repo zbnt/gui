@@ -25,8 +25,11 @@
 #include <Messages.hpp>
 #include <MessageUtils.hpp>
 
+constexpr quint32 PCAP_IDB_BLOCKTYPE = 0x00000001;
+constexpr quint32 PCAP_EPB_BLOCKTYPE = 0x00000006;
+
 QFrameDetector::QFrameDetector(QObject *parent)
-	: QAbstractDevice(parent)
+	: QAbstractDevice(DEV_FRAME_DETECTOR, parent)
 {
 	m_scriptsEnabled = 0;
 	m_detectionListA = new QTableModel(3, this);
@@ -99,17 +102,54 @@ void QFrameDetector::loadInitialProperties(const QList<QPair<PropertyID, QByteAr
 	emit settingsChanged();
 }
 
-void QFrameDetector::enableLogging(const QString &path)
+quint32 QFrameDetector::setPcapOutput(std::shared_ptr<QIODevice> &output, quint32 index)
 {
-	disableLogging();
+	m_logOutput = output;
+	m_logIndex = index;
 
-	m_logFile.setFileName(path + QString("/eth%1_eth%2_detector.csv").arg(m_portA).arg(m_portB));
-	m_logFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
+	quint16 port_a = m_portA;
+	quint16 port_b = m_portB;
+
+	for(int i = 0; i < 2; ++i)
+	{
+		auto name = QString("eth%1_to_eth%2").arg(port_a).arg(port_b).toUtf8();
+		auto padding = (name.length() % 4) ? (4 - name.length() % 4) : 0;
+		quint32 blen = name.length() + padding + 32;
+
+		writeAsBytes(output, PCAP_IDB_BLOCKTYPE);
+		writeAsBytes(output, blen);
+
+		// IDB body
+
+		writeAsBytes(output, quint32(1));     // LinkType + RESERVED
+		writeAsBytes(output, m_extrFifoSize); // SnapLen
+
+		// if_name
+
+		writeAsBytes(output, quint16(2));
+		writeAsBytes(output, quint16(name.length()));
+		output->write(name);
+		output->write("\x00\x00\x00\x00", padding);
+
+		// if_tsresol
+
+		writeAsBytes(output, quint16(9));
+		writeAsBytes(output, quint16(1));
+		writeAsBytes(output, quint32(9));
+
+		writeAsBytes(output, blen);
+		std::swap(port_a, port_b);
+	}
+
+	return 2;
 }
+
+void QFrameDetector::enableLogging(const QString&)
+{ }
 
 void QFrameDetector::disableLogging()
 {
-	if(m_logFile.isOpen()) m_logFile.close();
+	m_logOutput.reset();
 }
 
 void QFrameDetector::updateDisplayedValues()
@@ -151,6 +191,7 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 	quint8 logWidth = readAsNumber<quint8>(measurement, 13);
 	quint8 matchMask = readAsNumber<quint8>(measurement, 14);
 
+	quint64 timeNs = 8 * time;
 	qint32 extOffset = ((logWidth + 23) / logWidth) * logWidth - 8;
 
 	matchDir -= 'A';
@@ -166,7 +207,7 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 
 	QStringList matchInfo =
 	{
-		QString::number(time * 8),
+		QString::number(timeNs),
 		matchMaskStr,
 		QString("%1 bytes").arg(measurement.size() - extOffset),
 	};
@@ -185,20 +226,41 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 
 	m_mutex.unlock();
 
-	if(m_logFile.isWritable())
+	if(m_logOutput && m_logOutput->isWritable())
 	{
-		QByteArray extractedData = measurement.mid(extOffset);
+		quint32 plen = measurement.size() - extOffset;
+		quint32 blen = plen + 52 + ((plen % 4) ? (4 - plen % 4) : 0);
 
-		m_logFile.write(QByteArray::number(time));
-		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(number));
-		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(matchDir));
-		m_logFile.putChar(',');
-		m_logFile.write(QByteArray::number(matchMask));
-		m_logFile.putChar(',');
-		m_logFile.write(extractedData.toHex());
-		m_logFile.putChar('\n');
+		writeAsBytes(m_logOutput, PCAP_EPB_BLOCKTYPE);
+		writeAsBytes(m_logOutput, blen);
+
+		// EPB body
+
+		writeAsBytes(m_logOutput, m_logIndex + matchDir);
+		writeAsBytes(m_logOutput, quint32(timeNs >> 32));
+		writeAsBytes(m_logOutput, quint32(timeNs));
+		writeAsBytes(m_logOutput, plen);
+		writeAsBytes(m_logOutput, plen);
+		m_logOutput->write(measurement.constData() + extOffset, plen);
+
+		if(plen % 4)
+		{
+			m_logOutput->write("\x00\x00\x00\x00", 4 - plen % 4);
+		}
+
+		// epb_packetid
+
+		writeAsBytes(m_logOutput, quint16(5));
+		writeAsBytes(m_logOutput, quint16(8));
+		writeAsBytes(m_logOutput, quint64(number));
+
+		// opt_custom (match mask)
+
+		writeAsBytes(m_logOutput, quint16(2989));
+		writeAsBytes(m_logOutput, quint16(4));
+		writeAsBytes(m_logOutput, quint32(matchMask));
+
+		writeAsBytes(m_logOutput, blen);
 	}
 }
 
@@ -333,7 +395,7 @@ bool QFrameDetector::parseScript(QTextStream &input, Script &script, QString &er
 
 		// Parse instruction
 
-		QVector<QStringRef> pieces = line.splitRef(' ', QString::SkipEmptyParts);
+		auto pieces = line.splitRef(' ', Qt::SkipEmptyParts);
 
 		switch(pieces.size())
 		{

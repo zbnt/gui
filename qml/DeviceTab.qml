@@ -262,7 +262,7 @@ Item {
 					onClicked: {
 						if(!ZBNT.running)
 						{
-							ZBNT.startRun(ZBNT.exportResults)
+							ZBNT.startRun(ZBNT.exportResults, ZBNT.openWireshark)
 						}
 						else
 						{

@@ -18,9 +18,12 @@
 
 #pragma once
 
+#include <memory>
+
 #include <QObject>
 #include <QList>
 #include <QPair>
+#include <QIODevice>
 
 #include <Messages.hpp>
 
@@ -38,16 +41,19 @@ class QAbstractDevice : public QObject
 	Q_PROPERTY(quint8 id MEMBER m_id READ id)
 
 public:
-	QAbstractDevice(QObject *parent = nullptr);
+	QAbstractDevice(DeviceType type, QObject *parent = nullptr);
 	~QAbstractDevice();
 
 	quint8 id() const;
 	void setID(quint8 id);
 
+	DeviceType type() const;
+
 	virtual void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props) = 0;
 
-	virtual void enableLogging(const QString &path) = 0;
-	virtual void disableLogging() = 0;
+	virtual quint32 setPcapOutput(std::shared_ptr<QIODevice> &output, quint32 index);
+	virtual void enableLogging(const QString &path);
+	virtual void disableLogging();
 
 	virtual void updateDisplayedValues() = 0;
 
@@ -61,4 +67,5 @@ public slots:
 
 private:
 	quint8 m_id;
+	DeviceType m_type;
 };

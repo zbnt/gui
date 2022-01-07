@@ -20,6 +20,7 @@
 
 #include <QDir>
 #include <QDateTime>
+#include <QProcess>
 
 #include <dev/QTrafficGenerator.hpp>
 #include <dev/QLatencyMeasurer.hpp>
@@ -32,6 +33,9 @@
 
 #include <Zbnt.hpp>
 #include <MessageUtils.hpp>
+
+constexpr quint32 PCAP_SHB_BLOCKTYPE   = 0x0A0D0D0A;
+constexpr quint32 PCAP_BYTEORDER_MAGIC = 0x1A2B3C4D;
 
 NetWorker::NetWorker(QObject *parent)
 	: QObject(parent)
@@ -148,7 +152,7 @@ void NetWorker::sendData(const QByteArray &data)
 	m_client->write(data);
 }
 
-void NetWorker::startRun(bool exportResults)
+void NetWorker::startRun(bool exportResults, bool openWireshark)
 {
 	for(QAbstractDevice *dev : m_devices)
 	{
@@ -165,9 +169,62 @@ void NetWorker::startRun(bool exportResults)
 		QDir measurementDir;
 		measurementDir.mkpath("measurements/" + timeStamp);
 
+		// Set up PCap
+
+		std::shared_ptr<QIODevice> pcapOutput;
+
+		if(!openWireshark)
+		{
+			QFile *logFile = new QFile();
+
+			if(logFile)
+			{
+				logFile->setFileName("measurements/" + timeStamp + "/traffic.pcapng");
+				logFile->open(QIODevice::WriteOnly | QIODevice::Truncate);
+			}
+
+			pcapOutput.reset(logFile);
+		}
+		else
+		{
+			QProcess *wireshark = new QProcess();
+
+			pcapOutput.reset(wireshark);
+
+			if(wireshark)
+			{
+				std::shared_ptr<QIODevice> wiresharkProcess = pcapOutput;
+
+				connect(wireshark, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+					[wiresharkProcess](int, QProcess::ExitStatus)
+					{
+						Q_UNUSED(wiresharkProcess);
+					}
+				);
+
+				wireshark->start("wireshark", {"-k", "-i", "-"}, QIODevice::WriteOnly);
+			}
+		}
+
+		if(pcapOutput)
+		{
+			writeAsBytes(pcapOutput, PCAP_SHB_BLOCKTYPE);
+			writeAsBytes(pcapOutput, quint32(28));
+			writeAsBytes(pcapOutput, PCAP_BYTEORDER_MAGIC);
+			writeAsBytes(pcapOutput, quint16(1));
+			writeAsBytes(pcapOutput, quint16(0));
+			pcapOutput->write("\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", 8);
+			writeAsBytes(pcapOutput, quint32(28));
+		}
+
+		// Configure devices
+
+		quint32 index = 0;
+
 		for(QAbstractDevice *dev : m_devices)
 		{
 			dev->enableLogging("measurements/" + timeStamp);
+			index += dev->setPcapOutput(pcapOutput, index);
 		}
 	}
 

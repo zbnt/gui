@@ -24,6 +24,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QTimer>
+#include <QFile>
 
 #include <dev/QTrafficGenerator.hpp>
 #include <dev/QLatencyMeasurer.hpp>
@@ -59,7 +60,7 @@ public slots:
 	void setDeviceProperty(quint8 devID, quint32 propID, const QByteArray &values);
 
 	void sendData(const QByteArray &data);
-	void startRun(bool exportResults);
+	void startRun(bool exportResults, bool openWireshark);
 	void stopRun();
 
 private slots:

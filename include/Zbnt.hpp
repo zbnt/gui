@@ -43,6 +43,7 @@ class Zbnt : public QObject
 	Q_PROPERTY(quint16 bitstreamID MEMBER m_bitstreamID NOTIFY settingsChanged)
 	Q_PROPERTY(QString runTime READ runTime WRITE setRunTime NOTIFY settingsChanged)
 	Q_PROPERTY(bool exportResults MEMBER m_exportResults NOTIFY settingsChanged)
+	Q_PROPERTY(bool openWireshark MEMBER m_openWireshark NOTIFY settingsChanged)
 
 	Q_PROPERTY(QVariantList deviceList MEMBER m_deviceList NOTIFY devicesChanged)
 	Q_PROPERTY(QStringList bitstreamNames MEMBER m_bitstreamNames NOTIFY bitstreamsChanged)
@@ -115,7 +116,7 @@ signals:
 	void connectLocal(qint64 pid);
 	void disconnectFromBoard();
 
-	void startRun(bool enableLog);
+	void startRun(bool exportResults, bool openWireshark);
 	void stopRun();
 	void setActiveBitstream(const QString &value);
 	void getDeviceProperty(quint8 devID, quint32 propID);
@@ -141,6 +142,7 @@ private:
 
 	quint64 m_runTime = 125000000ul;
 	bool m_exportResults = true;
+	bool m_openWireshark = false;
 	quint16 m_bitstreamID = 0;
 
 	quint64 m_currentTime = 0;

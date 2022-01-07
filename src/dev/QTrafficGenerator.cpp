@@ -24,7 +24,7 @@
 #include <MessageUtils.hpp>
 
 QTrafficGenerator::QTrafficGenerator(QObject *parent)
-	: QAbstractDevice(parent)
+	: QAbstractDevice(DEV_TRAFFIC_GENERATOR, parent)
 { }
 
 QTrafficGenerator::~QTrafficGenerator()

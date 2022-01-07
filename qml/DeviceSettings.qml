@@ -34,6 +34,7 @@ GridLayout {
 
 	Component.onCompleted: {
 		ZBNT.exportResults = Qt.binding(function() { return exportFilesInput.checked })
+		ZBNT.openWireshark = Qt.binding(function() { return openWiresharkInput.checked })
 	}
 
 	Connections {
@@ -141,7 +142,7 @@ GridLayout {
 	}
 
 	Label {
-		text: "Export to CSV files:"
+		text: "Save results:"
 		font.weight: Font.Bold
 		Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 	}
@@ -150,6 +151,26 @@ GridLayout {
 		id: exportFilesInput
 		checked: true
 		enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected
+		Layout.fillWidth: true
+		Layout.columnSpan: 2
+
+		onToggled: {
+			if(!checked) {
+				openWiresharkInput.checked = false;
+			}
+		}
+	}
+
+	Label {
+		text: "Open Wireshark:"
+		font.weight: Font.Bold
+		Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+	}
+
+	CheckBox {
+		id: openWiresharkInput
+		checked: false
+		enabled: !ZBNT.running && ZBNT.connected == ZBNT.Connected && exportFilesInput.checked
 		Layout.fillWidth: true
 		Layout.columnSpan: 2
 	}

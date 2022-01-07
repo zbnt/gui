@@ -25,7 +25,7 @@
 #include <MessageUtils.hpp>
 
 QLatencyMeasurer::QLatencyMeasurer(QObject *parent)
-	: QAbstractDevice(parent)
+	: QAbstractDevice(DEV_LATENCY_MEASURER, parent)
 { }
 
 QLatencyMeasurer::~QLatencyMeasurer()

@@ -20,11 +20,11 @@
 
 #include <QObject>
 #include <QUrl>
-#include <QFile>
 #include <QList>
 #include <QMutex>
 #include <QVariant>
 #include <QBitArray>
+#include <QIODevice>
 #include <QTextStream>
 
 #include <QTableModel.hpp>
@@ -65,6 +65,7 @@ public:
 
 	void loadInitialProperties(const QList<QPair<PropertyID, QByteArray>> &props);
 
+	quint32 setPcapOutput(std::shared_ptr<QIODevice> &output, quint32 index);
 	void enableLogging(const QString &path);
 	void disableLogging();
 
@@ -119,5 +120,6 @@ private:
 	QStringList m_detectionCountersStr;
 
 	QMutex m_mutex;
-	QFile m_logFile;
+	quint32 m_logIndex;
+	std::shared_ptr<QIODevice> m_logOutput;
 };

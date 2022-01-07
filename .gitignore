@@ -1,3 +1,4 @@
+.cache
 .directory
 *.kdev4
 build/

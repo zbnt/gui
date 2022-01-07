@@ -18,8 +18,8 @@
 
 #include <dev/QAbstractDevice.hpp>
 
-QAbstractDevice::QAbstractDevice(QObject *parent)
-	: QObject(parent), m_id(0)
+QAbstractDevice::QAbstractDevice(DeviceType type, QObject *parent)
+	: QObject(parent), m_id(0), m_type(type)
 { }
 
 QAbstractDevice::~QAbstractDevice()
@@ -34,3 +34,19 @@ void QAbstractDevice::setID(quint8 id)
 {
 	m_id = id;
 }
+
+DeviceType QAbstractDevice::type() const
+{
+	return m_type;
+}
+
+quint32 QAbstractDevice::setPcapOutput(std::shared_ptr<QIODevice>&, quint32)
+{
+	return 0;
+}
+
+void QAbstractDevice::enableLogging(const QString&)
+{ }
+
+void QAbstractDevice::disableLogging()
+{ }
