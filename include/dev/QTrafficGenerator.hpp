@@ -31,7 +31,7 @@ class QTrafficGenerator : public QAbstractDevice
 	Q_PROPERTY(quint32 templateLength MEMBER m_templateLength NOTIFY templateChanged)
 	Q_PROPERTY(QString templatePath MEMBER m_templatePath NOTIFY templateChanged)
 	Q_PROPERTY(QByteArray templateBytes MEMBER m_templateBytes NOTIFY templateChanged)
-	Q_PROPERTY(QByteArray templateMask MEMBER m_templateMask NOTIFY templateChanged)
+	Q_PROPERTY(QByteArray sourceBytes MEMBER m_sourceBytes NOTIFY templateChanged)
 
 	Q_PROPERTY(quint8 enable MEMBER m_enable NOTIFY settingsChanged)
 
@@ -76,7 +76,7 @@ private:
 	quint32 m_templateLength = 0;
 	QString m_templatePath;
 	QByteArray m_templateBytes;
-	QByteArray m_templateMask;
+	QByteArray m_sourceBytes;
 	qint32 m_maxTemplateLength;
 
 	quint8 m_port = 0;

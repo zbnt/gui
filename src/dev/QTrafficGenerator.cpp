@@ -111,11 +111,11 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 		return false;
 	}
 
-	QByteArray templateBytes, templateMask;
+	QByteArray templateBytes, sourceBytes;
 	QByteArray fileContents = headersFile.readAll();
 
-	bool inX = false, inComment = false;
-	quint8 lastChar = 0, currentMask = 0, maskCount = 0;
+	bool inX = false, inN = false, inComment = false;
+	quint8 lastChar = 0;
 	quint32 lineCount = 1;
 
 	for(char c : fileContents)
@@ -130,7 +130,25 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 				return false;
 			}
 
+			templateBytes.append('\0');
+			sourceBytes.append(0x01);
+
 			inX = false;
+			continue;
+		}
+
+		if(inN)
+		{
+			if(c != 'n' && c != 'b')
+			{
+				emit error(QString("Syntax error in line %1: Incomplete frame number sequence").arg(lineCount));
+				return false;
+			}
+
+			templateBytes.append('\0');
+			sourceBytes.append((c == 'n') ? 0x02 : 0x03);
+
+			inN = false;
 			continue;
 		}
 
@@ -163,8 +181,9 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 				}
 
 				templateBytes.append((lastChar << 4) | c);
+				sourceBytes.append(quint8(0x00));
+
 				lastChar = 0;
-				++maskCount;
 			}
 			else
 			{
@@ -187,28 +206,16 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 		else if(c == 'x')
 		{
 			inX = true;
-
-			templateBytes.append('\0');
-			currentMask |= 1 << maskCount;
-			++maskCount;
+		}
+		else if(c == 'n')
+		{
+			inN = true;
 		}
 		else if(!isspace(c))
 		{
 			emit error(QString("Syntax error in line %1: Invalid character").arg(lineCount));
 			return false;
 		}
-
-		if(maskCount >= 8)
-		{
-			templateMask.append(currentMask);
-			currentMask = 0;
-			maskCount = 0;
-		}
-	}
-
-	if(maskCount != 0)
-	{
-		templateMask.append(currentMask);
 	}
 
 	if(templateBytes.size() > m_maxTemplateLength)
@@ -218,7 +225,7 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 	}
 
 	m_templateBytes = templateBytes;
-	m_templateMask = templateMask;
+	m_sourceBytes = sourceBytes;
 
 	m_templateLength = templateBytes.length();
 	m_templatePath = selectedPath;
@@ -231,7 +238,7 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 void QTrafficGenerator::clearTemplate()
 {
 	m_templateBytes.clear();
-	m_templateMask.clear();
+	m_sourceBytes.clear();
 
 	m_templateLength = 0;
 	m_templatePath = "";
