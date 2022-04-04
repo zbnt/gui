@@ -187,15 +187,13 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 
 	quint64 time = readAsNumber<quint64>(measurement, 0);
 	quint32 number = readAsNumber<quint32>(measurement, 8);
-	quint8 matchDir = readAsNumber<quint8>(measurement, 12);
+	quint8 frameFlags = readAsNumber<quint8>(measurement, 12);
 	quint8 logWidth = readAsNumber<quint8>(measurement, 13);
 	quint8 matchMask = readAsNumber<quint8>(measurement, 14);
 
 	quint64 timeNs = 8 * time;
 	qint32 extOffset = ((logWidth + 23) / logWidth) * logWidth - 8;
-
-	matchDir -= 'A';
-	if(matchDir > 1) return;
+	quint8 matchDir = frameFlags & 1;
 
 	QString matchMaskStr;
 	matchMaskStr.resize(m_numScripts, '0');
@@ -254,11 +252,11 @@ void QFrameDetector::receiveMeasurement(const QByteArray &measurement)
 		writeAsBytes(m_logOutput, quint16(8));
 		writeAsBytes(m_logOutput, quint64(number));
 
-		// opt_custom (match mask)
+		// opt_custom (frame and match flags)
 
 		writeAsBytes(m_logOutput, quint16(2989));
 		writeAsBytes(m_logOutput, quint16(4));
-		writeAsBytes(m_logOutput, quint32(matchMask));
+		writeAsBytes(m_logOutput, (quint32(matchMask) << 8) | (quint32(frameFlags) >> 1));
 
 		writeAsBytes(m_logOutput, blen);
 	}
