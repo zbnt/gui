@@ -31,7 +31,6 @@ class QTrafficGenerator : public QAbstractDevice
 	Q_PROPERTY(quint32 templateLength MEMBER m_templateLength NOTIFY templateChanged)
 	Q_PROPERTY(QString templatePath MEMBER m_templatePath NOTIFY templateChanged)
 	Q_PROPERTY(QByteArray templateBytes MEMBER m_templateBytes NOTIFY templateChanged)
-	Q_PROPERTY(QByteArray sourceBytes MEMBER m_sourceBytes NOTIFY templateChanged)
 
 	Q_PROPERTY(quint8 enable MEMBER m_enable NOTIFY settingsChanged)
 
@@ -42,7 +41,7 @@ class QTrafficGenerator : public QAbstractDevice
 	Q_PROPERTY(QString burstOnTime MEMBER m_burstOnTime NOTIFY settingsChanged)
 	Q_PROPERTY(QString burstOffTime MEMBER m_burstOffTime NOTIFY settingsChanged)
 
-	Q_PROPERTY(QString lfsrSeed MEMBER m_lfsrSeed NOTIFY settingsChanged)
+	Q_PROPERTY(QString prngSeed MEMBER m_prngSeed NOTIFY settingsChanged)
 
 public:
 	QTrafficGenerator(QObject *parent = nullptr);
@@ -76,7 +75,6 @@ private:
 	quint32 m_templateLength = 0;
 	QString m_templatePath;
 	QByteArray m_templateBytes;
-	QByteArray m_sourceBytes;
 	qint32 m_maxTemplateLength;
 
 	quint8 m_port = 0;
@@ -88,5 +86,5 @@ private:
 	QString m_burstOnTime;
 	QString m_burstOffTime;
 
-	QString m_lfsrSeed;
+	QString m_prngSeed;
 };

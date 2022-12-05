@@ -339,7 +339,11 @@ QByteArray QFrameDetector::loadScript(quint32 id, QUrl url)
 		return scriptBytes;
 	}
 
+	auto name = url.fileName().chopped(6);
+
 	appendAsBytes(scriptBytes, id);
+	scriptBytes.append(name.toUtf8());
+	scriptBytes.push_back('\0');
 
 	for(quint32 i = 0; i < m_maxScriptSize; ++i)
 	{
@@ -353,7 +357,7 @@ QByteArray QFrameDetector::loadScript(quint32 id, QUrl url)
 		appendAsBytes(scriptBytes, fullInstr);
 	}
 
-	m_scriptName[id] = url.fileName().chopped(6);
+	m_scriptName[id] = name;
 	m_scriptPath[id] = url;
 	m_scriptsEnabled |= (1 << id);
 

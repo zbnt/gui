@@ -72,6 +72,7 @@ public slots:
 	static QByteArray arrayFromNum(const QString &data, qint32 size);
 	static QString arrayToStr(const QByteArray &data, qint32 start, qint32 size);
 	static QVariant arrayToNum(const QByteArray &data, qint32 start, qint32 size);
+	static int arrayFirstZero(const QByteArray &data, qint32 start);
 
 	static QString cyclesToTime(QString cycles);
 	static QString bytesToHumanReadable(QString bytes);

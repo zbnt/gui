@@ -156,6 +156,11 @@ QVariant Zbnt::arrayToNum(const QByteArray &data, qint32 start, qint32 size)
 	return QVariant(0);
 }
 
+int Zbnt::arrayFirstZero(const QByteArray &data, qint32 start)
+{
+	return data.indexOf('\0', start);
+}
+
 QString Zbnt::cyclesToTime(QString cycles)
 {
 	QString res;

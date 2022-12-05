@@ -224,8 +224,10 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 		return false;
 	}
 
-	m_templateBytes = templateBytes;
-	m_sourceBytes = sourceBytes;
+	m_templateBytes = selectedPath.toUtf8();
+	m_templateBytes.push_back('\0');
+	m_templateBytes.append(templateBytes);
+	m_templateBytes.append(sourceBytes);
 
 	m_templateLength = templateBytes.length();
 	m_templatePath = selectedPath;
@@ -238,7 +240,6 @@ bool QTrafficGenerator::loadTemplate(QUrl url)
 void QTrafficGenerator::clearTemplate()
 {
 	m_templateBytes.clear();
-	m_sourceBytes.clear();
 
 	m_templateLength = 0;
 	m_templatePath = "";

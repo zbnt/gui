@@ -28,6 +28,42 @@ Item {
 
 	property var object: undefined
 	property var deviceID: 0
+	property bool scriptPending: true
+
+	Component.onCompleted: {
+		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_FRAME_TEMPLATE)
+	}
+
+	Connections {
+		target: ZBNT
+
+		function onPropertyChanged(success, devID, propID, value) {
+			if(devID == root.deviceID && propID == Messages.PROP_FRAME_TEMPLATE)
+			{
+				if(success)
+				{
+					const nameLength = ZBNT.arrayFirstZero(value, 0)
+					const name = ZBNT.arrayToStr(value, 0, nameLength)
+					const templateLength = (value.byteLength - nameLength - 1) / 2
+
+					root.object.templatePath = name
+
+					if(name.length != 0)
+					{
+						root.object.templateLoaded = true;
+						root.object.templateLength = templateLength;
+					}
+					else
+					{
+						root.object.templateLoaded = false;
+						root.object.templateLength = 0;
+					}
+				}
+
+				root.scriptPending = false;
+			}
+		}
+	}
 
 	Connections {
 		target: root.object
@@ -59,8 +95,8 @@ Item {
 		onAccepted: {
 			if(root.object.loadTemplate(fileUrl))
 			{
+				root.scriptPending = true;
 				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_TEMPLATE, root.object.templateBytes)
-				ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SOURCE, root.object.sourceBytes)
 			}
 		}
 	}
@@ -117,6 +153,8 @@ Item {
 		}
 
 		RowLayout {
+			enabled: !root.scriptPending
+
 			Layout.fillWidth: true
 
 			TextField {
@@ -481,7 +519,7 @@ Item {
 			PropertyButtons {
 				id: seedButtons
 				deviceID: root.deviceID
-				propertyID: Messages.PROP_LFSR_SEED
+				propertyID: Messages.PROP_PRNG_SEED
 
 				target: root.object
 				targetProperty: "lfsrSeed"

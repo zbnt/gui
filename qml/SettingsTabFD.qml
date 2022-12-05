@@ -38,7 +38,6 @@ Item {
 		{
 			root.changePending |= 4
 			ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT, scriptBytes)
-			ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT_NAME, ZBNT.arrayConcat(ZBNT.arrayFromNum(id, 4), ZBNT.arrayFromStr(root.object.scriptName[id])))
 			ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_SCRIPT, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 		}
 	}
@@ -47,7 +46,6 @@ Item {
 		root.changePending |= 4
 		root.object.removeScript(id)
 		ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT, ZBNT.arrayFromNum(id, 4))
-		ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_FRAME_SCRIPT_NAME, ZBNT.arrayFromNum(id, 4))
 		ZBNT.setDeviceProperty(root.deviceID, Messages.PROP_ENABLE_SCRIPT, ZBNT.arrayFromNum(root.object.scriptsEnabled, 4))
 	}
 
@@ -56,7 +54,7 @@ Item {
 
 		for(var i = 0; i < 2*root.object.numScripts; i++)
 		{
-			ZBNT.getDevicePropertyWithArgs(root.deviceID, Messages.PROP_FRAME_SCRIPT_NAME, ZBNT.arrayFromNum(i, 4));
+			ZBNT.getDevicePropertyWithArgs(root.deviceID, Messages.PROP_FRAME_SCRIPT, ZBNT.arrayFromNum(i, 4));
 		}
 
 		ZBNT.getDeviceProperty(root.deviceID, Messages.PROP_ENABLE)
@@ -107,7 +105,7 @@ Item {
 
 					root.changePending &= ~4
 				}
-				else if(propID == Messages.PROP_FRAME_SCRIPT_NAME)
+				else if(propID == Messages.PROP_FRAME_SCRIPT)
 				{
 					if(success)
 					{
